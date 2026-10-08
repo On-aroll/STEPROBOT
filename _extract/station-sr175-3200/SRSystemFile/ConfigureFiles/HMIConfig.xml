@@ -1,0 +1,75 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<HMIConfig>
+    <Language>0</Language>
+    <Jog>15</Jog>
+    <Button>
+        <Basic>
+            <F1 Fun="eDirectTeach" />
+            <Right0 Fun="eWorkSpace" />
+            <Right1 Fun="eSignalConfig" />
+            <Right2 Fun="eToolTeach" />
+            <Right3 Fun="eReferenceTeach" />
+            <Right4 Fun="eSpeedGearSet" />
+            <Right5 Fun="eSoftFloatConfig" />
+            <Right6 Fun="" />
+        </Basic>
+        <Weld>
+            <F1 Fun="eWireBack" />
+            <Right0 Fun="eWorkSpace" />
+            <Right1 Fun="eSignalConfig" />
+            <Right2 Fun="eToolTeach" />
+            <Right3 Fun="eReferenceTeach" />
+            <Right4 Fun="eWeldMonitor" />
+            <Right5 Fun="eSystemInfo" />
+            <Right6 Fun="" />
+        </Weld>
+        <Bend>
+            <F1 Fun="eBendSimu" />
+            <Right0 Fun="eWorkSpace" />
+            <Right1 Fun="eSignalConfig" />
+            <Right2 Fun="eToolTeach" />
+            <Right3 Fun="eReferenceTeach" />
+            <Right4 Fun="eBendConfig" />
+            <Right5 Fun="eBendTuningConfig" />
+            <Right6 Fun="" />
+        </Bend>
+    </Button>
+    <CommonCommand>
+        <Cmd CmdName="PTP">Movement</Cmd>
+        <Cmd CmdName="Lin">Movement</Cmd>
+        <Cmd CmdName="Circ">Movement</Cmd>
+        <Cmd CmdName="WaitTime">Movement</Cmd>
+        <Cmd CmdName="DIRead">IO</Cmd>
+        <Cmd CmdName="DIWAIT">IO</Cmd>
+        <Cmd CmdName="DOSet">IO</Cmd>
+        <Cmd CmdName="Tool">Setting</Cmd>
+        <Cmd CmdName="RefSys">Setting</Cmd>
+        <Cmd CmdName="ProgCall">FlowControl</Cmd>
+        <Cmd CmdName="ARCON">ARCWelding</Cmd>
+        <Cmd CmdName="ARCOFF">ARCWelding</Cmd>
+        <Cmd CmdName="ARCSET">ARCWelding</Cmd>
+        <Cmd CmdName="WLin">ARCWelding</Cmd>
+        <Cmd CmdName="WCirc">ARCWelding</Cmd>
+    </CommonCommand>
+    <SpeedGear Increment="2">3 8 12 20 100</SpeedGear>
+    <LogoutTime>0</LogoutTime>
+    <ButtonQt>
+        <LF1 Func="" />
+        <LF2 Func="" />
+        <LF3 Func="" />
+        <RF1 Func_Detail="" Func="WeldSimu" />
+        <RF2 Func_Detail="" Func="" />
+        <RF3 Func_Detail="" Func="" />
+        <RF4 Func_Detail="" Func="" />
+        <RF5 Func_Detail="" Func="" />
+        <KeyF1 Func_Detail="" Func="" />
+        <KeyF2 Func_Detail="" Func="" />
+        <KeyF3 Func_Detail="" Func="" />
+        <KeyF4 Func_Detail="" Func="" />
+    </ButtonQt>
+    <CmdQt />
+    <CommonIO>
+        <IOType />
+        <IOPort />
+    </CommonIO>
+</HMIConfig>

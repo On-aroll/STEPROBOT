@@ -1,0 +1,92 @@
+[
+  {
+    "Item": "Anaconda Python",
+    "Path": "D:\\Anaconda\\anconda\\python.exe",
+    "Exists": false
+  },
+  {
+    "Item": "Anaconda conda",
+    "Path": "D:\\Anaconda\\anconda\\Scripts\\conda.exe",
+    "Exists": false
+  },
+  {
+    "Item": "MSVC environment",
+    "Path": "D:\\VSBuildTools\\VC\\Auxiliary\\Build\\vcvars64.bat",
+    "Exists": false
+  },
+  {
+    "Item": "Standalone Git",
+    "Path": "D:\\Git\\cmd\\git.exe",
+    "Exists": false
+  },
+  {
+    "Item": "VS Code executable",
+    "Path": "D:\\VSCODE\\Microsoft VS Code\\Code.exe",
+    "Exists": true
+  },
+  {
+    "Item": "Dotnet SDK",
+    "Path": "C:\\Program Files\\dotnet\\sdk\\8.0.425\\MSBuild.dll",
+    "Exists": true
+  },
+  {
+    "Item": "Studio executable",
+    "Path": "D:\\Desktop\\STEPROBOT\\STEPStudio 4.7.0\\bin\\STEPStudio 4.7.0.exe",
+    "Exists": false
+  },
+  {
+    "Item": "Virtual controller 1",
+    "Path": "D:\\Desktop\\STEPROBOT\\STEPStudio 4.7.0\\RobotController_PC\\Environment\\1-NonReal.exe",
+    "Exists": false
+  },
+  {
+    "Item": "Virtual controller 2",
+    "Path": "D:\\Desktop\\STEPROBOT\\STEPStudio 4.7.0\\RobotController_PC\\Environment\\2-RobotMoveControl.exe",
+    "Exists": false
+  },
+  {
+    "Item": "Virtual HMI",
+    "Path": "D:\\Desktop\\STEPROBOT\\STEPStudio 4.7.0\\RobotController_PC\\Environment\\3-HMI.exe",
+    "Exists": false
+  },
+  {
+    "Item": "Robot model",
+    "Path": "D:\\Desktop\\STEPROBOT\\STEPStudio 4.7.0\\STEPLibrary\\Robots\\SR175-3200.srlib",
+    "Exists": false
+  },
+  {
+    "Item": "SDK data header",
+    "Path": "D:\\Desktop\\STEPROBOT\\_extract\\sdk\\SR.SDK_C++_X64_Win_V2.4.1.20250801\\ControlMsgData.hpp",
+    "Exists": false
+  },
+  {
+    "Item": "SDK library",
+    "Path": "D:\\Desktop\\STEPROBOT\\_extract\\sdk\\SR.SDK_C++_X64_Win_V2.4.1.20250801\\Robot-SDK.lib",
+    "Exists": false
+  },
+  {
+    "Item": "SDK debug library",
+    "Path": "D:\\Desktop\\STEPROBOT\\_extract\\sdk\\SR.SDK_C++_X64_Win_V2.4.1.20250801\\Robot-SDKd.lib",
+    "Exists": false
+  },
+  {
+    "Item": "Native bridge",
+    "Path": "D:\\Desktop\\STEPROBOT\\实验准备\\上位机\\native\\bin\\StepRobot.Native.dll",
+    "Exists": false
+  },
+  {
+    "Item": "Published app",
+    "Path": "D:\\Desktop\\STEPROBOT\\实验准备\\上位机\\bin\\host\\StepRobot.App.exe",
+    "Exists": false
+  },
+  {
+    "Item": "Windows SDK header",
+    "Path": "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.26100.0\\um\\Windows.h",
+    "Exists": true
+  },
+  {
+    "Item": "Windows SDK import library",
+    "Path": "C:\\Program Files (x86)\\Windows Kits\\10\\Lib\\10.0.26100.0\\um\\x64\\WS2_32.Lib",
+    "Exists": true
+  }
+]

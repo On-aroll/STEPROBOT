@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="utf-8">
+<title>国庆快乐 — 机械臂写字轨迹（虚拟控制器实测）</title>
+<style>
+  body{margin:0;overflow:hidden;background:#0d1117;font-family:"Microsoft YaHei",sans-serif}
+  #hud{position:fixed;top:12px;left:14px;color:#e6edf3;font-size:13px;line-height:1.7;
+       background:rgba(22,27,34,.82);padding:10px 14px;border-radius:8px;border:1px solid #30363d}
+  #hud b{color:#ffd700} #hud .r{color:#ff5b5b} #hud .y{color:#ffd700}
+  #legend{position:fixed;bottom:12px;left:14px;color:#8b949e;font-size:12px;
+          background:rgba(22,27,34,.82);padding:8px 12px;border-radius:8px;border:1px solid #30363d}
+  .sw{display:inline-block;width:22px;height:3px;vertical-align:middle;margin:0 6px 2px 0}
+</style>
+</head>
+<body>
+<div id="hud">
+  <b>国庆快乐</b> — 机械臂 TCP 轨迹<br>
+  平面: X=<span id="px">-</span> mm<br>
+  规划点: <span id="np">-</span> · 实测点: <span id="nt">-</span><br>
+  <span id="status" class="r">加载中…</span>
+</div>
+<div id="legend">
+  <span class="sw" style="background:#ffd700"></span>规划路径（字形轮廓）
+  <span class="sw" style="background:#ff3b3b;box-shadow:0 0 6px #ff3b3b"></span>控制器实测 TCP 轨迹
+  <span class="sw" style="background:#4dd8ff"></span>TCP 当前位置
+</div>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1117);
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 10, 20000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+
+// 坐标系：控制器 world（mm）。写字平面 X=常量，Y=字宽，Z=字高。
+// 为方便观察，把 Z 当作"上"。
+camera.position.set(-2600, 1400, 1600);
+controls.target.set(1500, 0, 1200);
+
+scene.add(new THREE.AxesHelper(500));
+// 写字平面网格
+const grid = new THREE.GridHelper(2600, 26, 0x30363d, 0x21262d);
+grid.rotation.x = Math.PI/2;
+grid.position.set(1500, 0, 1200);
+scene.add(grid);
+
+const planGroup = new THREE.Group();
+const traceGroup = new THREE.Group();
+scene.add(planGroup, traceGroup);
+
+function line(points, color, width, glow){
+  const g = new THREE.BufferGeometry().setFromPoints(
+      points.map(p => new THREE.Vector3(p[0], p[2], -p[1]))); // (X,Y,Z)->(x, z, -y) 让 Z 朝上
+  const m = new THREE.LineBasicMaterial({color, linewidth:width,
+        transparent:true, opacity:glow?0.95:0.75});
+  return new THREE.Line(g, m);
+}
+
+async function loadJSON(u){ const r = await fetch(u); if(!r.ok) throw new Error(u); return r.json(); }
+
+// 规划路径
+loadJSON('guoqing_kuaile_path.json').then(d=>{
+  document.getElementById('px').textContent = d.plane_x;
+  document.getElementById('np').textContent = d.n_points;
+  for (const s of d.segments){
+    planGroup.add(line(s.points, 0xffd700, 1, false));
+  }
+  document.getElementById('status').textContent = '规划路径已加载';
+}).catch(e=>document.getElementById('status').textContent = '规划路径加载失败: '+e);
+
+// 实测轨迹
+loadJSON('tcp_trace.json').then(d=>{
+  document.getElementById('nt').textContent = d.n || d.pts.length;
+  traceGroup.add(line(d.pts, 0xff3b3b, 2, true));
+  // 当前位置标记
+  const last = d.pts[d.pts.length-1];
+  const dot = new THREE.Mesh(new THREE.SphereGeometry(14,16,16),
+              new THREE.MeshBasicMaterial({color:0x4dd8ff}));
+  dot.position.set(last[0], last[2], -last[1]);
+  scene.add(dot);
+  document.getElementById('status').innerHTML =
+      '<b style="color:#3fb950">实测轨迹已加载</b> — 共 ' + d.pts.length + ' 个 TCP 点';
+}).catch(e=>document.getElementById('status').textContent = '实测轨迹未找到（任务未完成？）: '+e);
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+(function loop(){ requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+</script>
+</body>
+</html>

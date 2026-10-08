@@ -1,0 +1,29 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 203, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\BonVoyage\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\http\server.py", line 1345, in <module>
+    test(
+    ~~~~^
+        HandlerClass=handler_class,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<3 lines>...
+        protocol=args.protocol,
+        ^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\BonVoyage\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\http\server.py", line 1292, in test
+    with ServerClass(addr, HandlerClass) as httpd:
+         ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\BonVoyage\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\socketserver.py", line 457, in __init__
+    self.server_bind()
+    ~~~~~~~~~~~~~~~~^^
+  File "C:\Users\BonVoyage\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\http\server.py", line 1339, in server_bind
+    return super().server_bind()
+           ~~~~~~~~~~~~~~~~~~~^^
+  File "C:\Users\BonVoyage\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\http\server.py", line 140, in server_bind
+    socketserver.TCPServer.server_bind(self)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\BonVoyage\.workbuddy-ai\binaries\python\versions\3.13.12\Lib\socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+PermissionError: [WinError 10013] 以一种访问权限不允许的方式做了一个访问套接字的尝试。

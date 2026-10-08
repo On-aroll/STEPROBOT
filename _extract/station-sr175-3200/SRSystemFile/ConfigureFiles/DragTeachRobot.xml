@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DragTeachRobot>
+    <RobotName1>SD500</RobotName1>
+    <RobotName2>SD500E</RobotName2>
+    <RobotName3>SD700</RobotName3>
+    <RobotName4>SD700E</RobotName4>
+    <RobotName5>SD900</RobotName5>
+    <RobotName6>SA1400</RobotName6>
+    <RobotName7>SA1400B</RobotName7>
+    <RobotName8>SA1800L</RobotName8>
+    <RobotName9>SA1800B</RobotName9>
+    <RobotName10>SA1800C</RobotName10>
+    <RobotName11>SA1800</RobotName11>
+    <RobotName12>SD700C</RobotName12>
+    <RobotName13>SD900C</RobotName13>
+    <RobotName14>SA1400H</RobotName14>
+    <RobotName15>SD500E2</RobotName15>
+</DragTeachRobot>

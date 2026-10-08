@@ -1,0 +1,56 @@
+# 注意：本文件在仓库根（D:\Desktop\STEPROBOT），代码在 实验准备/ 之下。
+# 所以模式一律写成"任意深度匹配"（裸目录名，不带前导斜杠）——
+# 之前写成 上位机/logs/ 会被锚定到根目录而完全失效，教训记在这里。
+
+# ── 构建产物 ──────────────────────────────────────────────
+bin/
+obj/
+*.user
+.vs/
+.idea/
+
+# ── 每次运行重写的输出（可再生，不入库）────────────────────────
+logs/
+reports/
+__pycache__/
+*.pyc
+
+!/reports/
+!/reports/*.py
+!/reports/*.json
+!/reports/*.dxf
+!/reports/*.srd
+!/reports/*.srp
+!/reports/guoqing-viewer/
+!/reports/guoqing-viewer/**
+
+# ── 厂商 SDK 产物：许可与体积原因不入库 ────────────────────────
+# 真 Robot-SDK-CSharp.dll 到手后放 libs\ 下，只在本机用
+libs/
+*.dll
+# 例外：**仿真桩件**夹具，适配层测试依赖它，故意入库（7KB，绝不可带进实验室）
+!实验准备/上位机/test-fixtures/Robot-SDK-CSharp.dll
+
+# ── 厂商原始资料（46MB 不可变输入，默认不入库）───────────────────
+# 想跟踪就删掉这两行
+*.pdf
+*.zip
+
+# ── 杂项 ─────────────────────────────────────────────────
+Thumbs.db
+desktop.ini
+*.tmp
+*.exe
+
+# 本机安装介质与可重建的厂商/工具产物；源码、检索文本仍可跟踪
+/_setup/
+/_extract/sdk/
+/_extract/cad-original/
+/sdk/
+/STEPStudio*/
+/STEPROBOT-Recovery/
+/STEPROBOT1/
+/.workbuddy-ai/
+/research/cpp-starter/build/
+*.lib
+*.srlib

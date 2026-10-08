@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<BendGeneral>
+    <BendGeneral_1>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_1>
+    <BendGeneral_2>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_2>
+    <BendGeneral_3>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_3>
+    <BendGeneral_4>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_4>
+    <BendGeneral_5>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_5>
+    <BendGeneral_6>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_6>
+    <BendGeneral_7>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_7>
+    <BendGeneral_8>
+        <BenderSystem>Delem</BenderSystem>
+        <BenderType>up</BenderType>
+    </BendGeneral_8>
+</BendGeneral>

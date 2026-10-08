@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<SamplingConfig>
+    <Sampling1>
+        <CyclicTime>4</CyclicTime>
+        <MaxSizePerChannel>150000</MaxSizePerChannel>
+        <Trigger Type="0" TypeExtraInfo="0" Auto="0" />
+        <CH1 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH2 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH3 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH4 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH5 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH6 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH7 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH8 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+    </Sampling1>
+    <Sampling2>
+        <CyclicTime>4</CyclicTime>
+        <MaxSizePerChannel>150000</MaxSizePerChannel>
+        <Trigger Type="0" TypeExtraInfo="0" Auto="0" />
+        <CH1 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH2 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH3 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH4 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH5 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH6 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH7 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH8 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+    </Sampling2>
+    <Sampling3>
+        <CyclicTime>4</CyclicTime>
+        <MaxSizePerChannel>150000</MaxSizePerChannel>
+        <Trigger Type="0" TypeExtraInfo="0" Auto="0" />
+        <CH1 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH2 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH3 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH4 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH5 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH6 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH7 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH8 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+    </Sampling3>
+    <Sampling4>
+        <CyclicTime>4</CyclicTime>
+        <MaxSizePerChannel>150000</MaxSizePerChannel>
+        <Trigger Type="0" TypeExtraInfo="0" Auto="0" />
+        <CH1 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH2 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH3 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH4 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH5 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH6 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH7 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+        <CH8 Type="0" Variable="0" ExtraInfo="1" IsOpen="0" />
+    </Sampling4>
+</SamplingConfig>

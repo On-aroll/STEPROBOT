@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<PalletizingRecipe>
+    <Station1>
+        <Name />
+        <ProgramPath />
+    </Station1>
+    <Station2>
+        <Name />
+        <ProgramPath />
+    </Station2>
+    <Station3>
+        <Name />
+        <ProgramPath />
+    </Station3>
+    <Station4>
+        <Name />
+        <ProgramPath />
+    </Station4>
+</PalletizingRecipe>

@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<PowerOffConfig>
+    <!--1代表开启关机配置，0代表未开启-->
+    <Enable>0</Enable>
+    <!--关机时的路径-->
+    <Path Enable="0" />
+    <!--关机时的行号-->
+    <LineNum Enable="0">1</LineNum>
+    <!--关机时的速度百分比-->
+    <SpeedPercent Enable="0">1</SpeedPercent>
+    <!--关机时的焊接模式-->
+    <ArcMode Enable="0">1</ArcMode>
+    <!--关机时的工具-->
+    <Tool Enable="1" />
+    <!--关机时的坐标系-->
+    <Ref Enable="1" />
+    <!--关机时的关节位置-->
+    <PowerOffPos>
+        <EnablePos>0</EnablePos>
+        <Joint1 />
+        <Joint2 />
+        <Joint3 />
+        <Joint4 />
+        <Joint5 />
+        <Joint6 />
+        <AuxAxis1 />
+        <AuxAxis2 />
+        <AuxAxis3 />
+        <AuxAxis4 />
+        <AuxAxis5 />
+        <AuxAxis6 />
+    </PowerOffPos>
+    <ProgInfoStack />
+    <RestorePath Enable="0">0</RestorePath>
+    <!--关机时的激光焊模式-->
+    <LaserWeldMode Enable="0">0</LaserWeldMode>
+    <!--关机时的激光切割模式-->
+    <LaserCutMode Enable="0">0</LaserCutMode>
+</PowerOffConfig>

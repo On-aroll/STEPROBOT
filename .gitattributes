@@ -1,0 +1,17 @@
+* text=auto
+
+# 源文件与文档统一 LF 入库（C++/GBK 头文件例外，见下）
+*.cs    text eol=crlf
+*.csproj text eol=crlf
+*.sln   text eol=crlf
+*.md    text eol=lf
+
+# C++ SDK 头文件是厂商给的 GBK/ANSI 无 BOM 文件，一旦被转成 UTF-8 注释就废了
+*.hpp   -text
+
+# 二进制
+*.dll   binary
+*.lib   binary
+*.png   binary
+*.zip   binary
+*.pdf   binary

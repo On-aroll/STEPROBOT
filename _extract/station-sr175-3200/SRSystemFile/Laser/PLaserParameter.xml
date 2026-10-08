@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<PointLaserConfig>
+    <Port>-1</Port>
+    <MovementMin>0.000000</MovementMin>
+    <MovementMax>0.000000</MovementMax>
+    <PlVolOrCurMin>0.000000</PlVolOrCurMin>
+    <PlVolOrCurMax>0.000000</PlVolOrCurMax>
+    <AiMin>0</AiMin>
+    <AiMax>0</AiMax>
+    <AiVolOrCurMin>0.000000</AiVolOrCurMin>
+    <AiVolOrCurMax>0.000000</AiVolOrCurMax>
+</PointLaserConfig>

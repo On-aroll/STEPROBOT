@@ -1,0 +1,59 @@
+﻿{
+    "CheckedAt":  "2026-09-29T10:09:04.3093630+08:00",
+    "Project":  "D:\\Desktop\\STEPROBOT",
+    "DevelopmentChecksPassed":  true,
+    "FailureCount":  0,
+    "SimulationVerified":  false,
+    "Checks":  [
+                   {
+                       "Name":  "DotNet.SDK8",
+                       "Status":  "PASS",
+                       "Detail":  "8.0.425 [C:\\Program Files\\dotnet\\sdk]"
+                   },
+                   {
+                       "Name":  "DotNet.Runtime8",
+                       "Status":  "PASS",
+                       "Detail":  "Microsoft.AspNetCore.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]\r\nMicrosoft.NETCore.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]\r\nMicrosoft.NETCore.App 10.0.12 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]\r\nMicrosoft.WindowsDesktop.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]\r\nMicrosoft.WindowsDesktop.App 10.0.12 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]"
+                   },
+                   {
+                       "Name":  "MSVC.Files",
+                       "Status":  "PASS",
+                       "Detail":  "D:\\VSBuildTools\\VC\\Tools\\MSVC\\14.44.35207\\bin\\Hostx64\\x64\\cl.exe"
+                   },
+                   {
+                       "Name":  "Git.Program",
+                       "Status":  "PASS",
+                       "Detail":  "git version 2.55.0.windows.3"
+                   },
+                   {
+                       "Name":  "Git.Objects",
+                       "Status":  "PASS",
+                       "Detail":  "git.exe : notice: No default references\r\nAt D:\\Desktop\\STEPROBOT\\tools\\Check-Environment.ps1:19 char:20\r\n+         $output = (\u0026 $File @Arguments 2\u003e\u00261 | Out-String).Trim()\r\n+                    ~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (notice: No default references:String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError"
+                   },
+                   {
+                       "Name":  "SDK.Files",
+                       "Status":  "PASS",
+                       "Detail":  "All five files match the restored vendor SDK SHA-256 baseline."
+                   },
+                   {
+                       "Name":  "Host.Files",
+                       "Status":  "PASS",
+                       "Detail":  "D:\\Desktop\\STEPROBOT\\实验准备\\上位机\\bin\\host"
+                   },
+                   {
+                       "Name":  "Host.NativeSDK",
+                       "Status":  "PASS",
+                       "Detail":  "STEP C# 上位机 | 后端 vendor-cpp-readonly | .NET 8.0.31\r\nSDK：SDK-V2.4.1-20250801F_20251013\r\n本地 SDK 加载成功；未发起网络连接，未验证控制器接口。"
+                   },
+                   {
+                       "Name":  "Studio.Simulation",
+                       "Status":  "MANUAL",
+                       "Detail":  "User installs STEPStudio. License, station loading, controller startup and live SDK capture are not checked here."
+                   },
+                   {
+                       "Name":  "Python.Research",
+                       "Status":  "MANUAL",
+                       "Detail":  "User installs Anaconda. Select its interpreter and run env_check.py separately when ready."
+                   }
+               ]
+}

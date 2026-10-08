@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<BendSignal>
+    <BendSignal_1>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode>0</CommunicateMode>
+        <FollowInRealTime>0</FollowInRealTime>
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_1>
+    <BendSignal_2>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode>0</CommunicateMode>
+        <FollowInRealTime>0</FollowInRealTime>
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_2>
+    <BendSignal_3>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode>0</CommunicateMode>
+        <FollowInRealTime>0</FollowInRealTime>
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_3>
+    <BendSignal_4>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode>0</CommunicateMode>
+        <FollowInRealTime>0</FollowInRealTime>
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_4>
+    <BendSignal_5>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode />
+        <FollowInRealTime />
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_5>
+    <BendSignal_6>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode />
+        <FollowInRealTime />
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_6>
+    <BendSignal_7>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode />
+        <FollowInRealTime />
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_7>
+    <BendSignal_8>
+        <UpPointInPut>-1</UpPointInPut>
+        <SpeedChangePointInPut>-1</SpeedChangePointInPut>
+        <ClampPointInPut>-1</ClampPointInPut>
+        <DowmPointInPut>-1</DowmPointInPut>
+        <UploadPointInPut>-1</UploadPointInPut>
+        <HighSpeedDownOutPut>-1</HighSpeedDownOutPut>
+        <LowSpeedDownOutPut>-1</LowSpeedDownOutPut>
+        <ReturnOutPut>-1</ReturnOutPut>
+        <CommunicateMode />
+        <FollowInRealTime />
+        <TCPIP />
+        <TCPPort />
+    </BendSignal_8>
+</BendSignal>

@@ -1,0 +1,14 @@
+STEP C# 上位机 | 后端 test-stub | .NET 8.0.31
+SDK：V2.3-STUB
+数据源：软件测试桩件（不连接 Studio，不代表六轴物理仿真）
+采集：17 次；连续失败：0；状态：Connected
+关节角 [deg]：7.02, -12.5, 30, 0, 90, -180
+WORLD XYZABC：800.11, 10.22, 1027.33, 0, 90, -180
+使能：False；模式：Manual；倍率：15%
+工程：project0/program0；消息：4001: 机器人没有上使能
+[SetRate] dry-run: 策略放行，但未加 --allow-motion 故不执行
+[Enable] dry-run: 策略放行，但未加 --allow-motion 故不执行
+[WaitEnabled] dry-run: 策略放行，但未加 --allow-motion 故不执行
+[Hold] dry-run: 策略放行，但未加 --allow-motion 故不执行
+[MoveJ] dry-run: 机器人未使能；本次会话尚未使能；未配置每轴软限位（JointLimitsDeg），按"宁可不动也不乱动"拒绝运动
+日志：C:\Users\admin\AppData\Local\STEPROBOT-Integrity\audit-20260928-205237\audit-demo.jsonl

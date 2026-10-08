@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<RobotVarTree>
+    <_global.sr>
+        <_record />
+        <_project />
+    </_global.sr>
+    <project1.sr>
+        <_project />
+        <program0>
+            <ap0 Type="8" Data="100.000000 0.000000 30.000000 0.000000 54.113600 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000">0</ap0>
+            <ap1 Type="8" Data="0.000000 0.000000 0.000000 0.000000 54.113600 18.072000 0.000000 0.000000 0.000000 0.000000 0.000000 0.000000">0</ap1>
+        </program0>
+    </project1.sr>
+</RobotVarTree>

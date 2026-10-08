@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    桩件 SDK 工程：产出 Robot-SDK-CSharp.dll（与厂商产物同名，仅用于测试本工具）。
+    用法见 __test__\说明.md —— 这个 DLL 绝不能拿到现场去替代厂商 DLL。
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <AssemblyName>Robot-SDK-CSharp</AssemblyName>
+    <RootNamespace>StepRobotSDKCSharp</RootNamespace>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <PlatformTarget>x64</PlatformTarget>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  </PropertyGroup>
+
+</Project>

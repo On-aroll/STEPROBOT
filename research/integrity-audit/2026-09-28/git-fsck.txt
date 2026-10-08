@@ -1,0 +1,131 @@
+error: refs/codex/turn-diffs/checkpoints/0b1000ebc7a6a2ed143ca2f1409930a3/c71115d6cb6ae39f43e5862fbbb0702c/second.py: badRefContent: r"""A raw docstring.
+"""
+
+
+def look_busy():
+    xxxx = 1
+    yyyy = 2
+    zzzz = 3
+    wwww = 4
+    vvvv = xxxx + yyyy + zzzz + wwww
+    return vvvv
+error: refs/codex/turn-diffs/checkpoints/0b1000ebc7a6a2ed143ca2f1409930a3/c71115d6cb6ae39f43e5862fbbb0702c/__init__.py: badRefContent: 
+error: refs/codex/turn-diffs/checkpoints/first.py: badRefContent: r"""A raw docstring.
+"""
+
+
+def look_busy():
+    xxxx = 1
+    yyyy = 2
+    zzzz = 3
+    wwww = 4
+    vvvv = xxxx + yyyy + zzzz + wwww
+    return vvvv  # pylint: disable=duplicate-code
+error: refs/codex/turn-diffs/checkpoints/__init__.py: badRefContent: 
+error: refs/codex/turn-diffs/checkpoints/0b1000ebc7a6a2ed143ca2f1409930a3/c71115d6cb6ae39f43e5862fbbb0702c/__init__.py: invalid sha1 pointer 0000000000000000000000000000000000000000
+error: refs/codex/turn-diffs/checkpoints/0b1000ebc7a6a2ed143ca2f1409930a3/c71115d6cb6ae39f43e5862fbbb0702c/second.py: invalid sha1 pointer 0000000000000000000000000000000000000000
+error: refs/codex/turn-diffs/checkpoints/__init__.py: invalid sha1 pointer 0000000000000000000000000000000000000000
+error: refs/codex/turn-diffs/checkpoints/first.py: invalid sha1 pointer 0000000000000000000000000000000000000000
+bad sha1 file: .git/objects/05/dummy_plugin.py
+bad sha1 file: .git/objects/5b/__init__.py
+bad sha1 file: .git/objects/69/used_before_assignment_py313.py
+bad sha1 file: .git/objects/69/used_before_assignment_py313.rc
+bad sha1 file: .git/objects/72/top_level_list_of_disable.result.json
+bad sha1 file: .git/objects/72/top_level_list_of_disable.toml
+bad sha1 file: .git/objects/7a/exec_used.txt
+bad sha1 file: .git/objects/b6/cs_consider_using_assignment_expr.py
+bad sha1 file: .git/objects/b6/cs_consider_using_assignment_expr.rc
+bad sha1 file: .git/objects/b6/cs_consider_using_assignment_expr.txt
+bad sha1 file: .git/objects/b6/cs_consider_using_augmented_assign.rc
+bad sha1 file: .git/objects/b6/cs_consider_using_augmented_assign.txt
+bad sha1 file: .git/objects/b6/cs_consider_using_namedtuple_or_dataclass.py
+bad sha1 file: .git/objects/b6/cs_consider_using_namedtuple_or_dataclass.rc
+bad sha1 file: .git/objects/b6/cs_consider_using_tuple.txt
+bad sha1 file: .git/objects/b6/cs_default.py
+bad sha1 file: .git/objects/b6/cs_default.rc
+bad sha1 file: .git/objects/b6/cs_prefer_typing_namedtuple.py
+bad sha1 file: .git/objects/b6/cs_prefer_typing_namedtuple.rc
+bad sha1 file: .git/objects/b6/cs_py_version_35.py
+bad sha1 file: .git/objects/b6/cs_py_version_35.rc
+bad sha1 file: .git/objects/b6/cs_use_math_not_float.rc
+bad sha1 file: .git/objects/c8/self_assigning_variable.py
+bad sha1 file: .git/objects/c8/self_cls_assignment.py
+bad sha1 file: .git/objects/c8/self_cls_assignment.txt
+bad sha1 file: .git/objects/eb/loaded_plugin_does_not_exists.2.out
+bad sha1 file: .git/objects/eb/loaded_plugin_does_not_exists.toml
+error in blob 1f5a9b3f32f41c416ec47d119f550a9e666f495e: gitattributesMissing: unable to read .gitattributes blob
+error: HEAD: invalid reflog entry e11110426a93f6b9d8684d45814617638fd3c486
+error: HEAD: invalid reflog entry e11110426a93f6b9d8684d45814617638fd3c486
+error: refs/heads/main: invalid reflog entry e11110426a93f6b9d8684d45814617638fd3c486
+error: refs/heads/main: invalid reflog entry e11110426a93f6b9d8684d45814617638fd3c486
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob 1f5a9b3f32f41c416ec47d119f550a9e666f495e
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob f8e2a2d21b757f451e4b2f22ba8467154083c815
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    tree be30e8f8a96d234da5b054bb6a1c017975a80fed
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob c4071523dfcb3a0cf4e3fca10a1383b3b2d70739
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob ead5eeff534a7478c5d5e278beea9ead2f89e2ca
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob 0bc30516ddbc8c25b161ba847b88c12fc4d0c08e
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob b8254788df515ca1b89ea7c4e4bb73ad27675ce9
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob c0baac727dc3490f743e20914fadb3915adbb557
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob 0793879ce76c493c11afad112ee52b87430a21de
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    tree 45d87dc90d1449c6ba3af1cfd5cf951674bd9a97
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob e3b202a3b9e49e2650c3fe40f8324cba0bcd49b8
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    tree 87958e589332e192f96585a6d1db681be698b41f
+broken link from    tree 547bccf768727979ab5571a20081ed3f4562c8d7
+              to    blob 1eb797aacd0f383f165979afeba9754de1cd2482
+broken link from    tree 44e15eb9bce87bf1feedc9d4f638f52038fa2267
+              to    tree 09b223d5d987072741fb1ab3174a73cbe900b494
+broken link from    tree 44e15eb9bce87bf1feedc9d4f638f52038fa2267
+              to    tree d663dfb3aa9dbb948aa1886bb4b20b5ba752623a
+broken link from    tree 44e15eb9bce87bf1feedc9d4f638f52038fa2267
+              to    blob 1555e1cb361c5da8fcdc5b7ce8985a218a1780f6
+broken link from    tree e8008a8e1ed1462b807afaad18b73782693ad0f6
+              to    blob d62b605ca177409d5b275bff6e03d34ab3f13cb3
+broken link from    tree e8008a8e1ed1462b807afaad18b73782693ad0f6
+              to    blob 7d4fa55ca9dd45cd8bb924ebe9bc722a4bfc7c79
+broken link from    tree e8008a8e1ed1462b807afaad18b73782693ad0f6
+              to    blob 1b6f5d7aad7f3799a3ea4fdafb1b4aee66f5b5bf
+broken link from  commit 11e8308cf8befdc56332d13706d8fc36daa5f22d
+              to  commit e11110426a93f6b9d8684d45814617638fd3c486
+broken link from    tree 682e701153c314a1c820c67a3c6b80af5ac09074
+              to    blob 3e816d6a58577a74059caf97ac9778c5914bbe5e
+broken link from    tree 4983f66c590405fc41d9ee8f03771796aa11b9d8
+              to    blob e692256377b2df2658ea0bf3007ce42b1036c46f
+broken link from    tree 4983f66c590405fc41d9ee8f03771796aa11b9d8
+              to    blob 5943b44937f1a6fa6654c195f16517db7d60e883
+missing tree 45d87dc90d1449c6ba3af1cfd5cf951674bd9a97
+missing tree be30e8f8a96d234da5b054bb6a1c017975a80fed
+missing blob 3e816d6a58577a74059caf97ac9778c5914bbe5e
+missing commit e11110426a93f6b9d8684d45814617638fd3c486
+missing tree 09b223d5d987072741fb1ab3174a73cbe900b494
+missing blob 1f5a9b3f32f41c416ec47d119f550a9e666f495e
+missing blob c0baac727dc3490f743e20914fadb3915adbb557
+missing blob e3b202a3b9e49e2650c3fe40f8324cba0bcd49b8
+missing blob e692256377b2df2658ea0bf3007ce42b1036c46f
+missing blob f8e2a2d21b757f451e4b2f22ba8467154083c815
+missing blob 0793879ce76c493c11afad112ee52b87430a21de
+missing blob 0bc30516ddbc8c25b161ba847b88c12fc4d0c08e
+missing blob 5943b44937f1a6fa6654c195f16517db7d60e883
+missing blob d62b605ca177409d5b275bff6e03d34ab3f13cb3
+missing tree d663dfb3aa9dbb948aa1886bb4b20b5ba752623a
+missing blob 1555e1cb361c5da8fcdc5b7ce8985a218a1780f6
+missing tree 87958e589332e192f96585a6d1db681be698b41f
+missing blob b8254788df515ca1b89ea7c4e4bb73ad27675ce9
+missing blob ead5eeff534a7478c5d5e278beea9ead2f89e2ca
+missing blob 1b6f5d7aad7f3799a3ea4fdafb1b4aee66f5b5bf
+missing blob 1eb797aacd0f383f165979afeba9754de1cd2482
+missing blob 7d4fa55ca9dd45cd8bb924ebe9bc722a4bfc7c79
+missing blob c4071523dfcb3a0cf4e3fca10a1383b3b2d70739
+error: Could not read e11110426a93f6b9d8684d45814617638fd3c486
+failed to parse commit e11110426a93f6b9d8684d45814617638fd3c486 from object database for commit-graph

@@ -1,0 +1,30 @@
+#!/bin/sh
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+runlevel=S
+prevlevel=N
+umask 022
+mkdir /dev/pts
+/bin/mount -a
+source /etc/profile
+cd /root/configFile
+./stepAction &
+sleep 10
+telnetd
+tcpsvd 0 21 ftpd -w /SRSystemFile/ &
+disksync &
+linux_name=`uname -r`
+echo linux_name=$linux_name
+if [ "$linux_name" = "3.14.79-rt85" ]; then
+	echo "3.14.79-rt85"
+	ifconfig eth0 192.168.39.220
+else
+	if [ "$linux_name" = "2.6.33.7-rt29" ]; then
+		echo "2.6.33.7-rt29"
+		ifconfig eth1 192.168.39.220
+		ifconfig eth0 192.168.1.1
+	else
+	echo "unkown linux"
+	fi
+fi
+ifconfig eth2 192.168.0.1
+

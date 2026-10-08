@@ -1,0 +1,81 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<Appointment>
+    <ProgramList>
+        <case1 port="-1">_global.sr\program0</case1>
+        <case2 port="-1" />
+        <case3 port="-1" />
+        <case4 port="-1" />
+        <case5 port="-1" />
+        <case6 port="-1" />
+        <case7 port="-1" />
+        <case8 port="-1" />
+        <case9 port="-1" />
+        <case10 port="-1" />
+        <case11 port="-1" />
+        <case12 port="-1" />
+        <case13 port="-1" />
+        <case14 port="-1" />
+        <case15 port="-1" />
+        <case16 port="-1" />
+    </ProgramList>
+    <Setting>
+        <MaxVel>0</MaxVel>
+        <DoubleClick>0</DoubleClick>
+        <ManualVel>0</ManualVel>
+        <AppointmentUsed>0</AppointmentUsed>
+    </Setting>
+    <ProgramCount>
+        <case1 count="0"></case1>
+        <case2 count="0"></case2>
+        <case3 count="0"></case3>
+        <case4 count="0"></case4>
+        <case5 count="0"></case5>
+        <case6 count="0"></case6>
+        <case7 count="0"></case7>
+        <case8 count="0"></case8>
+        <case9 count="0"></case9>
+        <case10 count="0"></case10>
+        <case11 count="0"></case11>
+        <case12 count="0"></case12>
+        <case13 count="0"></case13>
+        <case14 count="0"></case14>
+        <case15 count="0"></case15>
+        <case16 count="0"></case16>
+    </ProgramCount>
+    <ProgramAIO>
+        <case1 AO="-1" AI="-1"></case1>
+        <case2 AO="-1" AI="-1"></case2>
+        <case3 AO="-1" AI="-1"></case3>
+        <case4 AO="-1" AI="-1"></case4>
+        <case5 AO="-1" AI="-1"></case5>
+        <case6 AO="-1" AI="-1"></case6>
+        <case7 AO="-1" AI="-1"></case7>
+        <case8 AO="-1" AI="-1"></case8>
+        <case9 AO="-1" AI="-1"></case9>
+        <case10 AO="-1" AI="-1"></case10>
+        <case11 AO="-1" AI="-1"></case11>
+        <case12 AO="-1" AI="-1"></case12>
+        <case13 AO="-1" AI="-1"></case13>
+        <case14 AO="-1" AI="-1"></case14>
+        <case15 AO="-1" AI="-1"></case15>
+        <case16 AO="-1" AI="-1"></case16>
+    </ProgramAIO>
+    <ProgramDOFlash>
+        <case1 enable="0" time="1000"></case1>
+        <case2 enable="0" time="1000"></case2>
+        <case3 enable="0" time="1000"></case3>
+        <case4 enable="0" time="1000"></case4>
+        <case5 enable="0" time="1000"></case5>
+        <case6 enable="0" time="1000"></case6>
+        <case7 enable="0" time="1000"></case7>
+        <case8 enable="0" time="1000"></case8>
+        <case9 enable="0" time="1000"></case9>
+        <case10 enable="0" time="1000"></case10>
+        <case11 enable="0" time="1000"></case11>
+        <case12 enable="0" time="1000"></case12>
+        <case13 enable="0" time="1000"></case13>
+        <case14 enable="0" time="1000"></case14>
+        <case15 enable="0" time="1000"></case15>
+        <case16 enable="0" time="1000"></case16>
+    </ProgramDOFlash>
+</Appointment>

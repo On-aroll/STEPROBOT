@@ -1,0 +1,215 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<WorkSpace>
+    <CartSpace1>
+        <Info Data="eAreaBox,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="1.000000,1.000000,1.000000">0</AreaBox>
+        <AreaCylinder Data="0.000000,0.000000">0</AreaCylinder>
+        <AreaSphere Data="0.000000">0</AreaSphere>
+    </CartSpace1>
+    <CartSpace2>
+        <Info Data="eAreaBox,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="1.000000,1.000000,1.000000">0</AreaBox>
+        <AreaCylinder Data="0.000000,0.000000">0</AreaCylinder>
+        <AreaSphere Data="0.000000">0</AreaSphere>
+    </CartSpace2>
+    <CartSpace3>
+        <Info Data="eAreaBox,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="1.000000,1.000000,1.000000">0</AreaBox>
+        <AreaCylinder Data="1.000000,2.000000">0</AreaCylinder>
+        <AreaSphere Data="1.000000">0</AreaSphere>
+    </CartSpace3>
+    <CartSpace4>
+        <Info Data="eAreaSphere,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="-2.000000,8.000000,3.000000">0</AreaBox>
+        <AreaCylinder Data="9.000000,-67.000000">0</AreaCylinder>
+        <AreaSphere Data="1.000000">0</AreaSphere>
+    </CartSpace4>
+    <CartSpace5>
+        <Info Data="eAreaBox,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="1.000000,1.000000,1.000000">0</AreaBox>
+        <AreaCylinder Data="1.000000,2.000000">0</AreaCylinder>
+        <AreaSphere Data="1.000000">0</AreaSphere>
+    </CartSpace5>
+    <CartSpace6>
+        <Info Data="eAreaCylinder,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="500.000000,500.000000,500.000000">0</AreaBox>
+        <AreaCylinder Data="1.000000,2.000000">0</AreaCylinder>
+        <AreaSphere Data="1.000000">0</AreaSphere>
+    </CartSpace6>
+    <CartSpace7>
+        <Info Data="eAreaBox,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="1.000000,1.000000,1.000000">0</AreaBox>
+        <AreaCylinder Data="1.000000,2.000000">0</AreaCylinder>
+        <AreaSphere Data="1.000000">0</AreaSphere>
+    </CartSpace7>
+    <CartSpace8>
+        <Info Data="eAreaBox,eAreaOff" />
+        <BasePos Data="0.000000,0.000000,0.000000,0.000000,0.000000,0.000000">refname</BasePos>
+        <AreaBox Data="1.000000,1.000000,1.000000">0</AreaBox>
+        <AreaCylinder Data="1.000000,2.000000">0</AreaCylinder>
+        <AreaSphere Data="1.000000">0</AreaSphere>
+    </CartSpace8>
+    <AxisSpace1>
+        <Info Data="eAreaInside" />
+        <Axis_1 Data="FALSE,-0.500000,0.500000">Name</Axis_1>
+        <Axis_2 Data="FALSE,-45.500000,-44.500000">Name</Axis_2>
+        <Axis_3 Data="FALSE,43.000000,44.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,-0.500000,0.500000">Name</Axis_4>
+        <Axis_5 Data="FALSE,94.500000,95.500000">Name</Axis_5>
+        <Axis_6 Data="FALSE,-0.500000,0.500000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.000000,0.000000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace1>
+    <AxisSpace2>
+        <Info Data="eAreaOff" />
+        <Axis_1 Data="FALSE,0.000000,0.000000">Name</Axis_1>
+        <Axis_2 Data="FALSE,0.000000,0.000000">Name</Axis_2>
+        <Axis_3 Data="FALSE,0.000000,0.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,0.000000,0.000000">Name</Axis_4>
+        <Axis_5 Data="FALSE,0.000000,0.000000">Name</Axis_5>
+        <Axis_6 Data="FALSE,0.000000,0.000000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.000000,0.000000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace2>
+    <AxisSpace3>
+        <Info Data="eAreaOff" />
+        <Axis_1 Data="FALSE,0.000000,0.000000">Name</Axis_1>
+        <Axis_2 Data="FALSE,0.000000,0.000000">Name</Axis_2>
+        <Axis_3 Data="FALSE,0.000000,0.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,0.000000,0.000000">Name</Axis_4>
+        <Axis_5 Data="FALSE,0.000000,0.000000">Name</Axis_5>
+        <Axis_6 Data="FALSE,0.000000,0.000000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.0000,0.00000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace3>
+    <AxisSpace4>
+        <Info Data="eAreaOff" />
+        <Axis_1 Data="FALSE,0.000000,0.000000">Name</Axis_1>
+        <Axis_2 Data="FALSE,0.000000,0.000000">Name</Axis_2>
+        <Axis_3 Data="FALSE,0.000000,0.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,0.000000,0.000000">Name</Axis_4>
+        <Axis_5 Data="FALSE,0.000000,0.000000">Name</Axis_5>
+        <Axis_6 Data="FALSE,0.000000,0.000000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.000000,0.000000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace4>
+    <AxisSpace5>
+        <Info Data="eAreaOff" />
+        <Axis_1 Data="FALSE,0.000000,0.000000">Name</Axis_1>
+        <Axis_2 Data="FALSE,0.000000,0.000000">Name</Axis_2>
+        <Axis_3 Data="FALSE,0.000000,0.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,0.000000,0.000000">Name</Axis_4>
+        <Axis_5 Data="FALSE,0.000000,0.000000">Name</Axis_5>
+        <Axis_6 Data="FALSE,0.000000,0.000000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.000000,0.000000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace5>
+    <AxisSpace6>
+        <Info Data="eAreaOff" />
+        <Axis_1 Data="FALSE,0.000000,0.000000">Name</Axis_1>
+        <Axis_2 Data="FALSE,0.000000,0.000000">Name</Axis_2>
+        <Axis_3 Data="FALSE,0.000000,0.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,0.000000,0.000000">Name</Axis_4>
+        <Axis_5 Data="FALSE,0.000000,0.000000">Name</Axis_5>
+        <Axis_6 Data="FALSE,0.000000,0.000000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.000000,0.000000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace6>
+    <AxisSpace7>
+        <Info Data="eAreaOff" />
+        <Axis_1 Data="FALSE,0.000000,0.000000">Name</Axis_1>
+        <Axis_2 Data="FALSE,0.000000,0.000000">Name</Axis_2>
+        <Axis_3 Data="FALSE,0.000000,0.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,0.000000,0.000000">Name</Axis_4>
+        <Axis_5 Data="FALSE,0.000000,0.000000">Name</Axis_5>
+        <Axis_6 Data="FALSE,0.000000,0.000000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.000000,0.000000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace7>
+    <AxisSpace8>
+        <Info Data="eAreaOff" />
+        <Axis_1 Data="FALSE,0.000000,0.000000">Name</Axis_1>
+        <Axis_2 Data="FALSE,0.000000,0.000000">Name</Axis_2>
+        <Axis_3 Data="FALSE,0.000000,0.000000">Name</Axis_3>
+        <Axis_4 Data="FALSE,0.000000,0.000000">Name</Axis_4>
+        <Axis_5 Data="FALSE,0.000000,0.000000">Name</Axis_5>
+        <Axis_6 Data="FALSE,0.000000,0.000000">Name</Axis_6>
+        <UAxis_1 Data="FALSE,0.000000,0.000000">Name</UAxis_1>
+        <UAxis_2 Data="FALSE,0.000000,0.000000">Name</UAxis_2>
+        <UAxis_3 Data="FALSE,0.000000,0.000000">Name</UAxis_3>
+        <UAxis_4 Data="FALSE,0.000000,0.000000">Name</UAxis_4>
+        <UAxis_5 Data="FALSE,0.000000,0.000000">Name</UAxis_5>
+        <UAxis_6 Data="FALSE,0.000000,0.000000">Name</UAxis_6>
+    </AxisSpace8>
+    <SpaceCheck>
+        <AxisSpace_1>0</AxisSpace_1>
+        <AxisSpace_2>0</AxisSpace_2>
+        <AxisSpace_3>0</AxisSpace_3>
+        <AxisSpace_4>0</AxisSpace_4>
+        <AxisSpace_5>0</AxisSpace_5>
+        <AxisSpace_6>0</AxisSpace_6>
+        <AxisSpace_7>0</AxisSpace_7>
+        <AxisSpace_8>0</AxisSpace_8>
+        <CartSpace_1>0</CartSpace_1>
+        <CartSpace_2>0</CartSpace_2>
+        <CartSpace_3>0</CartSpace_3>
+        <CartSpace_4>0</CartSpace_4>
+        <CartSpace_5>0</CartSpace_5>
+        <CartSpace_6>0</CartSpace_6>
+        <CartSpace_7>0</CartSpace_7>
+        <CartSpace_8>0</CartSpace_8>
+    </SpaceCheck>
+    <SpacePriority>
+        <AxisSpace_1>0</AxisSpace_1>
+        <AxisSpace_2>0</AxisSpace_2>
+        <AxisSpace_3>0</AxisSpace_3>
+        <AxisSpace_4>0</AxisSpace_4>
+        <AxisSpace_5>0</AxisSpace_5>
+        <AxisSpace_6>0</AxisSpace_6>
+        <AxisSpace_7>0</AxisSpace_7>
+        <AxisSpace_8>0</AxisSpace_8>
+        <CartSpace_1>0</CartSpace_1>
+        <CartSpace_2>0</CartSpace_2>
+        <CartSpace_3>0</CartSpace_3>
+        <CartSpace_4>0</CartSpace_4>
+        <CartSpace_5>0</CartSpace_5>
+        <CartSpace_6>0</CartSpace_6>
+        <CartSpace_7>0</CartSpace_7>
+        <CartSpace_8>0</CartSpace_8>
+    </SpacePriority>
+</WorkSpace>

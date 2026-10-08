@@ -1,0 +1,182 @@
+[
+  {
+    "Path": "快速开始.md",
+    "Length": 5018,
+    "Sha256": "50D9966071942E8A2844C500F7AA0A79D7C0B4FCDC5832B843402F7DF1EFD932"
+  },
+  {
+    "Path": "联调验收记录.md",
+    "Length": 3568,
+    "Sha256": "B7B29678B67D7EF4BDAD1E0C3D54680D1F1C5C9F073B5BB9F6154BE906482FAB"
+  },
+  {
+    "Path": "build.ps1",
+    "Length": 761,
+    "Sha256": "A5942446C32446649417C88A63FDD09DAB25791682C8F77241284151914879B7"
+  },
+  {
+    "Path": "capture-studio.cmd",
+    "Length": 298,
+    "Sha256": "CD5077ABB15BA20C1BDAB11DE4119F2827E991252EA017F47DB2C5691B3D65E9"
+  },
+  {
+    "Path": "demo.cmd",
+    "Length": 289,
+    "Sha256": "11A80F74D3E0635BA57EE87159D2C2884AD2147455E2830DC46FD0D7D883E942"
+  },
+  {
+    "Path": "README.md",
+    "Length": 4674,
+    "Sha256": "BFE96090D7F290DC71AE7A3EAEDE38112C98F9A02D5E9DD9DA9CC8F3E2D30AF5"
+  },
+  {
+    "Path": "run.cmd",
+    "Length": 232,
+    "Sha256": "9FFC52C81495CD9EACF8F318421E0BC398D8BEA5F6DDE67C835F1389F9383D31"
+  },
+  {
+    "Path": "StepRobotHost.sln",
+    "Length": 3835,
+    "Sha256": "2EA9D4CA13C4E42CA1A37ACF5305CA8293E6E61928F5969BC14A737DCBAF9FE8"
+  },
+  {
+    "Path": "native\\bridge.cpp",
+    "Length": 4797,
+    "Sha256": "2939F659EFD11BCEF0F7F32B75B59256CE418A24FDD28F3A8A8414F4CD6FC26D"
+  },
+  {
+    "Path": "native\\build.bat",
+    "Length": 438,
+    "Sha256": "0F617E9B1CC4E5B5BEAF8CF765F9F66B0B545E0C82F0721FC4D43BDC027AF85A"
+  },
+  {
+    "Path": "src\\StepRobot.Adapter.Native\\NativeRobotLink.cs",
+    "Length": 5161,
+    "Sha256": "7E4D21FDD0795BBA8E41387143DFB5EE9EB0FC67CD68195244E210130C13C4E7"
+  },
+  {
+    "Path": "src\\StepRobot.Adapter.Native\\StepRobot.Adapter.Native.csproj",
+    "Length": 552,
+    "Sha256": "03356E614D4B439D945A879C1016A795C37DD8076B3808AE22C9EBA7C58AEAFA"
+  },
+  {
+    "Path": "src\\StepRobot.Adapter.Reflective\\ReflectiveRobotLink.cs",
+    "Length": 15788,
+    "Sha256": "61263959C92125940840C9B200F5EDBFF1C72AF75325A2CBF5A0D3744E39B9F2"
+  },
+  {
+    "Path": "src\\StepRobot.Adapter.Reflective\\StepRobot.Adapter.Reflective.csproj",
+    "Length": 327,
+    "Sha256": "E2F8BBA23B1BF1DB4D3BAC966B5F59406085EA61C455DA25C53FA26F9A380BA8"
+  },
+  {
+    "Path": "src\\StepRobot.App\\AppOptions.cs",
+    "Length": 6485,
+    "Sha256": "E3B8769C41C793F165D6E58DC3D17E2B7046EDC363AA6D93771A5B3D919C82CA"
+  },
+  {
+    "Path": "src\\StepRobot.App\\Program.cs",
+    "Length": 6813,
+    "Sha256": "37788FB34B33E5A9B35B17037216B2069C2CB06CBC5D6F9C0B0F6399EDFD0760"
+  },
+  {
+    "Path": "src\\StepRobot.App\\StepRobot.App.csproj",
+    "Length": 800,
+    "Sha256": "E7CFBBA85B8618B36D07677FF4516ADBF0CDC3499785D665382B37927F26DFD3"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\ExperimentRunner.cs",
+    "Length": 8410,
+    "Sha256": "3C624771D5142E06F0B6F88FC4E22158242110595EEEA1BBA66CF566DE326E59"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\IRobotLink.cs",
+    "Length": 1157,
+    "Sha256": "75E36393F603793404D95A3B64DC14D3C163FBF0221EFFCB00D2491EF6E6EC75"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\ISink.cs",
+    "Length": 2068,
+    "Sha256": "D54F1F5FA4F26CD94B7FFE3248EA98CE0A0C6BCFCD10F4BF4A93D347F891E55B"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\RobotTypes.cs",
+    "Length": 2404,
+    "Sha256": "3695D58529FCF8D0C0F46B170DD09DA79DE3DC7D25878D52C5FFEABF5593F003"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\SafetyGuard.cs",
+    "Length": 6777,
+    "Sha256": "491F9956F5517AAAD4202F076551F8BB66A9E1F745F6C0AAC9CBB709FDA34574"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\StatePoller.cs",
+    "Length": 2707,
+    "Sha256": "6F18099913EE8E4E0087B4C9DAE1A1311EC9C6ED882C8EDD5C4B531CD91C69E3"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\StepRobot.Core.csproj",
+    "Length": 218,
+    "Sha256": "E151F959964EB450A5B86B72765E3F9C505645FA9516EAE485743D2B43911C8E"
+  },
+  {
+    "Path": "src\\StepRobot.Core\\StubGuard.cs",
+    "Length": 1366,
+    "Sha256": "AD658C441593FC9809723F06D8FB75467EFB0BD12E72E8A320FF0C570479E8DD"
+  },
+  {
+    "Path": "test-fixtures\\Robot-SDK-CSharp.dll",
+    "Length": 7680,
+    "Sha256": "CDC4FD9187D546DA31F6925D6AD0563D7144FFB56E4F42EED3F7AC1368004732"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\AppOptionsTests.cs",
+    "Length": 2175,
+    "Sha256": "EDCBD6DD1440750C8C39F42D74B69CAC08EABD58EC50195EA2337B1BFD96F8D1"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\ExperimentRunnerTests.cs",
+    "Length": 9925,
+    "Sha256": "698D3849B2B6EDB6B075A644701BEBA18024E3ABC40D1AB7700DAB29BB7904F6"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\FakeRobotLink.cs",
+    "Length": 3211,
+    "Sha256": "955257F1309401ECAED95AEBDE74F0F5CDAFBB6BAF6A541338E7150111E03E96"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\NativeAdapterTests.cs",
+    "Length": 1209,
+    "Sha256": "DC12D96D4511A9917D04C4787E8BA37F9954D847F587316E144483580BB32D9A"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\ReflectiveAdapterFixtureTests.cs",
+    "Length": 4678,
+    "Sha256": "1FAF1BE0A79DD2F43A34E00CD5B6E14266A960EBDC803C81C1B7C281D9329816"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\SafetyGuardTests.cs",
+    "Length": 6682,
+    "Sha256": "B18322BBF6CE1D70D620363AA5B112A0875C40419A360C2751FAE7BC408052A2"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\StatePollerTests.cs",
+    "Length": 3857,
+    "Sha256": "EC51ED442A87A43A6956EC11A222C8D353F322F0F012D8B730D5BA4227E30C18"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\StepRobot.Core.Tests.csproj",
+    "Length": 980,
+    "Sha256": "B765E70EEB9B404FE1CA39B0D334951164EE995594BA836EDB7F395C83D78E44"
+  },
+  {
+    "Path": "tests\\StepRobot.Core.Tests\\StubGuardTests.cs",
+    "Length": 2808,
+    "Sha256": "79C4EB832BF77402865FE62AB29262A40DB3F5B2F7E3FA13C8E55B07B71BB37C"
+  },
+  {
+    "Path": "tools\\analyze_run.py",
+    "Length": 13351,
+    "Sha256": "AF0A36A6EDE609E682465773371203995A5E678BBCBA487C739BB3F189F35B80"
+  }
+]

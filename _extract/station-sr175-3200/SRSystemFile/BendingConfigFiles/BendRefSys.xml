@@ -1,0 +1,67 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<BendRefSys>
+    <BendRefSys_1>
+        <X>0.000000</X>
+        <Y>0.000000</Y>
+        <Z>0.000000</Z>
+        <A>0.000000</A>
+        <B>0.000000</B>
+        <C>0.000000</C>
+    </BendRefSys_1>
+    <BendRefSys_2>
+        <X />
+        <Y />
+        <Z />
+        <A />
+        <B />
+        <C />
+    </BendRefSys_2>
+    <BendRefSys_3>
+        <X />
+        <Y />
+        <Z />
+        <A />
+        <B />
+        <C />
+    </BendRefSys_3>
+    <BendRefSys_4>
+        <X />
+        <Y />
+        <Z />
+        <A />
+        <B />
+        <C />
+    </BendRefSys_4>
+    <BendRefSys_5>
+        <X />
+        <Y />
+        <Z />
+        <A />
+        <B />
+        <C />
+    </BendRefSys_5>
+    <BendRefSys_6>
+        <X />
+        <Y />
+        <Z />
+        <A />
+        <B />
+        <C />
+    </BendRefSys_6>
+    <BendRefSys_7>
+        <X />
+        <Y />
+        <Z />
+        <A />
+        <B />
+        <C />
+    </BendRefSys_7>
+    <BendRefSys_8>
+        <X />
+        <Y />
+        <Z />
+        <A />
+        <B />
+        <C />
+    </BendRefSys_8>
+</BendRefSys>

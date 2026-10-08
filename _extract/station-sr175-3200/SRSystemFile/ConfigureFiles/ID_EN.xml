@@ -1,0 +1,935 @@
+<MD>
+    <ID>Description</ID>
+    <E100>Robot is not initiated</E100>
+    <E101>Parameter is illegal</E101>
+    <E102>Pointer is Zero</E102>
+    <E103>Robot is not ready to switch on</E103>
+    <E104>Divide zero</E104>
+    <E150>Error change operation mode when robot moving</E150>
+    <E151>Robot is disabled when it is moving</E151>
+	<E152>Illegal GDO value</E152>
+	<E153>Cillision occured</E153>
+	<E154>the params of AOSync are equal</E154>
+    <E200>No base joint</E200>
+    <E201>Joint number is wrong</E201>
+    <E202>Aux joint number is zero</E202>
+    <E203>Aux joint number is out of three</E203>
+    <E204>Joints Move position is out of speed limit to the last move position</E204>
+    <E205>Aux Move position is out of speed limit to the last move position</E205>
+    <E206>Auxjoint num configer is error</E206>
+    <E207>Move position is out of speed limit to the actual joint's position</E207>
+    <E208>Move position is out of speed limit to the actual auxjoint's position</E208>
+    <E250>Error Create Queue</E250>
+    <E251>Program is NULL</E251>
+    <E252>No enough Memory</E252>
+    <E280>Segment Queue is NULL</E280>
+    <E281>Segment Queue is full</E281>
+    <E282>Segment Queue is empty</E282>
+    <E283>Segment Queue is out of range</E283>
+    <E300>MovePoint Queue is wrong</E300>
+    <E301>MovePoint Queue is NULL</E301>
+    <E302>MovePoint Queue is full</E302>
+    <E303>MovePoint Queue is empty</E303>
+    <E304>MovePoint Queue is clear</E304>
+    <E305>MovePoint Queue is out of range</E305>
+    <E320>Queue is full</E320>
+    <E321>Queue is empty</E321>
+    <E322>Queue is out of range</E322>
+    <E323>Queue item is already exist</E323>
+    <E324>Queue item is not exist</E324>
+    <E340>Stack is full</E340>
+    <E341>Stack is empty</E341>
+    <E342>Path end flag</E342>
+    <E343>Stack is out of range</E343>
+    <E344>The end of Tracking error</E344>
+    <E360>Too many reference system in a program</E360>
+	<E361>start port is bigger than end port</E361>
+    <E380>Err BQ Full</E380>
+    <E381>Err BQ Empty</E381>
+    <E382>Err BQ Out Of Range</E382>
+    <E383>Err Bend Is Null</E383>
+    <E384>Err Bend</E384>
+    <E385>Bend para error</E385>
+	<E386>Not support flexible dynamic</E386>
+	<E387>No real solution for flexible dynamic</E387>
+    <E400>Some joint has no reference</E400>
+    <E401>Joint one home failed</E401>
+    <E402>Joint two home failed</E402>
+    <E403>Joint three home failed</E403>
+    <E404>Joint four home failed</E404>
+    <E405>Joint five home failed</E405>
+    <E406>Joint six home failed</E406>
+    <E407>AuxJoint one home failed</E407>
+    <E408>AuxJoint two home failed</E408>
+    <E409>AuxJoint three home failed</E409>
+    <E410>AuxJoint four home failed</E410>
+    <E411>AuxJoint five home failed</E411>
+    <E412>AuxJoint six home failed</E412>
+	<E413>Out of port number range</E413>
+    <E500>ErrNotAutomaticExternal</E500>
+    <E501>ErrFBBusy</E501>
+    <E502>Err No ControlAuthority</E502>
+	<E503>Err No Program To Load</E503>
+	<E504>Err Illegal Prog1 Name</E504>
+	<E505>Err Illegal Prog2 Name</E505>
+	<E506>Err Illegal Prog3 Name</E506>
+	<E507>Err Illegal Prog4 Name</E507>
+	<E508>Err Illegal Prog5 Name</E508>
+	<E509>Err Illegal Prog6 Name</E509>
+	<E510>Err Illegal Prog7 Name</E510>
+	<E511>Err Illegal Prog8 Name</E511>
+	<E512>Err Illegal Prog9 Name</E512>
+	<E513>Err Illegal Prog10 Name</E513>
+	<E514>Err Illegal Prog11 Name</E514>
+	<E515>Err Illegal Prog12 Name</E515>
+	<E516>Enable Robot Timeout</E516>
+    <E550>Illegal correct dimension</E550>
+    <E551>Illegal CD when correct</E551>
+    <E552>The CD Refsyses are not same</E552>
+    <E553>Laser searching while touch device</E553>
+    <E554>Wire contacting before searching</E554>
+    <E555>No workpiece is found during searching</E555>
+    <E556>Position of workpiece out of tolerance distance</E556>
+    <E557>Illegal search process</E557>
+    <E558>Arc on out of time</E558>
+    <E559>Illegal arc on process</E559>
+    <E560>Arc off out of time</E560>
+    <E561>Illegal arc off process</E561>
+    <E562>Illegel arc settings except set,mode,job</E562>
+    <E563>Error RobotType was Used,not General Robot</E563>
+    <E564>CurrentTool not appropriate for WristWeave</E564>
+    <E565>Do not support double search yet</E565>
+    <E566>Current multilayer has not been initialed</E566>
+    <E567>Too many root pos</E567>
+    <E568>Segment type and pathmemo type not matched</E568>
+    <E569>Length equal to zero</E569>
+    <E570>Correct failed</E570>
+    <E571>Illegal search direction</E571>
+	<E572>Max anoalog physical value is equal to the min one</E572>
+	<E573>Wire Stick after arc off</E573>
+	<E574>Arc is interrupted</E574>
+	<E575>Illegal arc segment type</E575>
+	<E576>Illegal arc segment number or Interval</E576>
+	<E577>Illegal arc segment arc length</E577>
+	<E578>Too many arc segments</E578>
+	<E579>Arc length equal to zero</E579>
+    <E600>Illegal BendMove type</E600>
+    <E601>Err lose bend seg</E601>
+	<E602>Illegal transition coefficient</E602>
+    <E620>Opening laser is time out when searching</E620>
+    <E621>The return of laser camera is wrong</E621>
+	<E622>Initializing camera is wrong</E622>
+	<E623>Opening laser is wrong</E623>
+	<E624>Opening camera is wrong</E624>
+	<E625>Enable detecting is wrong</E625>
+	<E626>Closing camera is wrong</E626>
+	<E627>Closing laser is wrong</E627>
+	<E628>Disable detecting is wrong</E628>
+	<E629>Getting laser detected position is wrong</E629>
+	<E630>Tracking corrdinate cannot be established</E630>
+	<E631>Getting point of laser failed</E631>
+	<E633>No found feature points</E633>
+	<E635>The socket is disconnected between laser and robot</E635>
+	<E636>Cannot find starting point</E636>
+	<E637>points fitting failed</E637>
+	<E638>the matrix of handeye is not normal matrix</E638>
+	<E640>Need more sampling points</E640>
+	<E645>The start and end position overlap</E645>
+	<E650>Unsupported Track Mode</E650>
+	<E651>Track Refsys Type is wrong</E651>
+	<E652>Conveyor Parameter configuration is wrong</E652>
+    <E700>WorkSpace Parameter is illegal</E700>
+    <E701>WorkSpace is not actived</E701>
+    <E702>TCP is Out of CartWorkSpace1</E702>
+    <E703>TCP is Out of CartWorkSpace2</E703>
+    <E704>TCP is Out of CartWorkSpace3</E704>
+    <E705>TCP is Out of CartWorkSpace4</E705>
+    <E706>TCP is Out of CartWorkSpace5</E706>
+    <E707>TCP is Out of CartWorkSpace6</E707>
+    <E708>TCP is Out of CartWorkSpace7</E708>
+    <E709>TCP is Out of CartWorkSpace8</E709>
+    <E710>Joint is Out of JointWorkSpace1</E710>
+    <E711>Joint is Out of JointWorkSpace2</E711>
+    <E712>Joint is Out of JointWorkSpace3</E712>
+    <E713>Joint is Out of JointWorkSpace4</E713>
+    <E714>Joint is Out of JointWorkSpace5</E714>
+    <E715>Joint is Out of JointWorkSpace6</E715>
+    <E716>Joint is Out of JointWorkSpace7</E716>
+    <E717>Joint is Out of JointWorkSpace8</E717>
+    <E718>Joint1 is Out of JointWorkSpace</E718>
+    <E719>Joint2 is Out of JointWorkSpace</E719>
+    <E720>Joint3 is Out of JointWorkSpace</E720>
+    <E721>Joint4 is Out of JointWorkSpace</E721>
+    <E722>Joint5 is Out of JointWorkSpace</E722>
+    <E723>Joint6 is Out of JointWorkSpace</E723>
+    <E724>AuxJoint1 is Out of JointWorkSpace</E724>
+    <E725>AuxJoint2 is Out of JointWorkSpace</E725>
+    <E726>AuxJoint3 is Out of JointWorkSpace</E726>
+    <E727>AuxJoint4 is Out of JointWorkSpace</E727>
+    <E728>AuxJoint5 is Out of JointWorkSpace</E728>
+    <E729>AuxJoint6 is Out of JointWorkSpace</E729>
+	<E730>WorkSpace has been actived by HMI</E730>
+	<E800>Illegal BendMove type</E800>
+    <E801>Err lose bend seg</E801>
+	<E802>Illegal transition coefficient</E802>
+	<E803>Illegal bend degree</E803>
+	<E804>Illegal bend groove width</E804>
+	<E805>Illegal quick down distance</E805>
+	<E806>Illegal up distance</E806>
+	<E807>Bend IOs are not configured</E807>
+	<E808>Bend IOs are timeout</E808>
+	<E809>Top center is timeout</E809>
+	<E810>Velocity change point is timeout</E810>
+	<E811>Unload point is timeout</E811>
+	<E812>Bend IOs are outputting</E812>
+	<E813>No bend DI is configured</E813>
+	<E814>No bend DO is configured</E814>
+	<E815>DO "ToBend" is not configured</E815>
+	<E816>DI "VelChange" is not configured</E816>
+	<E817>DI "TopCenter" is not configured</E817>
+	<E818>Illegal bend correction times</E818>
+	<E819>Bend correction result is out of threshold</E819>
+	<E820>Bend sensor is not configured</E820>
+	<E821>Presser is not in place</E821>
+	<E822>Clamp point is timeout</E822>
+	<E823>Sensor value is out of initial AI value</E823>
+	<E824>Bender RDY is not in place</E824>
+	<E825>IO Communication mode is not "EtherCatIO"</E825>
+	<E826>Bender is not automatic mode</E826>
+	<E827>The parameters of bender machine are abnormal</E827>
+	<E828>The conveyor is not actived</E828>
+	<E829>The conveyor is not started</E829>
+	<E830>Can not start two conveyors at one time</E830>
+	<E831>The conveyor index is illegal</E831>
+	<E832>The conveyor track position is more than max range</E832>
+    <E1000>Joint velocity limit is NULL</E1000>
+    <E1001>Joint limit parameters is NULL</E1001>
+    <E1002>Joint1 is singular</E1002>
+    <E1003>Joint1 is out of space</E1003>
+    <E1004>Joint2 is out of space</E1004>
+    <E1005>Joint3 is out of space</E1005>
+    <E1006>Joint4 is out of space</E1006>
+    <E1007>Joint5 is out of space</E1007>
+    <E1008>Joint6 is out of space</E1008>
+    <E1009>Joint3 does not have Real solve</E1009>
+    <E1010>Joint2 does not have Real solve</E1010>
+    <E1011>Joint5 is singular</E1011>
+    <E1012>Joint5 is singular and joint6 is out of speed</E1012>
+    <E1013>AuxJoint1 is out of space</E1013>
+    <E1014>AuxJoint2 is out of space</E1014>
+    <E1015>AuxJoint3 is out of space</E1015>
+    <E1016>AuxJoint4 is out of space</E1016>
+    <E1017>AuxJoint5 is out of space</E1017>
+    <E1018>AuxJoint6 is out of space</E1018>
+    <E1019>PalletizerRobot Ori is err</E1019>
+    <E1020>Joint1 is out of speed</E1020>
+    <E1021>Joint2 is out of speed</E1021>
+    <E1022>Joint3 is out of speed</E1022>
+    <E1023>Joint4 is out of speed</E1023>
+    <E1024>Joint5 is out of speed</E1024>
+    <E1025>Joint6 is out of speed</E1025>
+    <E1026>J5 is near singular and j4 out of speed</E1026>
+    <E1027>J5 is near singular and j6 out of speed</E1027>
+    <E1028>Joint1 has no real solve</E1028>
+    <E1029>Joint5 has no real solve</E1029>
+    <E1030>Out Of Driver 3 Mechanical Limits</E1030>
+    <E1031>AuxJoint1 is out of speed</E1031>
+    <E1032>AuxJoint2 is out of speed</E1032>
+    <E1033>AuxJoint3 is out of speed</E1033>
+    <E1034>AuxJoint4 is out of speed</E1034>
+    <E1035>AuxJoint5 is out of speed</E1035>
+    <E1036>AuxJoint6 is out of speed</E1036>
+    <E1037>Joint2 and joint3 are near singular</E1037>
+    <E1038>Joint5 is near singular</E1038>
+	<E1039>Refsys and Tool Type conflict</E1039>
+	<E1040>Tool type is error</E1040>
+	<E1041>Application type is error</E1041>
+	<E1042>joint1 is near singular</E1042>
+	<E1043>Error Calculate CartMix 2 Cartpos</E1043>
+	<E1044>No RealSolve for Joint5</E1044>
+	<E1045>No RealSolve for Joint6</E1045>
+	<E1046>FixedTool Cannot Use For Spline</E1046>
+	<E1500>Error PTP initial</E1500>
+    <E1501>Error PTPREL initial</E1501>
+    <E1502>Error Line initial</E1502>
+    <E1503>Error LineREL initial</E1503>
+    <E1504>Error Circle initial</E1504>
+    <E1505>Error CircleAngle initial</E1505>
+    <E1506>Error Spline initial</E1506>
+	<E1507>Error in Path Active</E1507>
+	<E1508>Error in Jacobi inv</E1508>
+	<E1509>Error Transfor CartMix</E1509>
+	<E1510>return position in spline path</E1510>
+	<E1511>The positions have no change in spline path</E1511>
+	<E1512>The spline path cannot initialize in realtime thread</E1512>
+	<E1513>Error OVLABS CanNot OpenVibration</E1513>
+	<E1514>The arc length of path spline is too long!</E1514>
+	<E1590>The frequency and damping values are not appropriate</E1590>	
+	<E1599>SoftFloat can not open with IndAxis on</E1599>
+	<E1600>SoftFloat has already opened</E1600>
+	<E1601>SoftFloat Illegal CloseTime</E1601>
+	<E1602>SoftFloat Illegal Type</E1602>
+	<E1603>SoftFloat Illegal RefSysType</E1603>
+	<E1604>Dynamic not activated</E1604>
+	<E1605>Illegal parameter in collision detection</E1605>
+	<E1606>Collision happened in global collision process</E1606>
+	<E1607>Collision happened in NO.1 collision process</E1607>
+	<E1608>Collision happened in NO.2 collision process</E1608>
+	<E1609>Collision happened in NO.3 collision process</E1609>
+	<E1610>Collision happened in NO.4 collision process</E1610>
+	<E1611>Collision happened in NO.5 collision process</E1611>
+	<E1612>Collision happened in NO.6 collision process</E1612>
+	<E1613>Collision happened in NO.7 collision process</E1613>
+	<E1614>Collision happened in NO.8 collision process</E1614>
+	<E1615>Drag teach cannot be opened during collision detection</E1615>
+	<E1616>Rated torque from codesys is zero</E1616>
+	<E1617>Failed to change drag teach mode</E1617>
+	<E1618>The Identify deceleration planning has no solution</E1618>
+	<E1619>Illegal velocity when identify deceleration planning</E1619>
+	<E1620>Identification has been interrupted</E1620>
+	<E1621>The excitation trajectory time is zero</E1621>
+	<E1622>The ferquency in Load identify is zero</E1622>
+	<E1623>The reduction gear ratio is zero</E1623>
+	<E1624>Can Not Enable When Change Mode To PosMode</E1624>
+	<E1625>Can Not Change OPMode TO Auto In DragTeach</E1625>
+	<E1626>The separate friction identification is not supported in Palletizer robot</E1626>
+	<E1627>Can Not Change SoftFloat When Collision Detect Open</E1627>
+	<E1628>Can Not Change SoftFloat When FeedForward Open</E1628>
+	<E1629>Can Not Dragteach When SoftFloat Open</E1629>
+	<E1630>NO constant acc path in the process of Load identification</E1630>
+	<E1631>SoftFloat and drag teach cannot open together</E1631>
+	<E1632>SoftFloat and collision detect cannot open together</E1632>
+	<E1633>PayLoad value is too large for drag teach</E1633>
+	<E1634>Input InertiaMax is error</E1634>
+	<E1635>LoadIndentifyPath Get No Point</E1635>
+	<E1636>NO constant vel path in the process of Load identification</E1636>
+	<E1637>Total Num of LoadIdentifyPath is error</E1637>
+	<E1650>Box space parameter is illegal for force control</E1650>
+	<E1651>Cylinder space parameter is illegal for force control</E1651>
+	<E1652>Sphere space parameter is illegal for force control</E1652>
+	<E1653>Velocity limit is illegal for force control</E1653>
+	<E1654>Force limit is illegal for force control</E1654>
+	<E1655>MaxAngle limit is illegal for force control</E1655>
+	<E1656>MaxRot limit is illegal for force control</E1656>
+	<E1657>Damp value is illegal for force control</E1657>
+	<E1658>FCAct is not actived for force control</E1658>
+	<E1659>The monitor conditions are actived in force control processing</E1659>
+	<E1670>EGM has not opened</E1670>
+	<E1671>EGM does not support Palletizer</E1671>
+	<E1672>EGM does not support this statement</E1672>
+	<E1673>EGM running seg has not completed</E1673>
+	<E1674>EGM can not open with soft float opening</E1674>
+	<E1675>EGM has illegal parameter</E1675>
+	<E1676>The joint has been out of PMAX limit in EGM</E1676>
+	<E1677>The refSys does not match in EGM</E1677>
+	<E1700>KnotU is Exceed One</E1700>
+	<E1701>Bspline Parameter has Error</E1701>
+	<E1702>Remainpath Can Not be Finished in OneCycleTime</E1702>
+	<E1703>Calculate Weight Error</E1703>
+	<E1704>Error Condition For Round</E1704>
+	<E1705>Knot U Less Than Zero</E1705>
+	<E1706>Error Get Oritation TransCurve CPs For SplinePath</E1706>
+	<E1800>Path Parameters Not Saved Before</E1800>
+	<E1801>Robot Pos Not Saved Before</E1801>
+	<E1802>Restore Path Parameters Failed</E1802>
+	<E1803>Interrupt Queue Initialized Failed</E1803>
+	<E1810>Collecting data points exceeds the maximum limit</E1810>
+	<E1811>No Laser Point Recorded</E1811>
+	<E1812>Laser Sensor Parameters Invalid</E1812>
+	<E1820>Can not control servo when the robot is enabled</E1820>
+	<E1821>Can not control servo when the program is loaded</E1821>
+	<E1900>Initial Smooth Path Error</E1900>
+	<E1901>Velocity Scan Error</E1901>
+    <E1902>Error in Getting Velocity Profile</E1902>
+    <E1903>Error in SpolyProfile_NewShape</E1903>
+    <E1904>Error in the End Of TransSection</E1904>
+    <E1905>Error in the End Of NonTransSection</E1905>
+    <E1906>Error in Getting La For Vend_0</E1906>
+    <E1907>Error in interpolate NonSmooth In Joint</E1907>
+    <E1908>Error in Getting TransPath Vmax</E1908>
+    <E2000>DH parameter is NULL</E2000>
+    <E2001>DH parameter is NULL in Inv_kinematics</E2001>
+    <E2002>Error happened in getting DH Parameters</E2002>
+    <E2100>Reference type is wrong</E2100>
+    <E2101>Position type is wrong</E2101>
+    <E2102>Axis type is wrong</E2102>
+    <E2103>Ramp type is wrong</E2103>
+    <E2104>Segment type	is wrong</E2104>
+    <E2200>Override parameter is wrong</E2200>
+    <E2201>Target length is less than zero</E2201> 
+    <E2202>Cycle time less than zero</E2202>
+    <E2203>Blend condition is not one or zero</E2203> 
+    <E2204>Overlap parameter is not appropriate</E2204>
+    <E2205>Orientation interpolation type is wrong</E2205>
+    <E2206>Velocity is not appropriate</E2206>
+    <E2207>Acceleration is not appropriate</E2207>
+    <E2208>Deceleration is not appropriate</E2208>
+    <E2209>Jerk is not appropriate</E2209>
+    <E2210>reposition dynamic param is not appropriate</E2210>
+    <E2211>dynamic param is not appropriate</E2211>
+	<E2212>cannot use refvar in PTP or PTPRel</E2212>
+	<E2213>cannot use refvar in statements of waiting type</E2213>
+    <E2300>Position is NULL</E2300>
+    <E2301>Segment is NULL</E2301>
+    <E2302>RobotBase is NULL</E2302>
+	<E2303>Refsys is NULL</E2303>
+    <E2500>THe parameter x of sqrt(x) less than zero</E2500>
+    <E2501>Rcpos transfer to Posfull error</E2501>
+    <E2502>Error in KineForward function</E2502>
+    <E2503>Error get robot mode</E2503>
+    <E2504>Error Velocity Profile</E2504>
+    <E2505>OritationData is anomaly</E2505>
+    <E2506>Mode changed during Round</E2506>
+	<E2507>Mode change between startpos and endpos</E2507>
+	<E2508>joint4 Changes exceed 90 degree</E2508>
+	<E2509>joint6 Changes exceed 90 degree</E2509>
+	<E2510>Trajectory Status is Error</E2510>
+	<E2511>Segment Space is Error</E2511>
+    <E3000>JogPath is NULL</E3000>
+    <E3001>JogSegment is NULL</E3001>
+    <E3200>Jog Reference system is wrong</E3200>
+    <E3201>MoveType Parameter is wrong</E3201>
+    <E3202>JogMode Parameter is wrong</E3202>
+    <E3203>Error in T_velocity</E3203>
+    <E3204>Error in Absolute Jogging initial</E3204>
+    <E3205>Get JointPos error in increment Jogging</E3205>
+    <E3206>Get CartPos error in increment Jogging</E3206>
+    <E3207>Get JointPos error in absolute (PTP) Jogging</E3207>
+    <E3208>Get cartPos error in absolute (Line) Jogging</E3208>
+    <E3209>SubDyn is NULL</E3209>
+    <E3210>Direction type is wrong</E3210>
+    <E3211>Jogging Unit is too big or too small</E3211>
+    <E3212>Path velocity greater than 250mm/s</E3212>
+    <E3300>Rotation to RPY singular</E3300>
+	<E3330>A0 is Not OK to Generate Velocity profile</E3330>
+	<E3331>Cant Change the End of Velocity</E3331>
+	<E3332>Vmax Can Not Calculate</E3332>
+	<E3333>Error in Getting Vmin In La</E3333>
+	<E3334>Error in Getting Vmax In La</E3334>
+	<E3335>Error in Getting Lac</E3335>
+	<E3336>Error in Getting Lc_V0</E3336>
+	<E3337>Error in Getting Lc_V</E3337>
+	<E3338>Error in Getting Lc_Vend</E3338>
+	<E3339>Error in Getting Special Data of Vel Profile</E3339>
+	<E3340>Vel is Less Then Zero</E3340>
+	<E3341>Aamax has No Real Solve</E3341>
+	<E3342>Vmax Is Not Ok For Svelocity</E3342>
+    <E3400>Not find program variable or var illegal</E3400>
+    <E3401>Program variable type not exist</E3401>
+    <E3402>Program variable Name empty</E3402>
+    <E3403>Program bool variable value err</E3403>
+    <E3404>Program numerical variable value err</E3404>
+    <E3405>Program string variable value err</E3405>
+    <E3406>"{"or"}" err</E3406>
+    <E3407>Program ORITYPE variable value err</E3407>
+    <E3408>Program RAMPTYPE variable value err</E3408>
+    <E3409>Program Define Var Twice</E3409>
+    <E3410>Program Ref Var Not Find</E3410>
+    <E3411>Not Find Project File,Created in Controller</E3411>
+    <E3412>Config File Load Failure</E3412>
+    <E3413>Config File lose root element</E3413>
+    <E3414>Unknown Robot Type</E3414>
+    <E3415>RobotParameter file data irregular</E3415>
+    <E3416>ArcWelding file Load Failure</E3416>
+    <E3417>Welding File data irregular</E3417>
+    <E3418>Welding File lose root element</E3418>
+    <E3419>Touch File load failed</E3419>
+    <E3420>Touch File data irregular</E3420>
+    <E3421>Touch File lose root element</E3421>
+    <E3422>CD file data num err</E3422>
+    <E3423>ID description file err</E3423>
+    <E3424>MultiLayer data file lost</E3424>
+    <E3425>MultiLayer file lose root</E3425>
+    <E3426>MultiLayer file lost variable</E3426>
+    <E3427>MultiLayer pathMemo SetPC forbid</E3427>
+    <E3428>Cannot find the Pallet Var</E3428>
+    <E3429>Cannot find the Pallet ref</E3429>
+    <E3430>Pallet data initial error</E3430>
+    <E3431>Pallet act num error,greater or less</E3431>
+    <E3432>Pallet dynamic param error</E3432>
+    <E3433>Pallet overlap param error</E3433>
+    <E3434>Pallet unknown command error</E3434>
+    <E3435>Cannot find the Pallet finish bool var</E3435>
+    <E3436>Pallet Reset var More than 0</E3436>
+    <E3437>Aux num greater than you have purchased</E3437>
+    <E3438>SP variable used after multilayer Initial</E3438>
+    <E3439>Pallet variable number out limit</E3439>
+    <E3440>Cannot find the MultiLayer data</E3440>
+    <E3441>Pathmemo cannot towards the backward setpc</E3441>
+    <E3442>Pathmemo not initial</E3442>
+    <E3443>Pathmemo param not find</E3443>
+    <E3444>PointCorrect not accordance with MulitiLayer</E3444>
+    <E3445>PointCorrect 2th param error</E3445>
+    <E3446>PointCorrect 3th param error</E3446>
+    <E3447>PointCorrect 4th param not find</E3447>
+    <E3448>LayerLoop not accordance with MulitiLayer</E3448>
+    <E3449>LayerLoop cycle time outrange</E3449>
+    <E3450>PTP 1th param not find</E3450>
+    <E3451>PTP 1th param type error</E3451>
+    <E3452>PTP 2th param error</E3452>
+    <E3453>PTP 3th param error</E3453>
+    <E3454>Lin 1th param not find</E3454>
+    <E3455>Lin 1th param type error</E3455>
+    <E3456>Lin 2th param error</E3456>
+    <E3457>Lin 3th param error</E3457>
+    <E3458>Lin 4th param error</E3458>
+    <E3459>Circ 1th param not find</E3459>
+    <E3460>Circ 1th param type error</E3460>
+    <E3461>Circ 2th param not find</E3461>
+    <E3462>Circ 2th param type error</E3462>
+    <E3463>Circ 3th param error</E3463>
+    <E3464>Circ 4th param error</E3464>
+    <E3465>Circ 5th param error</E3465>
+    <E3466>CircAngle 1th param not find</E3466>
+    <E3467>CircAngle 1th param type error</E3467>
+    <E3468>CircAngle 2th param not find</E3468>
+    <E3469>CircAngle 2th param type error</E3469>
+    <E3470>CircAngle 3th param error</E3470>
+    <E3471>CircAngle 4th param error</E3471>
+    <E3472>CircAngle 5th param error</E3472>
+    <E3473>CircAngle 6th param error</E3473>
+    <E3474>Search_L 1th param not find</E3474>
+    <E3475>Search_L 1th param type error,not support</E3475>
+    <E3476>Search_L 2th param not find</E3476>
+    <E3477>Search_L 3th param not find</E3477>
+    <E3478>Search_T 1th param not find</E3478>
+    <E3479>Search_T 1th param type error,not support</E3479>
+    <E3480>Search_T 2th param not find</E3480>
+    <E3481>Search_T 3th param not find</E3481>
+    <E3482>CORR_1D param not find</E3482>
+    <E3483>CORR_2D 1th param not find</E3483>
+    <E3484>CORR_2D 2th param not find</E3484>
+    <E3485>CORR_3D 1th param not find</E3485>
+    <E3486>CORR_3D 2th param not find</E3486>
+    <E3487>CORR_3D 3th param not find</E3487>
+    <E3488>CORR_6D 1th param not find</E3488>
+    <E3489>CORR_6D 2th param not find</E3489>
+    <E3490>CORR_6D 3th param not find</E3490>
+    <E3491>CORR_6D 4th param not find</E3491>
+    <E3492>CORR_6D 5th param not find</E3492>
+    <E3493>CORR_6D 6th param not find</E3493>
+    <E3494>ARCON param not find</E3494>
+    <E3495>ARCOFF param not find</E3495>
+    <E3496>ARCSET param not find</E3496>
+	<E3497>Controller disk capacity shortage</E3497>
+	<E3498>CORR line ref name different</E3498>
+	<E3499>Assignment variable type incompatible</E3499>
+    <E3500>PLC Command data is empty</E3500>
+    <E3501>Authority is busy</E3501>
+	<E3502>Trial Time Out</E3502>
+	<E3503>Communication error Between RTS with Non</E3503>
+	<E3504>Sync Queue Too More</E3504>
+	<E3505>Independent Axis Turns error</E3505>
+	<E3506>Independent Axis must open</E3506>
+	<E3507>HMI Offline Status Conflict</E3507>
+	<E3508>Appointment Xml file error</E3508>
+	<E3509>program already in Load,need close first</E3509>
+    <E3510>Load program when loading state</E3510>
+    <E3511>Program is illegal format</E3511>
+    <E3512>Adjacency list construction failure</E3512>
+    <E3513>Program file wrong</E3513>
+	<E3514>Program Laser Handeye not initial</E3514>
+	<E3515>Program appointment Fail As Reload</E3515>
+	<E3517>Conveyor Data Irregular</E3517>
+	<E3518>Conveyor Track Error</E3518>
+    <E3519>PalletProgramInfo File format error</E3519>
+    <E3520>Start or load command is failure</E3520>
+    <E3521>Software not register</E3521>
+    <E3522>Invalid register key</E3522>
+	<E3523>Share Memory open error</E3523>
+    <E3524>Pallet Act Num</E3524>
+	<E3525>Cloud Thread open too more</E3525>
+	<E3526>Cloud String Format error</E3526>
+    <E3527>find windows Terminator</E3527>
+	<E3540>Connect two Name</E3540>
+	<E3541>Interrupt List More than 100</E3541>
+	<E3542>Interrupt not Operate safe type</E3542>
+	<E3543>Interrupt Variable or program not exist</E3543>
+	<E3544>IP initial error</E3544>
+	<E3545>GateWay initial error</E3545>
+	<E3546>DI Was Simulated</E3546>
+	<E3547>DO Was Forced</E3547>
+	<E3548>Coordinate type not match tool type</E3548>
+	<E3549>ClockRead return value out range</E3549>
+	<E3550>Cmd Not Support Interrupt</E3550>
+	<E3551>Interrupt execution after the  motion ends</E3551>
+	<E3552>Can not find Interrupt</E3552>
+	<E3553>Subprograms cannot be called during interrupt</E3553>
+	<E3554>Program Line Changed To First</E3554>
+	<E3555>Interrupt Not Connect</E3555>
+	<E3556>Interruption occurred during  movement,original path changed</E3556>
+	<E3557>Interrupt status error, need to kill program</E3557>
+	<E3558>Return Main Line Not Exist</E3558>
+	<E3559>Interrupt queue is cleared</E3559>
+	<E3560>Pallet Number Maybe Error when interrput</E3560>
+	<E3561>Non Secure Interrupts Will Be Cleared</E3561>
+	<E3562>Remaining Interrupts Are Cleared</E3562>
+    <E3563>Can not Use During Interrupt</E3563>
+    <E3564>Can not Call During Interrupt</E3564>
+    <E3565>All Data is Zero</E3565>
+    <E3566>No Intersection</E3566>
+    <E3567>Parameter Illegal</E3567>
+    <E3568>Cmd Illegal</E3568>
+    <E3569>Point Less or GSL Error</E3569>
+    <E3570>Fitting Error Is Large</E3570>
+    <E3571>Points Discrete Not Coplanar</E3571>
+    <E3580>Anti Trig Func Para Out Of Range</E3580>
+    <E3581>Exp Func FeedBack Variable Out Of Range</E3581>
+    <E3582>Sqrt Func Para Illegal</E3582>
+    <E3583>Bit Operation Para Out Of Range</E3583>
+    <E3584>DecToHex Func Para Illegal</E3584>
+    <E3585>HexToDec Func Para Illegal</E3585>
+    <E3586>Pow Func FeedBack Variable Out Of Range</E3586>
+    <E3587>BitCheck Func Second Para Out Of Range</E3587>
+    <E3588>Max/Min Func Para Type Not Unified </E3588>
+    <E3589>ATan2 Func Second Para Is 0</E3589>
+    <E3590>Pow Func Base Num Illegal</E3590>
+    <E3591>Bit Operation Para Illegal</E3591>
+    <E3592>ShL Func Result Out Of Range</E3592>
+    <E3595>LineLaserParameter file error</E3595>
+    <E3600>Load userinfo file fail</E3600>
+    <E3601>Spline point less than need</E3601>
+    <E3610>SystemConfig.xml format error</E3610>
+    <E3611>SystemConfig.xml not exist</E3611>
+    <E3612>LineLaserParameter file format error</E3612>
+    <E3613>LineLaserParameter file not find</E3613>
+    <E3614>User log file line number out of range</E3614>
+    <E3615>WriteLog % out of range</E3615>
+    <E3616>WriteLog data length out of range</E3616>
+    <E3617>Message data length out of range</E3617>
+	<E3631>Driver 1 err</E3631>
+	<E3632>Driver 2 err</E3632>
+	<E3633>Driver 3 err</E3633>
+	<E3634>Driver 4 err</E3634>
+	<E3635>Driver 5 err</E3635>
+	<E3636>Driver 6 err</E3636>
+	<E3637>Driver 7 err</E3637>
+	<E3638>Driver 8 err</E3638>
+	<E3639>Driver 9 err</E3639>
+	<E3640>Driver 10 err</E3640>
+	<E3641>Driver 11 err</E3641>
+	<E3642>Driver 12 err</E3642>
+	<E3643>CoDeSys err</E3643>
+	<E3650>Welder err</E3650>
+	<E3651>Dynamic Xml node err</E3651>
+	<E3652>Identify Failed</E3652>
+	<E3653>Home Failed From RTS</E3653>
+	<E3654>Home Failed Time Out</E3654>
+	<E3660>Function FeedBack Variable lost</E3660>
+	<E3661>Function Call Self More 8</E3661>
+	<E3662>Function Param num error</E3662>
+	<E3663>Function outside have cmd</E3663>
+	<E3664>Assignment Parsing Error</E3664>
+	<E3665>Assignment Incompatible Or Changed,Reload</E3665>
+	<E3666>Function Not Support this cmd</E3666>
+    <E3700>Pose type not accordance</E3700>
+    <E3701>LinISR Pose type forbid</E3701>
+    <E3702>LinISR FeedBackPose type forbid</E3702>
+    <E3703>LinISR 1th param not find</E3703>
+    <E3704>LinISR 1th param type error,not support</E3704>
+    <E3705>LinISR 2th param not find</E3705>
+    <E3706>LinISR 3th param not find</E3706>
+    <E3707>LinISR 4th param not find</E3707>
+    <E3708>LinISR 5th param not find</E3708>
+    <E3709>LinISR 6th param not find</E3709>
+    <E3711>WLin 1th param not find</E3711>
+    <E3712>WLin 1th param type error,not support</E3712>
+    <E3713>WLin 2th param not find</E3713>
+    <E3714>WLin 3th param not find</E3714>
+    <E3715>WLin 4th param not find</E3715>
+    <E3716>WLin 5th param not find</E3716>
+    <E3717>WLin 6th param not find</E3717>
+    <E3718>WCirc 1th param not find</E3718>
+    <E3719>WCirc 1th param type error,not support</E3719>
+    <E3720>WCirc 2th param not find</E3720>
+    <E3721>WCirc 2th param type error,not support</E3721>
+    <E3722>WCirc 3th param not find</E3722>
+    <E3723>WCirc 4th param not find</E3723>
+    <E3724>WCirc 5th param not find</E3724>
+    <E3725>WCirc 6th param not find</E3725>
+    <E3726>WCirc 7th param not find</E3726>
+    <E3727>ARCJOB param not find</E3727>
+    <E3728>ARCMODE param not find</E3728>
+    <E3729>This type var not support Arithmetic operation</E3729>
+    <E3730>Cannot call global or project var</E3730>
+    <E3731>JiaoDi File load failed</E3731>
+    <E3732>JiaoDi File lose root element</E3732>
+    <E3733>JiaoDi File data irregular</E3733>
+    <E3734>HMI request file not find</E3734>
+    <E3735>HMI send file not exist in NonReal</E3735>
+	<E3736>This Line unknown</E3736>
+	<E3737>WCircleAngle can not in MultiLayer</E3737>
+	<E3738>Segment Num Or Internal should more than 1</E3738>
+	<E3739>Segment Length more than 0</E3739>
+	<E3740>position var type not support</E3740>	<E3741>Error in Dyn</E3741>
+	<E3743>Error in ori</E3743>
+	<E3744>Segment Internal  more than 0</E3744>
+	<E3745>Internal,Length can‘t equal 0 at same time</E3745>
+	<E3746>Internal contains illegal format files</E3746>
+	<E3747>Movement No Tool Param</E3747>
+	<E3748>Movement No Ref Param</E3748>
+	<E3749>Find Retral No Target</E3749>
+	<E3750>Ref variable Assigned Loop</E3750>
+	<E3751>The pose may be different from the original</E3751>
+	<E3752>Back Execution Not Support</E3752>
+	<E3753>Not Change Tool Or Ref When Back Circ</E3753>
+	<E3754>Dynamic Parameter file irregular</E3754>	<E3755>Drag And Collision Open all</E3755>
+    <E3756>Identify file error</E3756>
+    <E3758>No program bound to GDI value</E3758>
+	<E3760>Bend Mould Data Irregular</E3760>
+	<E3761>Bend Ref Data Irregular</E3761>
+	<E3762>Bend IO Data Irregular</E3762>
+	<E3763>BendTuning Data Irregular</E3763>
+	<E3764>BendMaterial Data Irregular</E3764>
+	<E3765>BendMaterial Total Num err</E3765>
+	<E3766>BendMaterial Current Num err</E3766>
+    <E3767>Bender Msg Len Not Recv</E3767>
+    <E3768>Bender Msg Len Not Enough</E3768>
+    <E3769>Bender IP Port Err</E3769>
+    <E3770>Bender tcp Connect error</E3770>
+    <E3771>Bender Tcp Send Err</E3771>
+    <E3772>Bender Communication Mode Not IO</E3772>
+    <E3773>Bender Not In Auto Mode</E3773>
+    <E3774>Msg From Bender</E3774>
+    <E3775>Bender IP Already Connected</E3775>
+    <E3776>Bender Program Name Not Find</E3776>
+    <E3799>Empty String Not Split</E3799>	<E3780>Value Not in scope Of Var</E3780>
+    <E3781>Backupfile name illegal</E3781>
+    <E3800>Weave data format error</E3800>
+    <E3801>Bool variable format error</E3801>
+    <E3802>Only input UINT type param</E3802>
+    <E3803>Variables not within the scope</E3803>
+	<E3804>ArcData Format Err,must upgrade</E3804>
+	<E3805>Default weld speed file not find,must upgrade</E3805>
+	<E3806>BendTuning Variable Changed</E3806>
+	<E3807>Ref variable number larger than define</E3807>
+    <E3808>Array out of bounds</E3808>
+	<E3810>Cannot open the file</E3810>
+	<E3811>Unknown file in UserProgram</E3811>
+	<E3812>Program error or unknown variable,look source</E3812>
+	<E3813>ProgCall in loop,check call logic</E3813>
+	<E3814>Grammar error,check sub program</E3814>
+	<E3815>not support this variable type</E3815>
+	<E3816>Program Should Not Empty</E3816>
+	<E3817>HMI disconnected</E3817>
+	<E3818>Lack project STEP</E3818>
+	<E3819>Lack program STEP</E3819>
+	<E3820>ProgCall program more times</E3820>
+	<E3821>Main program is empty,reload</E3821>
+	<E3840>Unknown string in WorkSpaceFile</E3840>
+	<E3841>WorkSpaceFile  data irregular</E3841>
+	<E3842>WorkSpaceFile lost</E3842>
+	<E3843>WorkSpaceFile data num error</E3843>
+	<E3844>WorkSpace shape data not zero</E3844>
+	<E3845>Number of error too more</E3845>
+	<E3846>Drag Point too more</E3846>
+	<E3847>Fatal Error,must Reload</E3847>
+	<E3848>softfloat file lost</E3848>
+	<E3849>softfloat file format error</E3849>
+	<E3850>IO file lost</E3850>
+	<E3851>IO format error</E3851>
+	<E3852>IO port repeat,modify and restart</E3852>
+	<E3853>Start port larger than end port</E3853>
+	<E3854>Port is larger than define</E3854>
+	<E3855>IO module data err</E3855>
+	<E3856>DI variable data err</E3856>
+	<E3857>DO variable data err</E3857>
+	<E3858>AI variable data err</E3858>
+	<E3859>AO variable data err</E3859>
+	<E3860>GDI variable data err</E3860>
+	<E3861>GDO variable data err</E3861>
+	<E3862>System Signal err</E3862>
+	<E3863>Welding Signal err</E3863>
+	<E3864>Analog Welding Signal err</E3864>
+	<E3865>CartSpace IO err</E3865>
+	<E3866>AxisSpace IO err</E3866>
+	<E3867>Bend  IO err</E3867>
+	<E3868>IO value not in scope</E3868>
+	<E3871>After Percent sign must be 1 or 2</E3871>
+	<E3872>HMIConfig File Err</E3872>
+	<E3873>Trial Time is </E3873>
+    <E3874>Group programs profile is not exist</E3874>
+    <E3875>Group programs profile format error</E3875>
+	<E3900>Open err</E3900>
+	<E3901>CameraTakePhoto err</E3901>
+	<E3902>CameraGetPos err</E3902>
+	<E3903>CameraGetBool err</E3903>
+	<E3904>Close err</E3904>
+	<E3905>Get array var err</E3905>
+	<E3906>Parse Pos err</E3906>
+	<E3907>CameraType err</E3907>
+	<E3908>AttitudeType err</E3908>
+	<W3909>Read data err</W3909>
+	<E3910>Socket not open</E3910>
+	<E3911>Parse XML FILE err</E3911>
+	<E3912>Socket is open, please close</E3912>
+    <E3913>Socket Cmd Failure</E3913>
+    <E3930>Refsys type of Get_PLaserPos error</E3930>
+    <E3931>PLaserParaMeter file not find</E3931>
+    <E3932>PLaserParaMeter file loaded failure</E3932>
+    <E3933>PLaserParaMeter file is error format</E3933>
+    <E3934>Refsys type of Get_PL error</E3934>
+    <E3935>Monitor data error</E3935>
+    <E3936>Modify height input is not correct</E3936>
+    <E3937>Fitting line Error</E3937>
+    <E3938>Few Points Please Slow Down Again</E3938>
+    <E3940>ForceControl configuration File format error</E3940>
+    <E3941>ForceControl configuration File is not exist</E3941>
+    <E3950>EGM configuration File format error</E3950>
+    <E3951>EGM configuration File is not exist</E3951>
+    <E3952>Conveyor configuration File format error</E3952>
+    <E3953>Conveyor configuration File is not exist</E3953>
+    <E3954>Conveyor configuration File create filure</E3954>
+    <E3955>Movement Func Between TrackStart and TrackEnd</E3955>
+    <W4000>Program has not loaded or error in</W4000>
+    <W4001>Robot has not enabled</W4001>
+    <W4002>Do not jog when robot run in auto_mode</W4002>
+    <W4003>Do not Load a new program when robot is running</W4003>
+    <W4004>Do not jog when robot is moving</W4004>
+    <W4005>Do not kill the program when robot is moving</W4005>
+    <W4006>Do not Load a new program when robot is moving</W4006>
+    <W4007>Do not modify program when robot is moving</W4007>
+    <W4008>Do not SetPc when robot in ReturnPath status</W4008>
+    <W4009>Do not change run mode when robot is moving</W4009>
+    <W4010>Do not active ToolAlign when robot is moving</W4010>
+    <W4011>Do not press Start when doing ToolAlign</W4011>
+    <W4012>Do not active ToolAlign in AutoMode</W4012>
+    <W4013>Do not active JogToPosition when robot is moving</W4013>
+    <W4014>Do not press Start when doing JogToPosition</W4014>
+    <W4015>Do not active JogToPosition in AutoMode</W4015>
+    <W4016>The drive hardware enable is false</W4016>
+    <W4017>Error Not Clear</W4017>
+    <W4018>Cannot disable robot when program is running</W4018>
+	<W4019>Interrupt Already Opened</W4019>
+	<W4020>Do not change jog refsys when jogging</W4020>
+	<W4021>Do not change weld mode when moving</W4021>
+	<W4022>DI"LoadAndStart" conflicted with DI"Start"</W4022>
+	<W4100>Backward Logic Fail,please select other</W4100>
+	<W4101>Backward To First Line canot go,select other</W4101>
+	<W4102>need setpc to move line</W4102>
+	<W4103>Not Close Prog When Run</W4103>
+	<E4120>MovementLine Tool is Wrong</E4120>
+	<E4121>MovementLine Refsys is Wrong</E4121>
+	<E4122>Not Find Retral Target</E4122>
+    <W4500>Relative overlap parameter is greater than one</W4500>
+    <W4501>Relative overlap parameter is less than zero</W4501>
+    <W4502>OvlAbs parameter LinAx is less than zero</W4502>
+    <W4503>OvlAbs parameter JointDeg is less than zero</W4503>
+    <W4550>The record sampling interval is out of range</W4550>
+    <W4600>The orientation is not Norm</W4600>
+    <W4605>The conveyor is interrupt</W4605>
+    <W4606>The conveyor is interrupt because of out of track area</W4606>
+    <W4607>The conveyor has been abandoned </W4607>
+    <W4608>The conveyor is interrupt because no track segment</W4608>
+    <W4609>The conveyor is interrupt because of change refsys</W4609>
+    <W4610>The spacing between the front and rear workpieces is too small</W4610>
+    <W4700>Arc Welding Not Actived</W4700>
+    <W4701>Arc Searching Unactived</W4701>
+	<W4702>Arc Segment is too long</W4702>
+	<W4750>Bend RDY signal not output</W4750>
+	<W4751>Abnormal real height data for bending</W4751>
+	<W4800>CartWorkspaec 1 collision warning</W4800>
+	<W4801>CartWorkspaec 2 collision warning</W4801>
+	<W4802>CartWorkspaec 3 collision warning</W4802>
+	<W4803>CartWorkspaec 4 collision warning</W4803>
+	<W4804>CartWorkspaec 5 collision warning</W4804>
+	<W4805>CartWorkspaec 6 collision warning</W4805>
+	<W4806>CartWorkspaec 7 collision warning</W4806>
+	<W4807>CartWorkspaec 8 collision warning</W4807>
+	<W4808>AxisWorkSpace 1 Collision warning</W4808>
+	<W4809>AxisWorkSpace 2 Collision warning</W4809>
+	<W4810>AxisWorkSpace 3 collision warning</W4810>
+	<W4811>AxisWorkSpace 4 collision warning</W4811>
+	<W4812>AxisWorkSpace 5 collision warning</W4812>
+	<W4813>AxisWorkSpace 6 collision warning</W4813>
+	<W4814>AxisWorkSpace 7 collision warning</W4814>
+	<W4815>AxisWorkSpace 8 collision warning</W4815>
+	<W4816>Joint 1 Out of JointSpace</W4816>
+	<W4817>Joint 2 Out of JointSpace</W4817>
+	<W4818>Joint 3 Out of JointSpace</W4818>
+	<W4819>Joint 4 Out of JointSpace</W4819>
+	<W4820>Joint 5 Out of JointSpace</W4820>
+	<W4821>Joint 6 Out of JointSpace</W4821>
+	<W4822>AuxJoint 1 Out of JointSpace</W4822>
+	<W4823>AuxJoint 2 Out of JointSpace</W4823>
+	<W4824>AuxJoint 3 Out of JointSpace</W4824>
+	<W4825>AuxJoint 4 Out of JointSpace</W4825>
+	<W4826>AuxJoint 5 Out of JointSpace</W4826>
+	<W4827>AuxJoint 6 Out of JointSpace</W4827>
+	<W4828>Do not change work space configuration when robot is running</W4828>
+	<W4830>Deviation between robot and conveyor is out of range</W4830>
+	<W4831>Except track distance is too large compared to its velocity</W4831>
+	<W4832>MSE of fitting out of threshold</W4832>
+	<W4833>Cannot control servo when the robot is in this state</W4833>
+	<W4835>Cannot start drag teach in AutoMode</W4835>
+	<W4836>Cannot start drag teach when not enabled</W4836>
+	<W4837>Cannot change drag teach mode</W4837>
+	<W4838>Do not change dynamic parameters when robot is running</W4838>
+	<W4839>Cannot start collision detection when dragteaching</W4839>
+	<W4840>Cannot start slow speed identification in AutoMode</W4840>
+	<W4841>Cannot start full speed identification in ManualMode</W4841>
+	<W4842>Cannot start friction identification in ManualMode</W4842>
+	<W4843>Cannot start identification when planning deceleration</W4843>
+	<W4844>Joint1 is 10 degrees away from the JointLimit when drag teaching</W4844>
+	<W4845>Joint2 is 10 degrees away from the JointLimit when drag teaching</W4845>
+	<W4846>Joint3 is 10 degrees away from the JointLimit when drag teaching</W4846>
+	<W4847>Joint4 is 10 degrees away from the JointLimit when drag teaching</W4847>
+	<W4848>Joint5 is 10 degrees away from the JointLimit when drag teaching</W4848>
+	<W4849>Joint6 is 10 degrees away from the JointLimit when drag teaching</W4849>
+	<W4850>Not to change drag teach mode when robot is enabled</W4850>
+	<W4860>Wrist Insert Change End Oritation</W4860>
+	<W4870>The setting force exceeded the max force</W4870>
+	<W4871>The setting torque exceeded the max torque</W4871>
+	<W4872>The calculate force variation exceeded the max force variation</W4872>
+	<W4873>The calculate torque variation exceeded the max torque variation</W4873>
+	<W4880>The force control enable switch is not act</W4880>
+	<W4900>The user program is large,delete no need</W4900>
+	<W4901>Program Not Load</W4901>
+	<W4902>Line Num out Program</W4902>
+	<W4903>This line running,no cartPos set</W4903>
+	<W4904>Program index error</W4904>
+	<W4950>No Smooth For the Current Small Path</W4950>
+	<W4951>No Smooth For the next Small Path</W4951>
+	<W4952>No Smooth For two Small Pathes</W4952>
+	<W4953>No Smooth For ReversePath</W4953>
+	<W4954>No Smooth For certern Planning</W4954>
+    <I5000>Robot Boot Time</I5000>
+    <I5001>New User</I5001>
+    <I5002>Delete User</I5002>
+    <I5003>Modify User</I5003>
+    <I5004>Program Run</I5004>
+	<I6000>Correct process is terminated by signal interrupt</I6000>
+	<I6001>Signal interrupt is occurring in IO synchronization</I6001>
+	
+	<E5100>Get Acc From Tor is Zero</E5100>
+	<E5101>Segment Vel is Less Than Zero</E5101>
+	<E5102>Error Get Acc From Tor</E5102>
+	<E5103>Error Solve T1</E5103>
+	<E5104>Error RealTime Lookahead</E5104>
+	<E5105>Cal Tor Is Zero</E5105>
+	<E5106>Error Get Progress</E5106>
+	<E5107>Wrist Mode Change During Round</E5107>
+	<E5108>Round time T2 is Out of range</E5108>
+	<E5109>Tor Limt coff is Out of range</E5109>
+	
+	<E7000>Can not read system configures</E7000>
+	<E7001>Codesys had failed to change gear ratio </E7001>
+	
+	<E20001>Warning of overheating risk of Joint1 motor</E20001>
+	<E20002>Warning of overheating risk of Joint2 motor</E20002>
+	<E20003>Warning of overheating risk of Joint3 motor</E20003>
+	<E20004>Warning of overheating risk of Joint4 motor</E20004>
+	<E20005>Encoder overheat alarm of Joint1 motor</E20005>
+	<E20006>Encoder overheat alarm of Joint2 motor</E20006>
+	<E20007>Encoder overheat alarm of Joint3 motor</E20007>
+	<E20008>Encoder overheat alarm of Joint4 motor</E20008>
+	<E20009>Warning of overheating risk of Joint1 motor</E20009>
+	<E20010>Warning of overheating risk of Joint2 motor</E20010>
+	<E20011>Warning of overheating risk of Joint3 motor</E20011>
+	<E20012>Warning of overheating risk of Joint4 motor</E20012>
+	<E20013>Encoder overheat alarm of Joint1 motor</E20013>
+	<E20014>Encoder overheat alarm of Joint2 motor</E20014>
+	<E20015>Encoder overheat alarm of Joint3 motor</E20015>
+	<E20016>Encoder overheat alarm of Joint4 motor</E20016>
+	<E20017>Fault of Joint1 motor fan</E20017>
+</MD>

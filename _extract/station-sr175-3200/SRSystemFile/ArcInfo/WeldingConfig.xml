@@ -1,0 +1,35 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<WeldingConfig>
+    <ChgSimuWeldingMode>1</ChgSimuWeldingMode>
+    <WeldSampleDelayTime>1</WeldSampleDelayTime>
+    <temp1>1</temp1>
+    <temp2>1</temp2>
+    <temp3>1</temp3>
+    <temp4>1</temp4>
+    <temp5>1</temp5>
+    <temp6>1</temp6>
+    <temp7>1</temp7>
+    <temp8>1</temp8>
+    <ArcWeldMonitor>
+        <m_ValueType>0</m_ValueType>
+        <m_ErrStopType>0</m_ErrStopType>
+        <m_JudgmentType>0</m_JudgmentType>
+        <m_DelayTime>1000</m_DelayTime>
+        <m_PeriodTime>100</m_PeriodTime>
+        <m_PeriodFrequency>6</m_PeriodFrequency>
+        <m_WarnPort>-1</m_WarnPort>
+        <m_ErrPort>-1</m_ErrPort>
+        <m_WarnFlag_Current>0</m_WarnFlag_Current>
+        <m_LowerValue_Warn_C>10</m_LowerValue_Warn_C>
+        <m_UpperValue_Warn_C>10</m_UpperValue_Warn_C>
+        <m_ErrFlag_Current>0</m_ErrFlag_Current>
+        <m_LowerValue_Err_C>10</m_LowerValue_Err_C>
+        <m_UpperValue_Err_C>10</m_UpperValue_Err_C>
+        <m_WarnFlag_Voltage>0</m_WarnFlag_Voltage>
+        <m_LowerValue_Warn_V>10</m_LowerValue_Warn_V>
+        <m_UpperValue_Warn_V>10</m_UpperValue_Warn_V>
+        <m_ErrFlag_Voltage>0</m_ErrFlag_Voltage>
+        <m_LowerValue_Err_V>10</m_LowerValue_Err_V>
+        <m_UpperValue_Err_V>10</m_UpperValue_Err_V>
+    </ArcWeldMonitor>
+</WeldingConfig>

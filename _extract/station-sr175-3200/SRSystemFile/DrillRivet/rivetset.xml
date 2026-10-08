@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <numbervar value="40" varname="MV" />
+    <numbervar value="55" varname="Preloadtime" />
+    <numbervar value="55" varname="Turbotime" />
+    <numbervar value="77" varname="Baffletime" />
+    <boolvar value="1" varname="cylinder" />
+    <boolvar value="1" varname="twinturbo" />
+</root>

@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<WorkingData>
+    <IndTurns>0</IndTurns>
+    <IndOn>0</IndOn>
+    <LowerLimit>0.000000</LowerLimit>
+    <UpperLimit>0.000000</UpperLimit>
+    <HMIOffline>0</HMIOffline>
+    <JointThresholdSet>
+        <Base1>0.1</Base1>
+        <Base2>0.1</Base2>
+        <Base3>0.1</Base3>
+        <Base4>0.1</Base4>
+        <Base5>0.1</Base5>
+        <Base6>0.1</Base6>
+        <Aux1>0.1</Aux1>
+        <Aux2>0.1</Aux2>
+        <Aux3>0.1</Aux3>
+        <Aux4>0.1</Aux4>
+        <Aux5>0.1</Aux5>
+        <Aux6>0.1</Aux6>
+        <CountTime>1</CountTime>
+    </JointThresholdSet>
+</WorkingData>

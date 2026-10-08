@@ -1,0 +1,198 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<IO>
+    <IOModule>
+        <Used>FALSE</Used>
+        <IOModuleType Data="eCAN" />
+        <WelderType Data="eAoTai" />
+        <Commet />
+    </IOModule>
+    <DIVariable />
+    <DOVariable />
+    <AIVariable />
+    <AOVariable />
+    <GDIVariable />
+    <GDOVariable />
+    <SystemSignal>
+        <DefaultPath Port="-1" />
+        <Prog1 Port="-1" />
+        <Prog2 Port="-1" />
+        <Prog3 Port="-1" />
+        <Prog4 Port="-1" />
+        <Enable Port="-1" />
+        <Load Port="-1" />
+        <LoadAndStart Port="-1">1</LoadAndStart>
+        <ReStart Port="-1" />
+        <Start Port="-1" />
+        <Reset Port="-1" />
+        <Pause Port="-1" />
+        <Stop Port="-1" />
+        <Collision Port="-1" />
+        <Running Port="-1" />
+        <Error Port="-1" />
+        <Ready Port="-1" />
+        <Pausing Port="-1" />
+        <Disable Port="-1" />
+        <Manual Port="-1" />
+        <Auto Port="-1" />
+        <AutoExtenal Port="-1" />
+        <EmergencyStop Port="-1" />
+    </SystemSignal>
+    <WeldSignal>
+        <ArcStable Type="0" Port="-1">0</ArcStable>
+        <PowerSourceReady Type="0" Port="-1">2</PowerSourceReady>
+        <MainCurrentSign Type="0" Port="-1">0</MainCurrentSign>
+        <ProcessActive Type="0" Port="-1">0</ProcessActive>
+        <Sticking Type="0" Port="-1">0</Sticking>
+        <Weldon Type="1" Port="-1">2</Weldon>
+        <RobReady Type="1" Port="-1">0</RobReady>
+        <Gas Type="1" Port="-1">3</Gas>
+        <WireInch Type="1" Port="-1">0</WireInch>
+        <WireRet Type="1" Port="-1">0</WireRet>
+        <Reset Type="1" Port="-1">0</Reset>
+        <WeldingSimulation Type="1" Port="-1">0</WeldingSimulation>
+        <TouchSensing Type="1" Port="-1">0</TouchSensing>
+        <BurnBackDis Type="1" Port="-1">0</BurnBackDis>
+        <Error Type="4" Port="-1,-1">0</Error>
+        <OperatorModes Type="5" Port="-1,-1">0</OperatorModes>
+        <JobNumber Type="5" Port="-1,-1">0</JobNumber>
+        <ProNumber Type="5" Port="-1,-1">0</ProNumber>
+        <BurnBackTime Type="5" Port="-1,-1">1</BurnBackTime>
+    </WeldSignal>
+    <WeldSignal_E>
+        <Voltage Type="3" Port="-1">
+            <Level>0</Level>
+            <SegmentNum>1</SegmentNum>
+            <PhyValueMin>1.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000</PhyValueMin>
+            <PhyValueMax>2.000000,2.000000,3.000000,4.000000,5.000000,6.000000,7.000000,8.000000</PhyValueMax>
+            <LogValueMin>1,0,0,0,0,0,0,0</LogValueMin>
+            <LogValueMax>2,2,3,4,5,6,7,8</LogValueMax>
+        </Voltage>
+        <Current Type="3" Port="-1">
+            <Level>0</Level>
+            <SegmentNum>1</SegmentNum>
+            <PhyValueMin>1.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000</PhyValueMin>
+            <PhyValueMax>2.000000,2.000000,3.000000,4.000000,5.000000,6.000000,7.000000,8.000000</PhyValueMax>
+            <LogValueMin>1,0,0,0,0,0,0,0</LogValueMin>
+            <LogValueMax>2,2,3,4,5,6,7,8</LogValueMax>
+        </Current>
+        <Dynamics Type="5" Port="-1,-1">
+            <Level>0</Level>
+            <SegmentNum>1</SegmentNum>
+            <PhyValueMin>1.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000,0.000000</PhyValueMin>
+            <PhyValueMax>2.000000,2.000000,3.000000,4.000000,5.000000,6.000000,7.000000,8.000000</PhyValueMax>
+            <LogValueMin>1,0,0,0,0,0,0,0</LogValueMin>
+            <LogValueMax>2,2,3,4,5,6,7,8</LogValueMax>
+        </Dynamics>
+        <WeldingVoltage Type="4" Port="-1,-1">
+            <Level>0</Level>
+            <SegmentNum>3</SegmentNum>
+            <PhyValueMin>1.000000,2.000000,3.000000,4.000000,5.000000,6.000000,7.000000,8.000000</PhyValueMin>
+            <PhyValueMax>1.000000,2.000000,3.000000,4.000000,5.000000,6.000000,7.000000,8.000000</PhyValueMax>
+            <LogValueMin>1,2,3,4,5,6,7,8</LogValueMin>
+            <LogValueMax>1,2,3,4,5,6,7,8</LogValueMax>
+        </WeldingVoltage>
+        <WeldingCurrent Type="4" Port="-1,-1">
+            <Level>0</Level>
+            <SegmentNum>3</SegmentNum>
+            <PhyValueMin>1.000000,2.000000,3.000000,4.000000,5.000000,6.000000,7.000000,8.000000</PhyValueMin>
+            <PhyValueMax>1.000000,2.000000,3.000000,4.000000,5.000000,6.000000,7.000000,8.000000</PhyValueMax>
+            <LogValueMin>1,2,3,4,5,6,7,8</LogValueMin>
+            <LogValueMax>1,2,3,4,5,6,7,8</LogValueMax>
+        </WeldingCurrent>
+    </WeldSignal_E>
+    <CartSpaceSignal>
+        <CartSpaceSign1 Port="-1" />
+        <CartSpaceSign2 Port="-1" />
+        <CartSpaceSign3 Port="-1" />
+        <CartSpaceSign4 Port="-1" />
+        <CartSpaceSign5 Port="-1" />
+        <CartSpaceSign6 Port="-1" />
+        <CartSpaceSign7 Port="-1" />
+        <CartSpaceSign8 Port="-1" />
+    </CartSpaceSignal>
+    <AxisSpaceSignal>
+        <AxisSpaceSign1 Port="-1">Safehome</AxisSpaceSign1>
+        <AxisSpaceSign2 Port="-1" />
+        <AxisSpaceSign3 Port="-1" />
+        <AxisSpaceSign4 Port="-1" />
+        <AxisSpaceSign5 Port="-1" />
+        <AxisSpaceSign6 Port="-1" />
+        <AxisSpaceSign7 Port="-1" />
+        <AxisSpaceSign8 Port="-1" />
+    </AxisSpaceSignal>
+    <BendSignal>
+        <BendSign1 Port="-1,-1">commet</BendSign1>
+        <BendSign2 Port="-1,-1">commet</BendSign2>
+        <BendSign3 Port="-1,-1">commet</BendSign3>
+        <BendSign4 Port="-1,-1">commet</BendSign4>
+        <BendSign5 Port="-1,-1">commet</BendSign5>
+        <BendSign6 Port="-1,-1">commet</BendSign6>
+        <BendSign7 Port="-1,-1">commet</BendSign7>
+        <BendSign8 Port="-1,-1">commet</BendSign8>
+    </BendSignal>
+    <DIToDOConnection />
+    <DOToDIConnection />
+    <CrossConnection />
+    <SystemSignal_New>
+        <JogEnable ValidType="0" Port="-1" />
+        <Aux1Negative ValidType="0" Port="-1" />
+        <Aux1Positive ValidType="0" Port="-1" />
+        <Aux2Negative ValidType="0" Port="-1" />
+        <Aux2Positive ValidType="0" Port="-1" />
+        <Aux3Negative ValidType="0" Port="-1" />
+        <Aux3Positive ValidType="0" Port="-1" />
+        <Aux4Negative ValidType="0" Port="-1" />
+        <Aux4Positive ValidType="0" Port="-1" />
+        <Aux5Negative ValidType="0" Port="-1" />
+        <Aux5Positive ValidType="0" Port="-1" />
+        <Aux6Negative ValidType="0" Port="-1" />
+        <Aux6Positive ValidType="0" Port="-1" />
+        <PressureSwitch ValidType="0" Port="-1" />
+        <WeldWireReady ValidType="0" Port="-1" />
+        <StopMotion ValidType="0" Port="-1" />
+        <LineJump ValidType="2" Port="-1" />
+        <ManualProgStart ValidType="0" Port="-1" />
+        <ManualProgBack ValidType="0" Port="-1" />
+        <ColdWaterTest ValidType="0" Port="-1" />
+        <SafetyStop ValidType="0" Port="-1" />
+        <AutoStop ValidType="0" Port="-1" />
+        <ProgramLoad ValidType="0" Port="-1" />
+        <TriggerError ValidType="0" Port="-1" />
+    </SystemSignal_New>
+    <CartSpaceSignal_Priority>
+        <CartSpaceSign1DI Port="-1" />
+        <CartSpaceSign2DI Port="-1" />
+        <CartSpaceSign3DI Port="-1" />
+        <CartSpaceSign4DI Port="-1" />
+        <CartSpaceSign5DI Port="-1" />
+        <CartSpaceSign6DI Port="-1" />
+        <CartSpaceSign7DI Port="-1" />
+        <CartSpaceSign8DI Port="-1" />
+        <CartSpaceSign1DO Port="-1" />
+        <CartSpaceSign2DO Port="-1" />
+        <CartSpaceSign3DO Port="-1" />
+        <CartSpaceSign4DO Port="-1" />
+        <CartSpaceSign5DO Port="-1" />
+        <CartSpaceSign6DO Port="-1" />
+        <CartSpaceSign7DO Port="-1" />
+        <CartSpaceSign8DO Port="-1" />
+    </CartSpaceSignal_Priority>
+    <AxisSpaceSignal_Priority>
+        <AxisSpaceSign1DI Port="-1" />
+        <AxisSpaceSign2DI Port="-1" />
+        <AxisSpaceSign3DI Port="-1" />
+        <AxisSpaceSign4DI Port="-1" />
+        <AxisSpaceSign5DI Port="-1" />
+        <AxisSpaceSign6DI Port="-1" />
+        <AxisSpaceSign7DI Port="-1" />
+        <AxisSpaceSign8DI Port="-1" />
+        <AxisSpaceSign1DO Port="-1" />
+        <AxisSpaceSign2DO Port="-1" />
+        <AxisSpaceSign3DO Port="-1" />
+        <AxisSpaceSign4DO Port="-1" />
+        <AxisSpaceSign5DO Port="-1" />
+        <AxisSpaceSign6DO Port="-1" />
+        <AxisSpaceSign7DO Port="-1" />
+        <AxisSpaceSign8DO Port="-1" />
+    </AxisSpaceSignal_Priority>
+</IO>

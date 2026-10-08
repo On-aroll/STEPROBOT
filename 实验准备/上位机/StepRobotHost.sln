@@ -1,0 +1,57 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{022D254A-B036-4E5C-A9F7-B84D8868FB42}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StepRobot.Core", "src\StepRobot.Core\StepRobot.Core.csproj", "{57453CA9-2C25-4415-B725-79E88C7CB4F5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StepRobot.Adapter.Reflective", "src\StepRobot.Adapter.Reflective\StepRobot.Adapter.Reflective.csproj", "{46EEE550-F561-4B6B-878A-AE1C7E450B84}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StepRobot.App", "src\StepRobot.App\StepRobot.App.csproj", "{7D2A6736-2416-4952-9E3D-4291BA9DC602}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{C919AB09-F4D1-45F7-8600-CC0FC0F84D71}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StepRobot.Core.Tests", "tests\StepRobot.Core.Tests\StepRobot.Core.Tests.csproj", "{38802DA5-EB35-4C70-BE3F-0E019D07E95F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StepRobot.Adapter.Native", "src\StepRobot.Adapter.Native\StepRobot.Adapter.Native.csproj", "{F26D6C80-2F24-404F-808F-207E5ADA6C6F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{57453CA9-2C25-4415-B725-79E88C7CB4F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57453CA9-2C25-4415-B725-79E88C7CB4F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57453CA9-2C25-4415-B725-79E88C7CB4F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57453CA9-2C25-4415-B725-79E88C7CB4F5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{46EEE550-F561-4B6B-878A-AE1C7E450B84}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{46EEE550-F561-4B6B-878A-AE1C7E450B84}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{46EEE550-F561-4B6B-878A-AE1C7E450B84}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{46EEE550-F561-4B6B-878A-AE1C7E450B84}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D2A6736-2416-4952-9E3D-4291BA9DC602}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D2A6736-2416-4952-9E3D-4291BA9DC602}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D2A6736-2416-4952-9E3D-4291BA9DC602}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D2A6736-2416-4952-9E3D-4291BA9DC602}.Release|Any CPU.Build.0 = Release|Any CPU
+		{38802DA5-EB35-4C70-BE3F-0E019D07E95F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{38802DA5-EB35-4C70-BE3F-0E019D07E95F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{38802DA5-EB35-4C70-BE3F-0E019D07E95F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{38802DA5-EB35-4C70-BE3F-0E019D07E95F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F26D6C80-2F24-404F-808F-207E5ADA6C6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F26D6C80-2F24-404F-808F-207E5ADA6C6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F26D6C80-2F24-404F-808F-207E5ADA6C6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F26D6C80-2F24-404F-808F-207E5ADA6C6F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{57453CA9-2C25-4415-B725-79E88C7CB4F5} = {022D254A-B036-4E5C-A9F7-B84D8868FB42}
+		{46EEE550-F561-4B6B-878A-AE1C7E450B84} = {022D254A-B036-4E5C-A9F7-B84D8868FB42}
+		{7D2A6736-2416-4952-9E3D-4291BA9DC602} = {022D254A-B036-4E5C-A9F7-B84D8868FB42}
+		{38802DA5-EB35-4C70-BE3F-0E019D07E95F} = {C919AB09-F4D1-45F7-8600-CC0FC0F84D71}
+		{F26D6C80-2F24-404F-808F-207E5ADA6C6F} = {022D254A-B036-4E5C-A9F7-B84D8868FB42}
+	EndGlobalSection
+EndGlobal

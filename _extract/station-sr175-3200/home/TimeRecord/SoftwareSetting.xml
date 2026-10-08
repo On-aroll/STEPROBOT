@@ -1,0 +1,10 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<SoftwareSetting>
+    <TrialTime TimeLength="-1">123456</TrialTime>
+    <LifeFromSet>1</LifeFromSet>
+    <LastWorkDate>2026927</LastWorkDate>
+    <TimeSet>90</TimeSet>
+    <PlatFormLockStatus>0</PlatFormLockStatus>
+    <PlatFormLockMechanismStatus>0</PlatFormLockMechanismStatus>
+    <DeviceLockStatus>0</DeviceLockStatus>
+</SoftwareSetting>

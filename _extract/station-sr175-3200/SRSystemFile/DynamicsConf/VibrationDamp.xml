@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<VibrationDamp>
+    <IsOpen>1</IsOpen>
+    <Frequency>4.500000</Frequency>
+    <Damping>0.100000</Damping>
+    <IdentifyFrictionResultPercent>
+        <Axis1>0.00</Axis1>
+        <Axis2>0.00</Axis2>
+        <Axis3>0.00</Axis3>
+        <Axis4>0.00</Axis4>
+        <Axis5>0.00</Axis5>
+        <Axis6>0.00</Axis6>
+    </IdentifyFrictionResultPercent>
+</VibrationDamp>

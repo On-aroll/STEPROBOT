@@ -1,0 +1,40 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    STEP 机器人 SDK 链路自检工具
+    · 编译期**不引用** Robot-SDK-CSharp.dll：程序在运行时从 libs\ 反射加载。
+      所以厂商 DLL 到手之前，这个工程照样能 dotnet build 通过（阶段 0 的要求）。
+    · 目标框架选 net8.0：厂商手册 1.3 要求 .NET 7「或更高」。实测本工程在
+      net7.0 下能编译但启动失败——本机运行时只有 5.0.3 / 6.0.23 / 8.0.31，
+      默认 roll-forward 不跨大版本，会报 "You must install or update .NET"。
+    · RollForward=LatestMajor：换台只有更新运行时的电脑也能直接跑。
+    · 平台目标必须 x64 —— 厂商 SDK 库以 Release x86/x64 编译，
+      若拿到的 DLL 是 32 位版，把下面 PlatformTarget 改成 x86。
+  -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <RollForward>LatestMajor</RollForward>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>StepRobotLinkCheck</RootNamespace>
+    <AssemblyName>SdkLinkCheck</AssemblyName>
+    <PlatformTarget>x64</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <InvariantGlobalization>false</InvariantGlobalization>
+  </PropertyGroup>
+
+  <!-- 把 libs\ 下的 SDK 程序集及其原生依赖原样复制到输出目录，供反射加载 -->
+  <ItemGroup>
+    <None Include="libs\**\*.*" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <!-- __test__ 里是桩件 SDK，类型与本工具反射目标同名，绝不能编进本工程 -->
+  <ItemGroup>
+    <Compile Remove="__test__\**" />
+    <None Remove="__test__\**" />
+    <Content Remove="__test__\**" />
+  </ItemGroup>
+
+</Project>

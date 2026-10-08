@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<Report>
+    <Message MessageID="4001">
+        <MessageString>机器人没有上使能</MessageString>
+        <MessageSource>[StateStandby:1276]</MessageSource>
+        <MessageType>eWarning</MessageType>
+        <MessageTime>1617955737.319771</MessageTime>
+    </Message>
+    <Message MessageID="5000">
+        <MessageString>Robot Boot Time</MessageString>
+        <MessageSource>Start -1</MessageSource>
+        <MessageType>eInfo</MessageType>
+        <MessageTime>2026-9-27-20:35:31.96</MessageTime>
+    </Message>
+    <Message MessageID="4000">
+        <MessageString>程序没有加载或程序有错误</MessageString>
+        <MessageSource>[StateStandby:1426]</MessageSource>
+        <MessageType>eWarning</MessageType>
+        <MessageTime>2026-9-27-20:36:10.365</MessageTime>
+    </Message>
+    <Message MessageID="4000">
+        <MessageString>程序没有加载或程序有错误</MessageString>
+        <MessageSource>[StateStandby:1426]</MessageSource>
+        <MessageType>eWarning</MessageType>
+        <MessageTime>2026-9-27-20:36:11.175</MessageTime>
+    </Message>
+    <Message MessageID="5020">
+        <MessageString></MessageString>
+        <MessageSource>welding mode display</MessageSource>
+        <MessageType>eInfo</MessageType>
+        <MessageTime>2026-9-27-20:40:48.817</MessageTime>
+    </Message>
+</Report>

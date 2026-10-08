@@ -1,0 +1,59 @@
+{
+  "_meta": {
+    "robot": "STEP SR175-3200",
+    "source": "STEPROBOT1/STEPStudio 4.7.0/Project/test0927/SRSystemFile/ConfigureFiles/RobotParameter.xml",
+    "source_size_bytes": 10911,
+    "extracted": "2026-10-07",
+    "convention_source": "STEPStudio 4.7.0/bin/help documentation/STEP机器人配置软件使用说明书_V1.5.4.20181128.pdf 图4-2 / 图4-3",
+    "note": "字段名 Distance/Rotation 与 L1-L7 / a1-a6 的对应关系来自配置软件手册图4-2；本文件由机器实测值 + 手册口径合成，未经真机/虚拟控制器验证。"
+  },
+  "hardware": {
+    "robotType": "SR175-3200",
+    "robotSerialNo": "0099877765",
+    "elecBoxName": "SRC2.7",
+    "elecBoxSerialNo": "578687907",
+    "robotClass": "GeneralRobot",
+    "wristAxisCount": 3,
+    "cyclicTime_ms": 4
+  },
+  "link_parameters": {
+    "convention": "L1-L7 = 杆长(mm)；a1-a6 = 初始关节角(deg)",
+    "L1": {"value": 629.5, "unit": "mm", "field": "SRDistBase1_2Z", "meaning": "沿 1 轴 z 方向到 2 轴的距离"},
+    "L2": {"value": 1335,  "unit": "mm", "field": "SRDistBase2_3",  "meaning": "2 轴轴线到 3 轴轴线的垂直距离"},
+    "L3": {"value": 300,   "unit": "mm", "field": "SRDist3_4",     "meaning": "3 轴轴线到 4 轴轴线的垂直距离"},
+    "L4": {"value": 1511,  "unit": "mm", "field": "SRDistWrist1_2", "meaning": "腕轴 1-2 距离（=3 轴到 5 轴的垂直距离）"},
+    "L5": {"value": 225,   "unit": "mm", "field": "SRDistWrist2_TCP","meaning": "5 轴轴线到 TCP 的 x 方向的距离"},
+    "L6": {"value": 330,   "unit": "mm", "field": "SRDistBase1_2X", "meaning": "沿 1 轴 x 方向到 2 轴的距离"},
+    "L7": {"value": 0,     "unit": "mm", "field": "SRDistBase2_3Z", "meaning": "沿 5 轴 z 方向到 6 轴的距离"},
+    "a1": {"value": 0.0, "unit": "deg", "field": "SRRotBase1",  "meaning": "1 轴初始角"},
+    "a2": {"value": 0.0, "unit": "deg", "field": "SRRotBase2",  "meaning": "2 轴初始角"},
+    "a3": {"value": 0.0, "unit": "deg", "field": "SRRotBase3",  "meaning": "3 轴初始角"},
+    "a4": {"value": 0.0, "unit": "deg", "field": "SRRotWrist1", "meaning": "腕 1 轴初始角"},
+    "a5": {"value": 0.0, "unit": "deg", "field": "SRRotWrist2", "meaning": "腕 2 轴初始角"},
+    "a6": {"value": 0.0, "unit": "deg", "field": "SRRotWrist3", "meaning": "腕 3 轴初始角"}
+  },
+  "joint_limits": {
+    "unit": {"position": "deg", "velocity": "units/s", "acceleration": "units/s^2", "jerk": "units/s^3"},
+    "J1": {"min": -183, "max": 183,  "maxVelocity": 110, "reducedVelocity": 110, "maxAccel": 330, "maxDecel": 330, "maxJerk": 1650, "invertDirection": true},
+    "J2": {"min": -60,  "max": 85,   "maxVelocity": 100, "reducedVelocity": 100, "maxAccel": 300, "maxDecel": 300, "maxJerk": 1500, "invertDirection": false},
+    "J3": {"min": -130, "max": 80,   "maxVelocity": 100, "reducedVelocity": 100, "maxAccel": 300, "maxDecel": 300, "maxJerk": 1500, "invertDirection": false},
+    "J4": {"min": -220, "max": 220,  "maxVelocity": 170, "reducedVelocity": 170, "maxAccel": 510, "maxDecel": 510, "maxJerk": 2550, "invertDirection": true},
+    "J5": {"min": -125, "max": 125,  "maxVelocity": 160, "reducedVelocity": 160, "maxAccel": 480, "maxDecel": 480, "maxJerk": 2400, "invertDirection": false},
+    "J6": {"min": -360, "max": 360,  "maxVelocity": 220, "reducedVelocity": 220, "maxAccel": 660, "maxDecel": 660, "maxJerk": 3300, "invertDirection": true}
+  },
+  "base_and_tool": {
+    "baseTransformation": {"x": 0.0, "y": 0.0, "z": 0.0, "a": 0.0, "b": 0.0, "c": 0.0, "unit": "mm/deg", "note": "Euler xyz；定义基坐标系原点在 World 下的位姿。当前全零 = 基坐标系与 World 重合。"},
+    "toolDefaultTransformation": {"x": 0.0, "y": 0.0, "z": 0.0, "a": 0.0, "b": 0.0, "c": 0.0, "unit": "mm/deg", "note": "定义工具默认坐标系在法兰坐标系下的位姿。当前全零 = 未标定工具。"}
+  },
+  "homing": {
+    "source": "ConfigureFiles/HomingData.xml",
+    "resolution_per_turn": 131072,
+    "note": "六轴 MultiTurn/SingleTurn 零位数据；编码器分辨率 131072 counts/rev。"
+  },
+  "still_missing": [
+    "工具 TCP 实标定值（ToolCalibration.xml 与 base/tool transform 均为全零模板）",
+    "关节轴线在 CAD 装配坐标系中的位置与方向（STEP 只给固定演示姿态的外形）",
+    "CAD 装配坐标系 ↔ 机器人控制坐标系 的对齐变换",
+    "真机/虚拟控制器读数作为校准真值（真机 192.168.39.220 不可达）"
+  ]
+}

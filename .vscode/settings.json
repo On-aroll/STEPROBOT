@@ -1,0 +1,18 @@
+{
+    "git.path": "D:\\Git\\cmd\\git.exe",
+    // ===== Python：把解释器钉死，避免撞上微软商店的"假 python"占位符 =====
+    "python.defaultInterpreterPath": "D:\\Anaconda\\anconda\\python.exe",
+    "python.condaPath": "D:\\Anaconda\\anconda\\Scripts\\conda.exe",
+
+    // ===== Python Environments 扩展：仍然用 conda 管理，但把路径写死，不依赖 PATH 发现 =====
+    "python-envs.defaultEnvManager": "ms-python.python:conda",
+    "python-envs.defaultPackageManager": "ms-python.python:pip",
+
+    // ===== 终端：打开 VS Code 内置终端时自动激活环境，并让它优先用上面的解释器 =====
+    "python.terminal.activateEnvironment": true,
+    "python.analysis.addHoverTooltips": true,
+
+    // ===== 让 .py 文件默认 UTF-8，防止中文注释乱码 =====
+    "files.encoding": "utf8",
+    "files.autoGuessEncoding": true
+}

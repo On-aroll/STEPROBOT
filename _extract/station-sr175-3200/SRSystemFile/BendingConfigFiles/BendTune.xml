@@ -1,0 +1,195 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<BendTune>
+    <BendTune_1>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_1>
+    <BendTune_2>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_2>
+    <BendTune_3>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_3>
+    <BendTune_4>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_4>
+    <BendTune_5>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_5>
+    <BendTune_6>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_6>
+    <BendTune_7>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_7>
+    <BendTune_8>
+        <PlaceThreshold>0.2</PlaceThreshold>
+        <ErrorThreshold>0.5</ErrorThreshold>
+        <SensorNum />
+        <Sensor1AI />
+        <Sensor2AI />
+        <Sensor3AI />
+        <Sensor4AI />
+        <Sensor1Scale />
+        <Sensor2Scale />
+        <Sensor3Scale />
+        <Sensor4Scale />
+        <Sensor1Zero />
+        <Sensor2Zero />
+        <Sensor3Zero />
+        <Sensor4Zero />
+        <Sensor2ToSensor1Dis />
+        <Sensor3ToSensor2Dis />
+        <Sensor4ToSensor3Dis />
+        <Sensor1Initial />
+        <Sensor2Initial />
+        <Sensor3Initial />
+        <Sensor4Initial />
+    </BendTune_8>
+</BendTune>

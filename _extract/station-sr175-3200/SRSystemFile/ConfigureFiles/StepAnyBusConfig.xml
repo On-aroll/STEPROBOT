@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<StepAnyBusConfig>
+    <Common>
+        <Enable>1</Enable>
+        <BaurdrateSerial>1</BaurdrateSerial>
+        <NumOfOutputData>32</NumOfOutputData>
+        <NumOfInputData>32</NumOfInputData>
+    </Common>
+    <Profibus>
+        <Node_Profibus>15</Node_Profibus>
+    </Profibus>
+    <DeviceNet>
+        <Baurdrate_DeviceNet>3</Baurdrate_DeviceNet>
+        <Node_DeviceNet>3</Node_DeviceNet>
+    </DeviceNet>
+    <EthernetIP>
+        <DHCP_EthernetIP>0</DHCP_EthernetIP>
+        <Address_EthernetIP>192.168.250.60</Address_EthernetIP>
+        <Masknet_EthernetIP>255.255.255.0</Masknet_EthernetIP>
+        <Gateway_EthernetIP>0.0.0.0</Gateway_EthernetIP>
+    </EthernetIP>
+    <ModbusTCP>
+        <DHCP_ModbusTCP>0</DHCP_ModbusTCP>
+        <Address_ModbusTCP>192.168.1.2</Address_ModbusTCP>
+        <Masknet_ModbusTCP>255.255.255.0</Masknet_ModbusTCP>
+        <Gateway_ModbusTCP>0.0.0.0</Gateway_ModbusTCP>
+    </ModbusTCP>
+    <CClink>
+        <Baurdrate_CClink>0</Baurdrate_CClink>
+        <Node_CClink>7</Node_CClink>
+    </CClink>
+    <Ethercat>
+        <Node_Ethercat>0</Node_Ethercat>
+    </Ethercat>
+    <CANopen>
+        <Baurdrate_CANopen>5</Baurdrate_CANopen>
+        <Node_CANopen>3</Node_CANopen>
+    </CANopen>
+    <ProfinetIO>
+        <DHCP_ProfinetIO>0</DHCP_ProfinetIO>
+        <Address_ProfinetIO>192.168.0.30</Address_ProfinetIO>
+        <Masknet_ProfinetIO>255.255.255.0</Masknet_ProfinetIO>
+        <Gateway_ProfinetIO>0.0.0.0</Gateway_ProfinetIO>
+    </ProfinetIO>
+</StepAnyBusConfig>

@@ -1,0 +1,90 @@
+﻿<?xml version="1.0" standalone="no" ?>
+<!--
+Type:0、1、2分别表示检查、更换、大修； WarningLevel：0、1分别表示信息、警告；
+RunTimeSetValid、CycleTimeSetValid：0、1分别表示不适用、使用；RunTimeSet单位为小时，CycleTimeSet单位为月；
+LastTime:上一次维保时间，-1表示未设置过;RunTime:运行过时间；
+Name_EN、Name_CHS、Name_Other分别表示英文、中文、其它语言名称描述
+Name_EN、Info_CHS、Info_Other、中文、其它语言描述、Name_CHS、Name_Other分别表示英文、中文、其它语言信息提醒
+ -->
+<Manitenance>
+    <RobotRoutineInspection Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>RobotRoutineInspection</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </RobotRoutineInspection>
+    <InfoMark Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>InfoMark</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </InfoMark>
+    <Wire Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>Wire</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </Wire>
+    <LimitBlock Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>LimitBlock</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </LimitBlock>
+    <OilSeal Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>OilSeal</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </OilSeal>
+    <LubricatingGrease Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>LubricatingGrease</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </LubricatingGrease>
+    <EncoderBattery Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>EncoderBattery</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </EncoderBattery>
+    <RobotOverhaul Type="0" WarningLevel="0" RunTimeSetValid="0" RunTimeSet="10000" CycleTimeSetValid="0" CycleTimeSet="12">
+        <Name_EN>RobotOverhaul</Name_EN>
+        <Name_CHS />
+        <Name_Other />
+        <Info_EN />
+        <Info_CHS />
+        <Info_Other />
+        <LastTime>-1</LastTime>
+        <RunTime>0</RunTime>
+    </RobotOverhaul>
+</Manitenance>
