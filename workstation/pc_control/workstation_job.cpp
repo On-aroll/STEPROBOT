@@ -202,7 +202,7 @@ QString associateNativeGcode(Job& job, const QString& mappingPath) {
             return "所选 G 代码与映射中的原文不一致。";
     }
     QStringDecoder decoder(QStringDecoder::Utf8);
-    QString text = decoder(bytes);
+    QString text = stripUtf8Bom(decoder(bytes));
     if (decoder.hasError()) return "映射中的 G 代码不是有效 UTF-8。";
     text.replace("\r\n", "\n").replace('\r', '\n');
     if (text.endsWith('\n')) text.chop(1);
@@ -263,7 +263,7 @@ Job readGcodeJob(const QString& path, const Job& nativeTemplate, ConversionSetti
     }
     QStringDecoder decoder(QStringDecoder::Utf8);
     const QByteArray raw = file.readAll();
-    QString text = decoder(raw);
+    QString text = stripUtf8Bom(decoder(raw));
     text.replace("\r\n", "\n").replace('\r', '\n');
     if (text.endsWith('\n')) text.chop(1);
     job.source = text.split('\n');

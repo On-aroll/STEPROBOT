@@ -23,6 +23,18 @@ bool save(const QString& path, const QByteArray& bytes) {
 
 QString number(double value) { return QString::number(value, 'f', 6); }
 
+QString joinCsv(const QStringList& row) {
+    QStringList safe;
+    safe.reserve(row.size());
+    for (const auto& field : row) {
+        if (field.contains(u'"') || field.contains(u',') || field.contains(u'\n') || field.contains(u'\r'))
+            safe << u'"' + QString(field).replace(u'"', QLatin1String("\"\"")) + u'"';
+        else
+            safe << field;
+    }
+    return safe.join(u',');
+}
+
 QStringList xyz(Point point) { return {number(point.x), number(point.y), number(point.z)}; }
 
 QStringList fields(const QString& text, int count) {
@@ -148,7 +160,7 @@ void Experiment::sample(const QMap<QString, QString>& feedback, int sourceRow, s
     row << fields(feedback.value("xyz"), 3) << fields(feedback.value("abc"), 3) << fields(feedback.value("axes"), 6);
     row << (measured ? xyz(*measured) : fields({}, 3));
     row << (distance ? number(*distance) : QString());
-    if (!append(trace, (row.join(',') + '\n').toUtf8())) {
+    if (!append(trace, (joinCsv(row) + '\n').toUtf8())) {
         writeFailed = true;
         trace.close();
         return;

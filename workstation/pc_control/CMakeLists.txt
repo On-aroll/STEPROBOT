@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.24)
 project(StepWorkstation LANGUAGES CXX)
 
 find_package(Qt6 6.8.2 EXACT REQUIRED COMPONENTS Widgets Network)
-qt_add_executable(StepWorkstation WIN32 workstation.cpp workstation_job.cpp workstation_session.cpp workstation_experiment.cpp workstation_converter.cpp workstation_home.cpp)
+qt_add_executable(StepWorkstation WIN32 workstation.cpp workstation_job.cpp workstation_session.cpp workstation_experiment.cpp workstation_converter.cpp workstation_home.cpp workstation_replay.cpp)
 qt_add_executable(StepGcodeConverter gcode_converter.cpp workstation_job.cpp)
 target_compile_features(StepWorkstation PRIVATE cxx_std_20)
 target_compile_options(StepWorkstation PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8> $<$<CXX_COMPILER_ID:MSVC>:/W4>)
@@ -15,6 +15,25 @@ enable_testing()
 add_executable(StepReturnSpeedTest tests/return_tcp_speed_test.cpp)
 target_compile_features(StepReturnSpeedTest PRIVATE cxx_std_20)
 add_test(NAME return_tcp_speed_limit COMMAND StepReturnSpeedTest)
+
+add_executable(StepGcodeJobTest tests/gcode_job_test.cpp workstation_job.cpp)
+target_compile_features(StepGcodeJobTest PRIVATE cxx_std_20)
+target_compile_options(StepGcodeJobTest PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8> $<$<CXX_COMPILER_ID:MSVC>:/W4>)
+target_link_libraries(StepGcodeJobTest PRIVATE Qt6::Core Qt6::CorePrivate)
+add_test(NAME gcode_job COMMAND StepGcodeJobTest)
+add_custom_command(TARGET StepGcodeJobTest POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::Core> $<TARGET_FILE_DIR:StepGcodeJobTest>)
+
+add_executable(StepReplayTest tests/replay_test.cpp workstation_replay.cpp)
+target_compile_features(StepReplayTest PRIVATE cxx_std_20)
+target_compile_options(StepReplayTest PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8> $<$<CXX_COMPILER_ID:MSVC>:/W4>)
+target_link_libraries(StepReplayTest PRIVATE Qt6::Widgets)
+add_test(NAME history_replay COMMAND StepReplayTest)
+set_tests_properties(history_replay PROPERTIES
+    TIMEOUT 10
+    ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_FORCE_STDERR_LOGGING=1;QT_QPA_PLATFORM_PLUGIN_PATH=$<TARGET_FILE_DIR:Qt6::Core>/../plugins/platforms")
+add_custom_command(TARGET StepReplayTest POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::Core> $<TARGET_FILE:Qt6::Gui> $<TARGET_FILE:Qt6::Widgets> $<TARGET_FILE_DIR:StepReplayTest>)
 
 set(STEP_SDK_DIR "$ENV{STEP_SDK_DIR}" CACHE PATH "STEP C++ SDK x64 directory containing RobotCom.hpp and Robot-SDK.lib")
 if(EXISTS "${STEP_SDK_DIR}/RobotCom.hpp" AND EXISTS "${STEP_SDK_DIR}/Robot-SDK.lib")

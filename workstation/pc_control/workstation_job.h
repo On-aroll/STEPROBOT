@@ -11,6 +11,11 @@ struct Point {
     double z = 0;
 };
 
+inline QString stripUtf8Bom(QString text) {
+    if (text.startsWith(QChar(0xFEFF))) text.remove(0, 1);
+    return text;
+}
+
 struct Step {
     int row;
     int firstLine;

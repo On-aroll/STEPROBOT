@@ -2,6 +2,7 @@
 #include <winsock2.h>
 #include "workstation_session.h"
 
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
@@ -48,6 +49,18 @@ void hideConsole(QProcess& process) {
         args->flags |= CREATE_NO_WINDOW;
     });
     process.setProcessChannelMode(QProcess::MergedChannels);
+}
+
+void cleanOldRuns(const QString& logs) {
+    const QDir folder(logs);
+    const auto root = QFileInfo(logs).canonicalFilePath();
+    if (root.isEmpty()) return;
+    const auto now = QDateTime::currentDateTime();
+    for (const auto& entry : folder.entryInfoList({"cpp_*"}, QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
+        const auto canonical = entry.canonicalFilePath();
+        if (QFileInfo(canonical).dir().canonicalPath() == root && entry.lastModified().daysTo(now) >= 30)
+            QDir(canonical).removeRecursively();
+    }
 }
 }
 
@@ -126,6 +139,7 @@ void Session::waitForVirtualPorts(const Job& job, qint64 deadline) {
     const DWORD shortLength = GetShortPathNameW(nativeLogs.c_str(), shortPath, 32768);
     logs = shortLength > 0 && shortLength < 32768 ? QString::fromWCharArray(shortPath) : QDir(logs).absolutePath();
     if (logs.size() > 64) { fail("厂家仿真目录过长。请将 STEP_SIMULATION_RUN_ROOT 设置到较短的可写路径后重启工作台。"); return; }
+    cleanOldRuns(logs);
     auto environment = QProcessEnvironment::systemEnvironment();
     environment.insert("STEP_WORKSTATION_RUN_ROOT", QDir::toNativeSeparators(logs));
     environment.insert("STEP_VIRTUAL_KERNEL", QDir::toNativeSeparators(QDir(env).filePath("1-NonReal.exe")));
@@ -238,6 +252,7 @@ void Session::stop() {
         const bool start = pending == "start";
         pending.clear();
         if (note) note(start ? "已取消排队中的 START。" : "已取消排队中的返回起点。");
+        if (start && event) event("start_cancelled");
     } else {
         waitingStop = send("stop");
         if (note) note(waitingStop ? "停止发送请求已提交。" : "停止请求未送达控制端。");
@@ -306,6 +321,7 @@ void Session::handle(const QString& line) {
         feedback["home_plan_ready"] = "0";
         feedback["home_plan_error"] = line.mid(16);
         if (note) note("回程规划失败：" + line.mid(16) + "。机器人未移动。");
+        if (event) event("home_plan_failed");
         if (changed) changed();
     } else if (line.startsWith("robot=")) {
         const auto data = fields();
@@ -357,6 +373,7 @@ void Session::poll() {
         if (!pending.isEmpty() && !commandSent && clock.elapsed() - queuedAt >= 3000) {
             pending.clear();
             if (note) note("等待回读超时，操作未发送。");
+            if (event) event("queue_timeout");
         }
         if (control && ownedRun && (!fresh() || (value("home_return_result") == "unconfirmed" && value("motion_rest") != "1")) && !waitingStop && !timeoutStop) {
             timeoutStop = true;
@@ -370,6 +387,7 @@ void Session::poll() {
                 commandSent = false;
                 pending.clear();
                 if (note) note("命令未送达控制端。");
+                if (event) event("send_failed");
             }
         }
     }

@@ -26,6 +26,7 @@ public:
     QString value(const QString& key) const { return feedback.value(key); }
 
     std::function<void(QString)> note;
+    std::function<void(QString)> event;
     std::function<void()> changed;
     std::function<void()> sampled;
     std::function<void(bool)> ended;

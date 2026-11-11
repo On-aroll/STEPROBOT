@@ -90,7 +90,7 @@ QString openConversionDialog(QWidget* parent, const Job& nativeTemplate, const Q
         QFile file(selected);
         if (!file.open(QIODevice::ReadOnly) || file.size() > 32768) { status->setText("文件无法读取或超过 32 KiB。"); return; }
         QStringDecoder decoder(QStringDecoder::Utf8);
-        const auto text = decoder(file.readAll());
+        const auto text = stripUtf8Bom(decoder(file.readAll()));
         if (decoder.hasError()) { status->setText("源文件需要有效 UTF-8 文本。"); return; }
         path->setText(selected);
         source->setPlainText(text);

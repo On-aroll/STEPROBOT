@@ -3,7 +3,8 @@
 #include "workstation_converter.h"
 #include "workstation_home.h"
 #include "workstation_paths.h"
-#include "workstation_home.h"
+#include "workstation_plot.h"
+#include "workstation_replay.h"
 
 #include <QtWidgets>
 #include <QDateTime>
@@ -11,7 +12,6 @@
 #include <QCryptographicHash>
 #include <QJsonDocument>
 #include <QSaveFile>
-#include <QStandardPaths>
 #include <QStandardPaths>
 #include <QHostAddress>
 #include <QSet>
@@ -22,101 +22,36 @@
 #include <optional>
 
 namespace {
-const QColor Green("#17865d"), Amber("#b77900"), Slate("#7a8e9c");
 const QStringList LinkTypes{"STEP 虚拟控制器", "实机 STEP SDK", "Modbus TCP"};
 const QString DefaultCabinetEndpoint = "192.168.39.220:30312";
-
-class Plot : public QWidget {
-public:
-    explicit Plot(QWidget* parent = nullptr) : QWidget(parent) { setMinimumHeight(180); }
-    const QVector<Point>* points = nullptr;
-    int projection = 0;
-    int completed = 0;
-    int active = 0;
-    std::optional<Point> tcp;
-    QVector<Point> plannedHome;
-    QVector<Point> measured;
-    bool showMeasured = true;
-
-protected:
-    void paintEvent(QPaintEvent*) override {
-        QPainter painter(this);
-        painter.setRenderHint(QPainter::Antialiasing);
-        painter.fillRect(rect(), QColor("#f7fafc"));
-        painter.setPen(QColor("#e2e9ef"));
-        for (int x = 0; x < width(); x += 24) painter.drawLine(x, 0, x, height());
-        for (int y = 0; y < height(); y += 24) painter.drawLine(0, y, width(), y);
-        painter.setPen(QColor("#526777"));
-        painter.drawText(QRect(12, 8, width() - 24, 25), Qt::AlignLeft, "WORLD / 相对起点 · mm");
-        const bool hasProgram = points && points->size() >= 2;
-        if (!hasProgram && plannedHome.isEmpty()) {
-            painter.drawText(rect(), Qt::AlignCenter, "打开作业后显示轨迹");
-            return;
-        }
-        const auto project = [&](Point p) {
-            if (projection == 1) return QPointF(p.x, p.y);
-            if (projection == 2) return QPointF(p.x, p.z);
-            return QPointF((p.x - p.y) * .866, p.z + (p.x + p.y) * .5);
-        };
-        auto a = project(hasProgram ? points->first() : plannedHome.first());
-        auto b = a;
-        const auto extendBounds = [&](Point p) {
-            const auto v = project(p);
-            a = {std::min(a.x(), v.x()), std::min(a.y(), v.y())};
-            b = {std::max(b.x(), v.x()), std::max(b.y(), v.y())};
-        };
-        if (hasProgram) for (auto p : *points) extendBounds(p);
-        for (auto p : plannedHome) extendBounds(p);
-        const double scale = std::min((width() - 78) / std::max(1., b.x() - a.x()),
-                                      (height() - 76) / std::max(1., b.y() - a.y()));
-        const auto screen = [&](Point p) {
-            auto v = project(p) - (a + b) / 2;
-            return QPointF(width() / 2. + v.x() * scale, height() / 2. - v.y() * scale);
-        };
-        if (hasProgram) for (int i = 1; i < points->size(); ++i) {
-                const QColor color = i == active ? Amber : i <= completed ? Green : Slate;
-                painter.setPen(QPen(color, i == active ? 4 : 2, Qt::SolidLine, Qt::RoundCap));
-                painter.drawLine(screen(points->at(i - 1)), screen(points->at(i)));
-            }
-        if (plannedHome.size() > 1) {
-            QPainterPath route;
-            route.moveTo(screen(plannedHome.first()));
-            for (int i = 1; i < plannedHome.size(); ++i) route.lineTo(screen(plannedHome[i]));
-            painter.setPen(QPen(QColor("#c66c13"), 2, Qt::DashLine, Qt::RoundCap));
-            painter.drawPath(route);
-        }
-        if (showMeasured) {
-            QPainterPath trace;
-            bool open = false;
-            for (const auto& point : measured) {
-                if (!std::isfinite(point.x)) { open = false; continue; }
-                if (open) trace.lineTo(screen(point));
-                else trace.moveTo(screen(point));
-                open = true;
-            }
-            painter.setPen(QPen(QColor("#247cb5"), 1.8, Qt::DashLine));
-            painter.drawPath(trace);
-        }
-        if (tcp) {
-            const auto position = screen(*tcp);
-            painter.setPen(QPen(QColor("#175991"), 2));
-            if (rect().adjusted(9, 9, -9, -9).contains(position.toPoint())) {
-                painter.drawEllipse(position, 6, 6);
-                painter.drawLine(position - QPointF(9, 0), position + QPointF(9, 0));
-                painter.drawLine(position - QPointF(0, 9), position + QPointF(0, 9));
-            } else {
-                painter.drawText(QRect(12, 8, width() - 24, 25), Qt::AlignRight, "TCP 超出视图");
-            }
-        }
-        painter.setPen(QColor("#526777"));
-        painter.drawText(QRect(12, height() - 33, width() - 24, 25), Qt::AlignRight,
-                         showMeasured ? "绿 已走   黄 当前   灰 待走   橙虚线 回程预览   蓝 实测   ⊕ TCP" : "绿 已走   黄 当前   灰 待走   橙虚线 回程预览   ⊕ TCP");
-    }
-};
 
 QString duration(double seconds) {
     const auto s = static_cast<int>(std::min(seconds, 9999999.));
     return QString("%1:%2").arg(s / 60, 2, 10, QLatin1Char('0')).arg(s % 60, 2, 10, QLatin1Char('0'));
+}
+
+// 控制端拒绝命令时输出英文 Refused 行，这里按关键字翻译成人话，让操作者不用猜。
+QString refuseHint(const QString& raw) {
+    if (raw.contains("expected project and program") || raw.contains("not loaded; use the local pendant"))
+        return "柜内没有载入作业对应的工程与程序：请先在示教器上载入后再启动。";
+    if (raw.contains("AUT, continuous mode"))
+        return "柜内需处于自动模式、连续运行方式且伺服已使能：请到示教器切换后重试。";
+    if (raw.contains("stopped at its entry") || raw.contains("reload"))
+        return "程序须停在首行才能启动：请在示教器重新载入程序，使其回到首行。";
+    if (raw.contains("override of at most 20"))
+        return "首次实机测试要求倍率在 1%–20%：请在示教器上把倍率调低后重试。";
+    if (raw.contains("controller reports an error"))
+        return "控制器正在报错：请先在柜内查看并清除报警，再回界面重试。";
+    if (raw.contains("moving or returning"))
+        return "机器人正在运动或回程中：请先点「停止发送」并等它停稳。";
+    if (raw.contains("control disabled"))
+        return "启停控制权不可用或连接已断开：请重新连接后再试。";
+    if (raw.contains("private IPv4"))
+        return "拒绝连接：只允许接入已确认的控制柜私有网地址。";
+    if (raw.contains("verified local virtual controller"))
+        return "未找到受信任的本地虚拟控制器：请检查 STEPStudio 安装目录。";
+    if (raw.isEmpty()) return "操作被控制端拒绝，原因未说明。";
+    return "控制端拒绝：" + raw;
 }
 
 void setVisualProperty(QWidget* widget, const char* name, const QVariant& value) {
@@ -140,6 +75,7 @@ public:
         build();
         elapsed.start();
         session.note = [this](QString text) { log(text); };
+        session.event = [this](QString kind) { experimentEvent(kind); };
         session.sampled = [this] { sample(); };
         session.changed = [this] { refresh(); };
         session.ended = [this](bool lost) { finishExperiment(lost ? "feedback_lost" : "session_closed"); };
@@ -147,7 +83,14 @@ public:
         log("C++ 工作台就绪。打开工程 / G 代码，或从「工程 / 工具」载入螺旋示例。");
     }
 
-    ~Workstation() override { session.note = {}; session.sampled = {}; session.changed = {}; session.ended = {}; }
+    ~Workstation() override { session.note = {}; session.event = {}; session.sampled = {}; session.changed = {}; session.ended = {}; }
+
+    void experimentEvent(const QString& kind) {
+        if (kind == "home_plan_failed") { homePlanPending = false; return; }
+        if (!experiment.active()) return;
+        if (kind == "start_cancelled" || kind == "queue_timeout") finishExperiment("start_cancelled");
+        else if (kind == "send_failed" && !experiment.observedRunning()) finishExperiment("start_unconfirmed");
+    }
 
     void runSmoke(bool simulate, bool manualOnly = false, bool sourceOnly = false) {
         const QStringList source{"G21 G17 G91", "G01 Z1 F300", "G04 T1", "G02 I0.5 J0 Z1 F300", "M30"};
@@ -779,6 +722,7 @@ private:
                     const int ref = reported == 4 && session.value("refname") == "ROBOTBASE" ? 2 : reported;
                     if (ref < 0 || ref > 4) return;
                     const auto speed = ref != 0 && axis < 3 ? linearJogSpeed->value() : angularJogSpeed->value();
+                    if (!(speed > 0)) return;
                     if (session.request(QString("jog %1 %2%3 %4").arg(QString("JWBTU").mid(ref, 1)).arg(axis + 1).arg(dir ? '+' : '-')
                                         .arg(speed, 0, 'f', 3)))
                         homeDirty = true;
@@ -867,6 +811,10 @@ private:
         run->addWidget(progress);
         runTime = new QLabel;
         run->addWidget(runTime);
+        versionCheck = new QLabel;
+        versionCheck->setObjectName("versionCheck");
+        versionCheck->setWordWrap(true);
+        run->addWidget(versionCheck);
         cabinetInfo = new QLabel;
         cabinetInfo->setWordWrap(true);
         run->addWidget(cabinetInfo);
@@ -891,6 +839,10 @@ private:
         csvButton->setToolTip("手动点动和只读联调可单独记录遥测。作业试次会自动保存 trace.csv。");
         recordActions->addWidget(csvButton);
         recordActions->addWidget(openRecord);
+        auto* runBrowser = new QPushButton("历史试次");
+        runBrowser->setToolTip("浏览历次实验记录：拖时间轴离线回放，或选两份做参数与偏差对比。");
+        recordActions->addWidget(runBrowser);
+        connect(runBrowser, &QPushButton::clicked, this, [this] { RunBrowserDialog(recordRoot, this).exec(); });
         recordLayout->addLayout(recordActions);
         connect(csvButton, &QPushButton::clicked, this, &Workstation::toggleCsv);
         connect(openRecord, &QPushButton::clicked, this, [this] {
@@ -1228,10 +1180,10 @@ private:
         homePlanPath = rows.join('\n');
         plot->plannedHome = planned;
         plot->update();
-        const auto seconds = session.value("home_plan_seconds").toDouble();
+        const auto estimated = session.value("home_plan_seconds").toDouble();
         QMessageBox message(QMessageBox::Warning, "返回起点路径预览",
             QString("上位机按六轴关节分段规划，预计约 %1。末端速度上限 %2 mm/s，实际速度可能更低。\n\n%3\n\n仅做关节限位检查和 TCP 正运动学预览；没有工件、夹具和围栏模型，未执行环境碰撞检测。请先确认整个路径净空。实机移动未开放，当前只在隔离仿真中执行。")
-                .arg(duration(seconds)).arg(session.value("home_plan_speed")).arg(homePlanPath),
+                .arg(duration(estimated)).arg(session.value("home_plan_speed")).arg(homePlanPath),
             QMessageBox::Cancel, this);
         auto* run = message.addButton("确认低速返回", QMessageBox::AcceptRole);
         message.setDefaultButton(QMessageBox::Cancel);
@@ -1352,8 +1304,9 @@ private:
     }
 
     void log(const QString& text) {
-        if (text.startsWith("回程规划失败")) homePlanPending = false;
-        if (text.startsWith("Refused:") || text == "virtual_command_result=refused" || text.startsWith("result=unconfirmed") ||
+        if (text.startsWith("Refused:")) {
+            lastOperationError = refuseHint(text.mid(8));
+        } else if (text == "virtual_command_result=refused" || text.startsWith("result=unconfirmed") ||
             text.startsWith("jog_frame_unconfirmed") || text.startsWith("base_reference_unconfirmed")) {
             lastOperationError = "操作未确认，请查看记录中的原因";
         } else if (text == "virtual_command_result=ok" || text.startsWith("start_confirmed=") || text.startsWith("stop_confirmed=")) {
@@ -1367,10 +1320,8 @@ private:
         }
         if (experiment.active()) {
             experiment.event(text);
-            if (text.startsWith("start_cancelled=") || text == "已取消排队中的 START。" || text == "等待回读超时，操作未发送。") {
+            if (text.startsWith("start_cancelled=")) {
                 finishExperiment("start_cancelled");
-            } else if (text == "命令未送达控制端。" && !experiment.observedRunning()) {
-                finishExperiment("start_unconfirmed");
             } else if (session.pending == "start") {
                 if (text.startsWith("Refused:")) startFailure = "start_rejected";
                 else if (text.startsWith("result=unconfirmed")) startFailure = "start_unconfirmed";
@@ -1498,6 +1449,7 @@ private:
         }
         captureFeedback(observedSource, true);
         if (csv.isOpen()) {
+            // 遥测的 xyz/abc/axes 在协议里就是逗号串，直接拼接正好各占 3/3/6 列，不能套 joinCsv（会整体加引号挤成一列）。
             const auto line = QStringList{QDateTime::currentDateTime().toString(Qt::ISODateWithMs), session.value("state"),
                 session.value("mode"), session.value("override"), session.value("line"), session.value("alarm"), session.value("speed"),
                 session.value("xyz"), session.value("abc"), session.value("axes"), session.value("jogset"), session.value("jogunit")}.join(',');
@@ -1634,7 +1586,12 @@ private:
             for (const auto& item : jointLimits) limit = std::min(limit, item.toDouble());
             angularJogSpeed->setMaximum(limit);
         } else if (profileReady) angularJogSpeed->setMaximum(session.value("manual_angular").toDouble());
-        for (auto* button : manualButtons) button->setEnabled(manual && profileReady && frame >= 0 && frame <= 4);
+        const double linearSpeed = linearJogSpeed->value(), angularSpeed = angularJogSpeed->value();
+        for (int i = 0; i < manualButtons.size(); ++i) {
+            const bool needsLinear = frame != 0 && i / 2 < 3;
+            manualButtons[i]->setEnabled(manual && profileReady && frame >= 0 && frame <= 4 &&
+                                         (needsLinear ? linearSpeed > 0 : angularSpeed > 0));
+        }
         const auto joints = session.value("axes").split(',');
         QStringList pose;
         if (frame == 1) pose = (session.value("xyz") + ',' + session.value("abc")).split(',');
@@ -1652,6 +1609,7 @@ private:
         if (!fresh) manualFeedback->setText("连接虚拟控制器或实机只读后显示六轴角度。点动使用隔离虚拟控制器。");
         else if (!session.simulated) manualFeedback->setText("六轴角度为控制柜回读。现场手动操作使用示教器。");
         else if (!profileReady) manualFeedback->setText("尚未核对虚拟控制器手动速度参数。");
+        else if (angularSpeed <= 0 || (frame > 0 && frame <= 4 && linearSpeed <= 0)) manualFeedback->setText("手动速度回读未就绪，暂不能点动。");
         else if (session.value("jogset").toDouble() > 0) manualFeedback->setText(QString("控制器速度设定 %1 %2 · 单次 0.30 s · TCP 上限 250 mm/s")
             .arg(session.value("jogset"), session.value("jogunit") == "mm_s" ? "mm/s" : "°/s"));
         else manualFeedback->setText("输入目标速度，控制器按可用精度向下取值并回读应用速度。单次 0.30 s。");
@@ -1668,20 +1626,32 @@ private:
         }
         QString instruction = runText;
         QPushButton* next = nullptr;
-        if (!job.error.isEmpty()) { instruction = "需处理 · 修正标红指令后重新打开"; next = openButton; }
-        else if (linkType->currentIndex() == 2) instruction = "Modbus TCP 未接入";
+        const bool linkDown = session.lost || (session.connected() && hadFeedback && !fresh);
+        const bool stopUnconfirmed = fresh && session.value("home_return_result") == "unconfirmed" && session.value("motion_rest") != "1";
+        if (!job.error.isEmpty()) {
+            instruction = QString("需处理 · 程序解析未通过%1。下一步：修正左侧标红的指令后重新打开文件。")
+                .arg(job.diagnostics.isEmpty() ? QString() : QString("（共 %1 处问题）").arg(job.diagnostics.size()));
+            next = openButton;
+        } else if (linkDown) {
+            instruction = "需处理 · 通信中断。停止命令可能已发出但无法确认：先到柜子现场确认机器人已停稳，再检查网线与连接，重连后核对状态。实机状态以现场为准。";
+        } else if (session.waitingStop) {
+            instruction = "进行中 · 已请求停止，等待控制器确认。若长时间无回读，请到柜子现场确认；物理急停始终最快。";
+        } else if (stopUnconfirmed) {
+            instruction = "需处理 · 停止结果未确认：柜内未回读到“已停稳”。请到柜子确认机器人状态，必要时在示教器上手动停止。";
+        } else if (linkType->currentIndex() == 2) instruction = "Modbus TCP 未接入";
         else if (session.preparing) instruction = "进行中 · 准备 STEP 虚拟控制器";
-        else if (session.waitingStop) instruction = "进行中 · 等待停止确认";
         else if (returning) instruction = "进行中 · 返回记录的起点";
-        else if (!session.pending.isEmpty()) instruction = "进行中 · 等待操作回读";
+        else if (!session.pending.isEmpty()) instruction = "进行中 · 等待操作回读（约 3 秒未回读会自动撤销本次操作）";
         else if (idle) { instruction = "下一步 · 连接运行目标"; next = linkButton; }
-        else if (!fresh) instruction = hadFeedback ? "需处理 · 回读已中断，核对控制器状态" : "进行中 · 等待首次回读";
+        else if (!fresh) instruction = hadFeedback ? "需处理 · 回读中断，软件在自动重试。连续中断请按通信中断处理：到柜子现场确认状态。" : "进行中 · 等待首次回读";
         else if (job.name.isEmpty() && canOpenFile()) { instruction = "下一步 · 打开 G 代码或 STEP ZIP"; next = openButton; }
         else if (canAuthorize()) { instruction = "下一步 · 核对现场启停授权"; next = startButton; }
         else if (exportForReal) { instruction = "下一步 · 导出 STEP 工程进行验证"; next = startButton; }
         else if (canStart()) { instruction = "下一步 · 开始作业"; next = startButton; }
         else if (canReprepare()) { instruction = "下一步 · 重新准备仿真作业"; next = startButton; }
         else if (modeAuto->isEnabled()) { instruction = "下一步 · 切到自动运行"; next = modeAuto; }
+        else if (fresh && state == "2" && session.value("outcome") != "none" && !complete)
+            instruction = "已停止 · STEP 程序停止后停在当前行，直接再启动会被拒绝：请在柜内重新载入程序回到首行，再回本界面操作。";
         if (!lastOperationError.isEmpty()) instruction = "需处理 · " + lastOperationError;
         stateLabel->setText(instruction);
         setVisualProperty(stateLabel, "tone", tone);
@@ -1716,10 +1686,48 @@ private:
             remaining = "≈" + duration(estimate);
         }
         runTime->setText("已用 " + duration(seconds) + "  |  剩余 " + remaining);
+        // 名称比对不能证明柜内文件内容与本地版本一致。
+        QString checkText = "程序核对 · 待核对";
+        QString checkTone = "idle";
+        if (!fresh) checkText = "程序核对 · 待核对（等待柜子回读）";
+        else if (job.project.isEmpty()) checkText = "程序核对 · 未打开作业";
+        else if (session.value("project").isEmpty() && session.value("program").isEmpty())
+            checkText = "程序核对 · 待核对：柜内未报告程序名，启动前请在柜内载入作业程序。";
+        else {
+            const bool projectMatch = session.value("project") == job.project || session.value("project") + ".sr" == job.project;
+            const bool programMatch = session.value("program") == job.program;
+            if (projectMatch && programMatch) checkText = "程序核对 · 名称匹配（" + session.value("project") + " / " + session.value("program") + "），内容版本仍需人工核对。";
+            else {
+                checkText = "程序核对 · 不一致！柜内是 " + session.value("project") + " / " + session.value("program") +
+                    "，作业要求 " + job.project + " / " + job.program + "。直接启动会被拒绝，请先在柜内载入正确程序。";
+                checkTone = "error";
+            }
+        }
+        versionCheck->setText(checkText);
+        setVisualProperty(versionCheck, "tone", checkTone);
         cabinetInfo->setText(fresh ? QString("模式 %1 · 伺服 %2 · TCP %3 mm/s\n消息 %4 · %5")
             .arg(mode == "2" ? "自动" : mode == "3" ? "外部自动" : "手动", session.value("enabled") == "1" ? "已使能" : "未使能",
                  session.value("speed"), session.value("alarm"), session.simulated ? "STEP 隔离虚拟控制器" : session.address + " / " + session.identity) : "控制器回读待确认");
-        telemetry->setText(fresh ? "TCP " + session.value("speed") + " mm/s   WORLD " + session.value("xyz") + " / " + session.value("abc") +
+        // 回程值是 TCP 上限，jogset 已是控制器应用值，不再按倍率重复折算。
+        double settingValue = 0;
+        QString settingLabel, settingUnit = "mm/s";
+        if (returning) {
+            settingValue = session.value("home_plan_speed").toDouble();
+            settingLabel = "回程 TCP 上限";
+        } else if (manual && session.value("jogset").toDouble() > 0) {
+            settingValue = session.value("jogset").toDouble();
+            settingUnit = session.value("jogunit") == "mm_s" ? "mm/s" : "°/s";
+            settingLabel = "点动应用回读";
+        }
+        QString speedLine;
+        if (!fresh) speedLine = "速度 · 实测 —";
+        else if (settingValue > 0) {
+            speedLine = QString("速度 · %3 %1 %2 · 实测 TCP %4 mm/s · 柜内倍率 %5%")
+                .arg(settingValue, 0, 'f', 1).arg(settingUnit, settingLabel)
+                .arg(session.value("speed")).arg(rate, 0, 'f', 0);
+        } else
+            speedLine = QString("速度 · 实测 %1 mm/s · 倍率 %2%").arg(session.value("speed")).arg(rate, 0, 'f', 0);
+        telemetry->setText(fresh ? speedLine + "\nWORLD " + session.value("xyz") + " / " + session.value("abc") +
             "\n关节 " + session.value("axes") : "实时遥测 · 等待连接");
         footer->setText(connection + "   |   " + runText + "   |   行 " + (row ? QString::number(row) : fresh ? session.value("line") : "待回读") +
                         "   |   激光未接入   |   空跑模式");
@@ -1771,7 +1779,8 @@ private:
     QPushButton *openButton = nullptr, *linkButton = nullptr, *startButton = nullptr, *stopButton = nullptr,
                 *modeManual = nullptr, *modeAuto = nullptr, *csvButton = nullptr, *openRecord = nullptr;
     QLabel *fileLabel = nullptr, *linkLabel = nullptr, *machine = nullptr, *sourcePosition = nullptr, *summaryLabel = nullptr,
-           *telemetry = nullptr, *stateLabel = nullptr, *runPosition = nullptr, *runTime = nullptr, *cabinetInfo = nullptr, *footer = nullptr;
+           *telemetry = nullptr, *stateLabel = nullptr, *runPosition = nullptr, *runTime = nullptr, *cabinetInfo = nullptr, *footer = nullptr,
+           *versionCheck = nullptr;
     QComboBox* linkType = nullptr;
     QComboBox* jogFrame = nullptr;
     QGroupBox* sourceGroup = nullptr;
