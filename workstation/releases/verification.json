@@ -1,0 +1,30 @@
+{
+  "version": "2026.11.11",
+  "package_bytes": 10823193,
+  "package_limit_bytes": 50000000,
+  "source_and_release_bytes": 11455925.0,
+  "platform": "Windows 10/11 x64",
+  "build": "MSVC 2022 x64, Qt 6.8.2",
+  "tests": {
+    "cpp_speed_bound": "413 cases, 0 failures",
+    "installed_offline_ui": "passed with clean PATH",
+    "installed_converter": "passed",
+    "sdk_executable": "loads with bundled runtime",
+    "installed_source_controller_smoke": "passed, exit 0",
+    "native_yellow_row": 42,
+    "paired_gcode_row": 2,
+    "default_data_home_return": "passed with JSON configuration and default user data location; caps 100/25 mm/s; actual mid-motion stop; peak TCP 3.83991 mm/s",
+    "configuration_script": "passed, parsed UTF-8 JSON without BOM",
+    "final_installer_manifest": "installed files verified against bundled SHA256 manifest"
+  },
+  "studio_and_seed": "external dependencies, validated via configurable paths",
+  "physical_robot_tested": false,
+  "installer_sha256": "806b3b8c1741931c23eb8a9f947545842878a689d6c22283b652a1f03566e5fb",
+  "omitted": [
+    "STEPStudio installation",
+    "licensed workstation seed and registration",
+    "SDK development headers and libraries",
+    "toolchains",
+    "private logs, recordings, stored origins"
+  ]
+}

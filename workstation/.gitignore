@@ -1,0 +1,8 @@
+build/
+pc_control/native/
+pc_control/helix_pc.exe
+pc_control/workstation.paths.json
+*.obj
+*.pdb
+*.exp
+*.lib

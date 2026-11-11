@@ -54,3 +54,7 @@ desktop.ini
 /research/cpp-starter/build/
 *.lib
 *.srlib
+
+# Small, versioned workstation release and the reviewed native program template.
+!/workstation/releases/*.exe
+!/workstation/SR175_3200_Helix_Ready_25mms_v4.zip
