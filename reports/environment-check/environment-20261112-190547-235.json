@@ -1,0 +1,59 @@
+﻿{
+    "CheckedAt":  "2026-11-12T19:05:47.2086522+08:00",
+    "Project":  "D:\\Desktop\\STEP",
+    "DevelopmentChecksPassed":  false,
+    "FailureCount":  6,
+    "SimulationVerified":  false,
+    "Checks":  [
+                   {
+                       "Name":  "DotNet.SDK8",
+                       "Status":  "PASS",
+                       "Detail":  "8.0.425 [C:\\Program Files\\dotnet\\sdk]"
+                   },
+                   {
+                       "Name":  "DotNet.Runtime8",
+                       "Status":  "PASS",
+                       "Detail":  "Microsoft.AspNetCore.App 6.0.23 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]\r\nMicrosoft.AspNetCore.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.AspNetCore.App]\r\nMicrosoft.NETCore.App 5.0.3 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]\r\nMicrosoft.NETCore.App 6.0.23 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]\r\nMicrosoft.NETCore.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.NETCore.App]\r\nMicrosoft.WindowsDesktop.App 6.0.23 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]\r\nMicrosoft.WindowsDesktop.App 8.0.31 [C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App]"
+                   },
+                   {
+                       "Name":  "MSVC.Files",
+                       "Status":  "FAIL",
+                       "Detail":  "Missing x64 MSVC compiler or vcvars64.bat in D:\\VSBuildTools."
+                   },
+                   {
+                       "Name":  "Git.Program",
+                       "Status":  "FAIL",
+                       "Detail":  "Missing executable: D:\\Git\\cmd\\git.exe"
+                   },
+                   {
+                       "Name":  "Git.Objects",
+                       "Status":  "FAIL",
+                       "Detail":  "Missing executable: D:\\Git\\cmd\\git.exe"
+                   },
+                   {
+                       "Name":  "SDK.Files",
+                       "Status":  "FAIL",
+                       "Detail":  "Missing ControlMsgData.hpp; Missing EasyTcpClient.hpp; Missing Robot-SDK.lib; Missing Robot-SDKd.lib; Missing RobotCom.hpp"
+                   },
+                   {
+                       "Name":  "Host.Files",
+                       "Status":  "FAIL",
+                       "Detail":  "Missing: StepRobot.App.exe, StepRobot.App.dll, StepRobot.App.deps.json, StepRobot.App.runtimeconfig.json, StepRobot.Native.dll, test-fixtures\\Robot-SDK-CSharp.dll"
+                   },
+                   {
+                       "Name":  "Host.NativeSDK",
+                       "Status":  "FAIL",
+                       "Detail":  "Missing executable: D:\\Desktop\\STEP\\实验准备\\上位机\\bin\\host\\StepRobot.App.exe"
+                   },
+                   {
+                       "Name":  "Studio.Simulation",
+                       "Status":  "MANUAL",
+                       "Detail":  "User installs STEPStudio. License, station loading, controller startup and live SDK capture are not checked here."
+                   },
+                   {
+                       "Name":  "Python.Research",
+                       "Status":  "MANUAL",
+                       "Detail":  "User installs Anaconda. Select its interpreter and run env_check.py separately when ready."
+                   }
+               ]
+}

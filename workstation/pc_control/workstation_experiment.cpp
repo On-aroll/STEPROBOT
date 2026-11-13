@@ -142,6 +142,18 @@ bool Experiment::begin(const QString& root, const Job& job, const QString& label
     return true;
 }
 
+void Experiment::setStreamOrigin(Point origin) {
+    if (!recording) return;
+    metadata.insert("origin_world_mm", QJsonArray{origin.x, origin.y, origin.z});
+    if (metadata.value("mode") == "simulation")
+        metadata.insert("simulation_origin_world_mm", QJsonArray{origin.x, origin.y, origin.z});
+    metadata.insert("controller_project", "SDK.sr");
+    metadata.insert("controller_program", "SDK");
+    metadata.insert("execution", "sdk_stream");
+    metadata.insert("path_comparison", "nearest_polyline_on_active_source_line");
+    if (!save(QDir(directory).filePath("run.json"), QJsonDocument(metadata).toJson())) writeFailed = true;
+}
+
 void Experiment::sample(const QMap<QString, QString>& feedback, int sourceRow, std::optional<Point> measured,
                         std::optional<double> distance) {
     if (!recording) return;

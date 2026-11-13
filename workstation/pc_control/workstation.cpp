@@ -13,13 +13,23 @@
 #include <QJsonDocument>
 #include <QSaveFile>
 #include <QStandardPaths>
+#include <QTemporaryFile>
 #include <QHostAddress>
 #include <QSet>
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <limits>
+#include <memory>
 #include <optional>
+
+#ifdef _WIN32
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
 
 namespace {
 const QStringList LinkTypes{"STEP 虚拟控制器", "实机 STEP SDK", "Modbus TCP"};
@@ -38,8 +48,6 @@ QString refuseHint(const QString& raw) {
         return "柜内需处于自动模式、连续运行方式且伺服已使能：请到示教器切换后重试。";
     if (raw.contains("stopped at its entry") || raw.contains("reload"))
         return "程序须停在首行才能启动：请在示教器重新载入程序，使其回到首行。";
-    if (raw.contains("override of at most 20"))
-        return "首次实机测试要求倍率在 1%–20%：请在示教器上把倍率调低后重试。";
     if (raw.contains("controller reports an error"))
         return "控制器正在报错：请先在柜内查看并清除报警，再回界面重试。";
     if (raw.contains("moving or returning"))
@@ -78,7 +86,12 @@ public:
         session.event = [this](QString kind) { experimentEvent(kind); };
         session.sampled = [this] { sample(); };
         session.changed = [this] { refresh(); };
-        session.ended = [this](bool lost) { finishExperiment(lost ? "feedback_lost" : "session_closed"); };
+        session.ended = [this](bool lost) {
+            finishExperiment(lost ? "feedback_lost" : "session_closed");
+            submittedSdkProgram.clear();
+            sdkControllerProgram.clear();
+            sdkProgramFile.reset();
+        };
         refresh();
         log("C++ 工作台就绪。打开工程 / G 代码，或从「工程 / 工具」载入螺旋示例。");
     }
@@ -92,42 +105,109 @@ public:
         else if (kind == "send_failed" && !experiment.observedRunning()) finishExperiment("start_unconfirmed");
     }
 
-    void runSmoke(bool simulate, bool manualOnly = false, bool sourceOnly = false) {
+    void runControlSmoke() {
+        load(nativeTemplate);
+        session.prepare(job);
+        auto* test = new QTimer(this);
+        connect(test, &QTimer::timeout, this, [this, phase = 0, originalProgram = QString(), originalEnabled = QString()]() mutable {
+            if (session.lost && !session.connected()) { qWarning() << logs->toPlainText().right(2000); smokeExit(70); return; }
+            if (!session.fresh() || !session.pending.isEmpty() || session.waitingStop || session.waitingEstop) return;
+            if (phase == 0) {
+                if (!loaded() || session.value("motion_rest") != "1") { smokeExit(71); return; }
+                originalProgram = session.value("program");
+                originalEnabled = session.value("enabled");
+                modeManual->click();
+                ++phase;
+            } else if (phase == 1) {
+                if ((session.value("mode") != "0" && session.value("mode") != "1") ||
+                    session.value("program") != originalProgram || session.value("enabled") != originalEnabled) {
+                    qWarning() << "Loaded-program manual switch failed" << logs->toPlainText().right(1400);
+                    smokeExit(72); return;
+                }
+                qInfo() << "Loaded program retained across manual-mode switch; no enable change";
+                session.simulated = false; // Physical UI logic, still on this isolated manufacturer virtual controller.
+                auto replacement = nativeTemplate;
+                replacement.name = "reimported-capture-home.zip";
+                replacement.program = "capture_home";
+                showNativeSource(replacement, replacement.program);
+                selectJob(std::move(replacement));
+                ++phase;
+            } else if (phase == 2) {
+                if (!session.value("program").isEmpty() || loaded() || startButton->isEnabled() || !loadCurrentProgramButton->isEnabled()) {
+                    qWarning() << "Import did not unload before load" << logs->toPlainText().right(1400);
+                    smokeExit(73); return;
+                }
+                qInfo() << "Import unloaded old program; START disabled until explicit load";
+                loadCurrentProgramButton->click();
+                ++phase;
+            } else if (phase == 3) {
+                if (!loaded() || session.value("program") != "capture_home" || session.value("mode").toInt() > 1 ||
+                    session.value("enabled") != originalEnabled || session.value("state") != "2") {
+                    qWarning() << "Explicit current-program load failed" << logs->toPlainText().right(1400);
+                    smokeExit(74); return;
+                }
+                const auto expected = job.project;
+                job.project = "DifferentProject.sr";
+                refresh();
+                const bool blockedMismatch = !loaded() && !canStartAny() && !startButton->isEnabled();
+                job.project = expected;
+                refresh();
+                if (!blockedMismatch) { smokeExit(75); return; }
+                qInfo() << "Dynamic job identity matched; different-project START blocked; load neither ran nor enabled robot";
+                modeAuto->click();
+                ++phase;
+            } else {
+                if (!loaded() || (session.value("mode") != "2" && session.value("mode") != "3") ||
+                    session.value("enabled") != originalEnabled || session.value("state") != "2") { smokeExit(76); return; }
+                log("程序加载与手自动切换验证通过（隔离虚拟控制器）。");
+                const auto snapshot = qEnvironmentVariable("STEP_CONTROL_SMOKE_SNAPSHOT");
+                if (!snapshot.isEmpty()) grab().save(snapshot);
+                session.disconnect();
+                smokeExit(0);
+            }
+        });
+        test->start(80);
+        QTimer::singleShot(90000, this, [this] { qWarning() << logs->toPlainText().right(2000); smokeExit(77); });
+    }
+
+    void runSmoke(bool simulate, bool manualOnly = false, bool sourceOnly = false, bool sdkSmoke = false) {
         const QStringList source{"G21 G17 G91", "G01 Z1 F300", "G04 T1", "G02 I0.5 J0 Z1 F300", "M30"};
         auto valid = compileGcodeJob("selftest.nc", source, 1, nativeTemplate);
         auto invalid = compileGcodeJob("blocked.nc", {"G91", "G64 P0.1", "M3 S500", "M30"}, 1, nativeTemplate);
         if (!nativeTemplate.reviewed || !valid.runnable() || valid.points.size() != 74 || invalid.runnable() || invalid.diagnostics.size() != 2) {
             qWarning() << nativeTemplate.error << valid.error << valid.points.size() << invalid.diagnostics;
-            QCoreApplication::exit(11);
+            smokeExit(11);
             return;
         }
         const QStringList generalSource{"G21 G17 G90 G94 G91.1", "G0 X1", "G1 X2 F300", "G3 X1 Y1 I-1 J0", "X0 Y0 I0 J-1", "G91 G1 Z1", "G4 P0.1", "M2"};
         const auto general = compileGcodeJob("absolute_modal.nc", generalSource, 1, nativeTemplate);
+        const auto sdkShort = compileGcodeJob("sdk_short.nc", {"G21 G17 G90 G94 G91.1", "G1 Z1 F60", "G1 X1 F120", "G1 X0 F60", "M2"}, 1, nativeTemplate);
+        const auto sdkStop = compileGcodeJob("sdk_stop.nc", {"G21 G17 G91", "G1 X2 F60", "M2"}, 1, nativeTemplate);
         const auto arcError = compileGcodeJob("bad_arc.nc", {"G90 G1 X1 F300", "G2 X3 Y2 I0 J1", "M30"}, 1, nativeTemplate);
         const auto omitted = compileGcodeJob("dry.nc", {"G90", "M3 S800", "G1 Z1 F300", "M5", "M30"}, 1, nativeTemplate, {5, .05, true});
         if (!general.runnable() || general.points.last().x != 0 || general.points.last().y != 0 || general.points.last().z != 1 ||
             general.files.size() != 5 || general.files.contains("go_home.srp") || arcError.runnable() || !omitted.runnable() ||
             std::count_if(omitted.steps.cbegin(), omitted.steps.cend(), [](const Step& step) { return step.skipped; }) != 2) {
             qWarning() << "Expanded converter failed" << general.error << arcError.error << omitted.error;
-            QCoreApplication::exit(30); return;
+            smokeExit(30); return;
         }
         auto edited = nativeTemplate;
         showNativeFile(edited, "_project.srd");
-        if (edited.sourceFile != "_project.srd" || sourceRowForNativeLine(edited, edited.project, "_project", 1)) { QCoreApplication::exit(31); return; }
+        if (edited.sourceFile != "_project.srd" || sourceRowForNativeLine(edited, edited.project, "_project", 1)) { smokeExit(31); return; }
         const auto replacement = edited.files.value("go_home.srp") + "# Local edit test\n";
         QTemporaryDir editOutput;
         if (!updateNativeFile(edited, "go_home.srp", replacement).isEmpty() || edited.reviewed || edited.runnable() || !edited.modified || !edited.points.isEmpty() ||
             sourceRowForNativeLine(edited, edited.project, "go_home", 1) ||
-            !exportStepJob(edited, editOutput.filePath("edited.zip")).isEmpty()) { QCoreApplication::exit(32); return; }
+            !exportStepJob(edited, editOutput.filePath("edited.zip")).isEmpty()) { smokeExit(32); return; }
         const auto restored = readNativeJob(editOutput.filePath("edited.zip"));
         if (restored.files.size() != nativeTemplate.files.size() || restored.files.value("go_home.srp") != replacement ||
-            restored.files.value("capture_home.srp") != nativeTemplate.files.value("capture_home.srp")) { QCoreApplication::exit(33); return; }
+            restored.files.value("capture_home.srp") != nativeTemplate.files.value("capture_home.srp")) { smokeExit(33); return; }
         load(std::move(valid));
         QTemporaryDir exported;
         const auto package = exported.filePath("converted.zip");
         if (!exported.isValid() || !exportStepJob(job, package).isEmpty() || readNativeJob(package).files != job.files ||
             !QFileInfo::exists(package + ".mapping.json")) {
-            QCoreApplication::exit(17);
+            smokeExit(17);
             return;
         }
         auto linked = readNativeJob(package);
@@ -137,15 +217,15 @@ public:
             sourceRowForNativeLine(linked, "wrong.sr", linked.sourceProgram, first.firstLine) ||
             sourceRowForNativeLine(linked, linked.project, "wrong", first.firstLine)) {
             qWarning() << "Native G-code sidecar round-trip failed" << linked.mappingWarning;
-            QCoreApplication::exit(23); return;
+            smokeExit(23); return;
         }
-        if (!restoreMappedPreview(linked, nativeTemplate) || linked.points.size() != job.points.size()) { QCoreApplication::exit(35); return; }
+        if (!restoreMappedPreview(linked, nativeTemplate) || linked.points.size() != job.points.size()) { smokeExit(35); return; }
         showNativeSource(linked, linked.program);
         const auto redisplay = exported.filePath("browsed_native.zip");
-        if (!exportStepJob(linked, redisplay).isEmpty() || !readNativeJob(redisplay).sourceIsGcode) { QCoreApplication::exit(38); return; }
+        if (!exportStepJob(linked, redisplay).isEmpty() || !readNativeJob(redisplay).sourceIsGcode) { smokeExit(38); return; }
         if (linked.sourceIsGcode || sourceRowForNativeLine(linked, linked.project, linked.sourceProgram, 1) != 1 ||
             sourceRowForNativeLine(linked, linked.project, linked.sourceProgram, linked.source.size() + 1)) {
-            QCoreApplication::exit(24); return;
+            smokeExit(24); return;
         }
         QFile sidecar(package + ".mapping.json");
         sidecar.open(QIODevice::ReadOnly);
@@ -167,18 +247,18 @@ public:
         duplicate.insert("source_line", 1);
         entries.append(duplicate);
         overlapping.insert("source_map", entries);
-        if (!reject(changedHash) || !reject(changedSource) || !reject(overlapping)) { QCoreApplication::exit(25); return; }
+        if (!reject(changedHash) || !reject(changedSource) || !reject(overlapping)) { smokeExit(25); return; }
         const auto rawLine = nativeTemplate.source.indexOf("        Lin(cpOrigin,dynPath,NULL,NULL,Default,WORLD);") + 1;
         if (!nativeTemplate.nativeInput || nativeTemplate.source.isEmpty() || rawLine < 1 ||
             sourceRowForNativeLine(nativeTemplate, nativeTemplate.project, nativeTemplate.program, rawLine) != rawLine) {
-            QCoreApplication::exit(26); return;
+            smokeExit(26); return;
         }
         load(nativeTemplate);
         const auto nativeSnapshot = qEnvironmentVariable("STEP_NATIVE_SOURCE_SNAPSHOT");
         if (sourceTable->rowCount() != nativeTemplate.source.size() || sourceGroup->title() != "STEP / SRP 原文" ||
             sourceTree->topLevelItemCount() != 1 || sourceTree->topLevelItem(0)->childCount() != 4 ||
             plot->grab().toImage().pixelColor(5, 5) != QColor("#f7fafc") ||
-            (!nativeSnapshot.isEmpty() && !grab().save(nativeSnapshot))) { QCoreApplication::exit(27); return; }
+            (!nativeSnapshot.isEmpty() && !grab().save(nativeSnapshot))) { smokeExit(27); return; }
         load(compileGcodeJob("selftest.nc", source, 1, nativeTemplate));
         qInfo() << "Native SRP source, verified G-code round-trip, mismatched hashes and ambiguous mapping checks passed";
         if (!simulate) {
@@ -194,45 +274,60 @@ public:
                     dialog->accept();
                 });
                 openConversionDialog(this, nativeTemplate, workspace, general.inputBytes);
-                if (!captured) { QCoreApplication::exit(34); return; }
+                if (!captured) { smokeExit(34); return; }
             }
             const auto snapshot = qEnvironmentVariable("STEP_WORKSTATION_SNAPSHOT");
             const bool layout = sourceTable->rowCount() == source.size() && !stopButton->isEnabled() &&
                 ip->text() == DefaultCabinetEndpoint && ip->isEnabled() && !ip->isReadOnly();
-            QCoreApplication::exit(layout && (snapshot.isEmpty() || grab().save(snapshot)) ? 0 : 12);
+            smokeExit(layout && (snapshot.isEmpty() || grab().save(snapshot)) ? 0 : 12);
             return;
         }
         recordRoot = QDir(workspace).filePath("tmp/workstation_experiment_verification");
         experimentLabel->setText("原生回归试次");
         const auto generalZip = exported.filePath("general.zip");
-        if (!exportStepJob(general, generalZip).isEmpty()) { QCoreApplication::exit(36); return; }
+        if (!exportStepJob(general, generalZip).isEmpty()) { smokeExit(36); return; }
         auto testJob = readNativeJob(generalZip);
-        if (!restoreMappedPreview(testJob, nativeTemplate) || !testJob.trustedGcode || !testJob.runnable()) { QCoreApplication::exit(37); return; }
+        if (!restoreMappedPreview(testJob, nativeTemplate) || !testJob.trustedGcode || !testJob.runnable()) { smokeExit(37); return; }
         load(Job{});
         session.prepare(job);
         auto* test = new QTimer(this);
-        connect(test, &QTimer::timeout, this, [this, testJob, sourceOnly, phase = manualOnly ? 2 : -1, issued = false, baseline = QString(), frameIndex = 0, jogPhase = 0]() mutable {
-            if (session.lost && !session.preparing && !session.connected()) { qWarning() << logs->toPlainText().right(1800); QCoreApplication::exit(57); return; }
+        connect(test, &QTimer::timeout, this, [this, testJob, general, sdkShort, sdkStop, sdkSmoke, sourceOnly, phase = sdkSmoke ? -2 : manualOnly ? 2 : -1, issued = false, baseline = QString(), frameIndex = 0, jogPhase = 0, jogStopped = false, sendArmed = false, sdkPass = 0, sdkStopRequested = false, sawScroll = false, ticks = 0, allTicks = 0]() mutable {
+            ++allTicks;
+            if (allTicks % 50 == 0)
+                qWarning() << "tick heartbeat phase" << phase << "frame" << frameIndex << "issued" << issued
+                    << "lost" << session.lost << "preparing" << session.preparing << "fresh" << session.fresh()
+                    << "connected" << session.connected() << "modal" << (QApplication::activeModalWidget() != nullptr);
+            if (session.lost && !session.preparing && !session.connected()) { qWarning() << logs->toPlainText().right(1800); smokeExit(57); return; }
+            if (phase == -2 && session.fresh()) {
+                if (session.value("mode") != "2") {
+                    if (session.pending.isEmpty()) session.request("auto");
+                    return;
+                }
+                session.simulated = false; // Still attached to the verified, isolated virtual controller.
+                load(sdkShort);
+                phase = 3;
+                return;
+            }
             if (phase == -1 && session.fresh()) {
-                if (!canOpenFile() || !openButton->property("primary").toBool()) { QCoreApplication::exit(20); return; }
+                if (!canOpenFile() || !openButton->property("primary").toBool()) { smokeExit(20); return; }
                 selectJob(testJob);
                 phase = 0;
             }
             if (phase < 2 && !issued && canStart()) {
-                if (!startButton->property("primary").toBool()) { QCoreApplication::exit(21); return; }
+                if (!startButton->property("primary").toBool()) { smokeExit(21); return; }
                 if (phase == 0) {
                     const auto writable = recordRoot;
                     recordRoot = QCoreApplication::applicationFilePath();
                     const bool rejected = !queueExperiment() && session.pending.isEmpty();
                     recordRoot = writable;
-                    if (!rejected) { QCoreApplication::exit(15); return; }
+                    if (!rejected) { smokeExit(15); return; }
                 }
                 issued = queueExperiment();
             }
             if (phase == 0 && session.value("outcome") == "completed") {
                 if (!sawSource || donePoint != job.points.size() - 1 || sourceTable->rowCount() != testJob.source.size() ||
                     !verifyExperiment("completed", true)) {
-                    QCoreApplication::exit(13);
+                    smokeExit(13);
                     return;
                 }
                 qInfo() << "G-code mapping, storage gate and completed experiment archive passed";
@@ -244,54 +339,78 @@ public:
             } else if (phase == 1 && issued && session.value("state") == "0" && stopButton->isEnabled() &&
                        current > 0 && job.source.value(current - 1).trimmed().startsWith("Lin(cpOrigin,")) {
                 if (current != session.value("line").toInt() || sourceTable->item(current - 1, 0)->background().color() != QColor("#ffebad")) {
-                    QCoreApplication::exit(28); return;
+                    smokeExit(28); return;
                 }
                 const auto snapshot = qEnvironmentVariable("STEP_NATIVE_RUNNING_SNAPSHOT");
                 if (!snapshot.isEmpty()) grab().save(snapshot);
                 qInfo() << "Native controller line matched yellow SRP source row" << current;
                 stopButton->click();
             } else if (phase == 1 && session.value("outcome") == "stopped" && !session.waitingStop) {
-                if (!verifyExperiment("stopped", false)) { QCoreApplication::exit(16); return; }
-                if (!verifyPairedHighlight()) { QCoreApplication::exit(29); return; }
+                if (!verifyExperiment("stopped", false)) { smokeExit(16); return; }
+                if (!verifyPairedHighlight()) { smokeExit(29); return; }
                 qInfo() << "Reviewed helix ZIP and stopped experiment archive passed";
                 session.disconnect();
-                if (sourceOnly) { QCoreApplication::exit(0); return; }
+                if (sourceOnly) { smokeExit(0); return; }
                 ++phase;
                 issued = false;
                 load(Job{});
                 session.prepare(job);
             } else if (phase == 2 && session.fresh() && session.control && session.value("mode") == "1") {
                 const QStringList frames{"joints", "world", "base", "tool", "user SimPart", "world", "world"};
-                if (issued && session.pending.isEmpty()) {
+                // 点动保持期间 pending 不清空，须在命令结束前用实时速度/轴位打断，否则撑满 10 秒保护上限。
+                if (issued && jogPhase == 1 && !jogStopped && frameIndex <= 5 && session.pending.startsWith("jog ") &&
+                    (session.value("axes") != baseline || std::abs(session.value("speed").toDouble()) >= .01)) {
+                    session.stop();
+                    jogStopped = true;
+                }
+                if (issued && session.pending.isEmpty() && !session.waitingStop) {
                     if (jogPhase == 0) {
                         const int reported = session.value("jogref").toInt();
                         const int resolved = reported == 4 && session.value("refname") == "ROBOTBASE" ? 2 : reported;
                         if (resolved != (frameIndex >= 5 ? 1 : frameIndex)) {
                             qWarning() << "Frame selection failed" << frames[frameIndex] << logs->toPlainText().right(1200);
-                            QCoreApplication::exit(18);
+                            smokeExit(18);
                             return;
                         }
                         ++jogPhase;
                     } else {
+                        // 面板模式下点动按住持续，观察到运动后先发送停止，再校验结果。
+                        // 点动保持期间六轴回读可能不刷新，用实时末端速度先判运动，避免撑满 10 秒保护上限。
+                        if (!jogStopped && frameIndex <= 5) {
+                            if (session.value("axes") == baseline && std::abs(session.value("speed").toDouble()) < .01) return;
+                            session.stop();
+                            jogStopped = true;
+                            return;
+                        }
                         if ((frameIndex <= 5 && (session.value("axes") == baseline || session.value("jogset").toDouble() <= 0)) ||
                             (frameIndex == 6 && session.value("axes") != baseline) || std::abs(session.value("speed").toDouble()) >= .01) {
                             qWarning() << "Direct speed jog failed" << frames[frameIndex] << logs->toPlainText().right(1200);
-                            QCoreApplication::exit(19);
+                            smokeExit(19);
                             return;
                         }
                         qInfo() << "Direct manual jog passed" << frames[frameIndex] << session.value("jogset") << session.value("jogunit");
                         ++frameIndex;
                         jogPhase = 0;
+                        jogStopped = false;
                     }
                     issued = false;
                 }
                 if (frameIndex == 7) {
-                    if (streamedJogSamples < 5) { QCoreApplication::exit(22); return; }
+                    if (streamedJogSamples < 5) { smokeExit(22); return; }
                     if (auto* tabs = findChild<QTabWidget*>("workTabs")) tabs->setCurrentIndex(1);
                     const auto snapshot = qEnvironmentVariable("STEP_WORKSTATION_SNAPSHOT");
                     if (!snapshot.isEmpty()) grab().save(snapshot);
+                    if (sdkSmoke) {
+                        // SDK 直发冒烟：切到实机分支逻辑（仍连虚拟控制器），加载未打包的转换作业。
+                        session.simulated = false;
+                        load(general);
+                        phase = 3;
+                        qWarning() << "phase3 switch done simulated=" << session.simulated
+                            << "jobProg=" << job.program << "nativeInput=" << job.nativeInput;
+                        return;
+                    }
                     session.disconnect();
-                    QCoreApplication::exit(0);
+                    smokeExit(0);
                 } else if (!issued) {
                     if (jogPhase == 0) issued = session.request(frames[frameIndex]);
                     else {
@@ -300,12 +419,85 @@ public:
                         issued = session.request(QString("jog %1 1+ %2").arg(code, frameIndex == 0 ? "1.0" : frameIndex == 5 ? "250.0" : frameIndex == 6 ? "250.01" : "12.5"));
                     }
                 }
+            } else if (phase == 3) {
+                if (sdkPass == 2 && sendArmed && !sdkStopRequested && session.value("state") == "0" &&
+                    plot->tcp && std::abs(plot->tcp->x) >= .02) {
+                    sdkStopRequested = session.emergencyStop();
+                    return;
+                }
+                if (sdkPass == 2 && sdkStopRequested && session.value("outcome") == "stopped" &&
+                    !session.waitingEstop && session.pending.isEmpty()) {
+                    if (session.value("motion_rest") != "1" || !plot->tcp || std::abs(plot->tcp->x) >= 1.9 ||
+                        !verifyExperiment("stopped", false)) { smokeExit(60); return; }
+                    qInfo() << "SDK motion interrupted by STOP+MSTOP and confirmed at rest";
+                    session.disconnect();
+                    smokeExit(0);
+                    return;
+                }
+                if (sendArmed && !experiment.active() && session.value("outcome") != "completed" &&
+                    !(sdkPass == 2 && session.value("outcome") == "stopped")) {
+                    qWarning() << "SDK direct-send did not complete" << logs->toPlainText().right(1600);
+                    session.disconnect();
+                    smokeExit(59);
+                    return;
+                }
+                if (ticks == 0) qWarning() << "phase3 branch entered sendArmed=" << sendArmed;
+                if (!sendArmed) {
+                    ++ticks;
+                    if (ticks % 25 == 0)
+                        log(QString("phase3 gate fresh=%1 control=%2 waitingStop=%3 pending=%4 simulated=%5 nativeInput=%6 sdkProg=%7 "
+                            "jobProg=%8 ctlProg=%9 motion_rest=%10 error=%11 mode=%12 state=%13 loaded=%14 canSend=%15")
+                            .arg(session.fresh()).arg(session.control).arg(session.waitingStop).arg(session.pending,
+                            session.simulated).arg(job.nativeInput).arg(!job.sdkProgram.isEmpty()).arg(job.program,
+                            session.value("program"), session.value("motion_rest"), session.value("error"),
+                            session.value("mode"), session.value("state")).arg(loaded()).arg(canSend()));
+                    if (!session.fresh() || !session.control || !canSend()) return;
+                    QTimer::singleShot(60, this, [this] {
+                        if (auto* dialog = qobject_cast<QMessageBox*>(QApplication::activeModalWidget()))
+                            if (auto* yes = dialog->button(QMessageBox::Yes)) yes->click();
+                    });
+                    startButton->click();
+                    sendArmed = true;
+                    return;
+                }
+                if (session.value("state") == "0" && current > 0 &&
+                    std::any_of(job.steps.cbegin(), job.steps.cend(), [&](const Step& step) {
+                        const auto line = session.value("line").toInt();
+                        return step.row == current && line >= step.firstLine && line <= step.lastLine;
+                    }) && sourceTable->item(current - 1, 0)->background().color() == QColor("#ffebad")) sawScroll = true;
+                if (sendArmed && session.pending.isEmpty() && session.value("outcome") == "completed") {
+                    if (!sawScroll || !verifyExperiment("completed", true)) {
+                        qWarning() << "SDK sendrun failed" << sawScroll << logs->toPlainText().right(1600);
+                        smokeExit(58);
+                        return;
+                    }
+                    if (sdkPass == 0) {
+                        qInfo() << "SDK short motion, feed changes, scrolling source and measured endpoint passed";
+                        load(general);
+                        sdkPass = 1;
+                        sendArmed = sawScroll = false;
+                        ticks = 0;
+                        return;
+                    }
+                    qInfo() << "SDK repeated direct-send, multi-batch arc path and completed experiment passed";
+                    load(sdkStop);
+                    sdkPass = 2;
+                    sendArmed = sawScroll = false;
+                    ticks = 0;
+                }
             }
         });
         test->start(80);
-        QTimer::singleShot(sourceOnly ? 120000 : 61000, this, [this] {
+        QTimer::singleShot(sdkSmoke ? 240000 : 120000, this, [this] {
+            log(QString("smoke timeout axes=%1 jogset=%2 command_busy=%3 pending=%4 waitingStop=%5 fresh=%6 control=%7 "
+                "motion_rest=%8 error=%9 program=%10 mode=%11 state=%12 outcome=%13 line=%14")
+                .arg(session.value("axes"), session.value("jogset"), session.value("command_busy"), session.pending)
+                .arg(session.waitingStop).arg(session.fresh()).arg(session.control)
+                .arg(session.value("motion_rest"), session.value("error"), session.value("program"),
+                session.value("mode"), session.value("state"), session.value("outcome"), session.value("line")));
+            log("smoke timeout tail: " + logs->toPlainText().right(900));
             if (session.connected()) session.stop();
-            QCoreApplication::exit(14);
+            smokeExit(14);
         });
     }
 
@@ -318,7 +510,7 @@ public:
         session.prepare(job);
         auto* test = new QTimer(this);
         connect(test, &QTimer::timeout, this, [this, phase = 0, baseline = QString(), excursion = QString(), movingFrom = QString(), stopped = false, peakTCP = 0.]() mutable {
-            if (session.lost && !session.preparing && !session.connected()) { qWarning() << logs->toPlainText().right(1800); QCoreApplication::exit(57); return; }
+            if (session.lost && !session.preparing && !session.connected()) { qWarning() << logs->toPlainText().right(1800); smokeExit(57); return; }
             if (!session.fresh() || session.waitingStop) return;
             if (session.value("home_returning") == "1") {
                 bool ok = false;
@@ -327,7 +519,7 @@ public:
                 if (!ok || !std::isfinite(speed) || cap <= 0 || cap > 250 || std::abs(speed) > cap || session.value("return_unit") != "mm_s") {
                     session.stop();
                     qWarning() << "TCP return speed or unit check failed";
-                    QCoreApplication::exit(56); return;
+                    smokeExit(56); return;
                 }
                 peakTCP = std::max(peakTCP, std::abs(speed));
             }
@@ -344,32 +536,32 @@ public:
                     !readWorkstationOrigin(config.filePath("origins.json"), key) ||
                     readWorkstationOrigin(config.filePath("origins.json"), originDeviceKey(true, session.model, "other", session.address))) {
                     qWarning() << "Workstation-origin persistence or controller isolation failed";
-                    QCoreApplication::exit(41); return;
+                    smokeExit(41); return;
                 }
                 auto target = baseline.split(',');
                 bool ok = false;
                 const double firstAxis = target.value(0).toDouble(&ok);
-                if (!ok || target.size() != 6) { QCoreApplication::exit(42); return; }
+                if (!ok || target.size() != 6) { smokeExit(42); return; }
                 target[0] = QString::number(firstAxis + .1, 'f', 6);
                 excursion = target.join(',');
                 QString command = "planhome_tcp 100.0";
                 for (const auto& value : target) command += " " + value;
-                if (!session.request(command)) { QCoreApplication::exit(42); return; }
+                if (!session.request(command)) { smokeExit(42); return; }
                 phase = 1;
                 return;
             }
             if (!session.value("home_plan_error").isEmpty() && session.value("home_plan_error") != "none") {
                 qWarning() << "Home smoke planning failed" << session.value("home_plan_error");
-                QCoreApplication::exit(43); return;
+                smokeExit(43); return;
             }
             if (phase >= 2 && session.value("home_return_result") == "unconfirmed" && session.value("motion_rest") == "1") {
                 qWarning() << "Home smoke return was not confirmed" << logs->toPlainText().right(1800);
                 session.disconnect();
-                QCoreApplication::exit(55); return;
+                smokeExit(55); return;
             }
             if (phase == 1 && session.value("home_plan_ready") == "1" && !session.value("home_path").isEmpty()) {
                 qInfo() << "Home smoke outbound requested, TCP cap 100 mm/s";
-                if (!session.request("returnhome " + session.value("home_plan_id"))) { QCoreApplication::exit(44); return; }
+                if (!session.request("returnhome " + session.value("home_plan_id"))) { smokeExit(44); return; }
                 phase = 2;
                 return;
             }
@@ -378,17 +570,17 @@ public:
                 const auto target = excursion.split(','), actual = axes.split(',');
                 bool reached = target.size() == 6 && actual.size() == 6;
                 for (int i = 0; reached && i < 6; ++i) reached = std::abs(actual[i].toDouble() - target[i].toDouble()) <= .02;
-                if (!reached) { QCoreApplication::exit(45); return; }
+                if (!reached) { smokeExit(45); return; }
                 QString command = "planhome_tcp 100.0";
                 for (const auto& value : baseline.split(',')) command += " " + value;
-                if (!session.request(command)) { QCoreApplication::exit(46); return; }
+                if (!session.request(command)) { smokeExit(46); return; }
                 phase = 3;
                 return;
             }
             if (phase == 3 && session.value("home_plan_ready") == "1" && !session.value("home_path").isEmpty()) {
                 if (session.value("program") != "" || !session.request("returnhome " + session.value("home_plan_id"))) {
                     qWarning() << "Independent return plan depended on a loaded project";
-                    QCoreApplication::exit(47); return;
+                    smokeExit(47); return;
                 }
                 phase = 4;
                 return;
@@ -398,22 +590,22 @@ public:
                 const auto target = baseline.split(','), actual = axes.split(',');
                 bool reached = target.size() == 6 && actual.size() == 6;
                 for (int i = 0; reached && i < 6; ++i) reached = std::abs(actual[i].toDouble() - target[i].toDouble()) <= .02;
-                if (!reached) { QCoreApplication::exit(48); return; }
+                if (!reached) { smokeExit(48); return; }
                 QString command = "planhome_tcp 25.0";
                 for (const auto& value : excursion.split(',')) command += " " + value;
-                if (!session.request(command)) { QCoreApplication::exit(49); return; }
+                if (!session.request(command)) { smokeExit(49); return; }
                 phase = 5;
                 return;
             }
             if (phase == 5 && session.value("home_plan_ready") == "1" && !session.value("home_path").isEmpty()) {
                 movingFrom = axes;
-                if (!session.request("returnhome " + session.value("home_plan_id"))) { QCoreApplication::exit(50); return; }
+                if (!session.request("returnhome " + session.value("home_plan_id"))) { smokeExit(50); return; }
                 phase = 8;
                 return;
             }
             if (phase == 8 && session.value("home_returning") == "1" &&
                 std::abs(axes.section(',', 0, 0).toDouble() - movingFrom.section(',', 0, 0).toDouble()) >= .005 && !stopped) {
-                if (!stopButton->isEnabled() || session.canClose()) { QCoreApplication::exit(53); return; }
+                if (!stopButton->isEnabled() || session.canClose()) { smokeExit(53); return; }
                 session.stop();
                 stopped = true;
                 return;
@@ -422,11 +614,11 @@ public:
                 session.value("home_return_result") == "stopped" && session.value("motion_rest") == "1") {
                 const auto start = movingFrom.split(','), actual = axes.split(',');
                 if (start.size() != 6 || actual.size() != 6 || std::abs(actual[0].toDouble() - start[0].toDouble()) < .001) {
-                    QCoreApplication::exit(54); return;
+                    smokeExit(54); return;
                 }
                 qInfo() << "Home smoke passed: persistent device-scoped origin, project-independent PTP return, TCP caps 100/25 mm/s, and mid-motion stop; peak TCP mm/s =" << peakTCP;
                 session.disconnect();
-                QCoreApplication::exit(0);
+                smokeExit(0);
             }
         });
         test->start(80);
@@ -435,7 +627,7 @@ public:
             if (session.connected()) session.stop();
             QTimer::singleShot(2500, this, [this] {
                 if (session.canClose()) session.disconnect();
-                QCoreApplication::exit(48);
+                smokeExit(48);
             });
         });
     }
@@ -511,6 +703,21 @@ protected:
     }
 
 private:
+    void smokeExit(int code) {
+        static int calls = 0;
+        ++calls;
+        QString trace;
+        if (calls <= 2 || calls % 100 == 0) {
+            void* frames[14]{};
+            const auto count = CaptureStackBackTrace(1, 14, frames, nullptr);
+            trace = QString(" base=%1").arg(quintptr(GetModuleHandleW(nullptr)), 0, 16);
+            for (ULONG i = 0; i < count; ++i) trace += QString(" %1").arg(quintptr(frames[i]), 0, 16);
+        }
+        log(QString("smoke exit code=%1 calls=%2%3").arg(code).arg(calls).arg(trace));
+        if (calls > 60) { log("smoke exit loop detected, hard exit"); std::_Exit(95); }
+        QCoreApplication::exit(code);
+    }
+
     void build() {
         auto* base = new QWidget;
         setCentralWidget(base);
@@ -543,15 +750,13 @@ private:
             if (QDir().mkpath(recordRoot)) QDesktopServices::openUrl(QUrl::fromLocalFile(recordRoot));
             else log("无法打开实验记录目录。");
         });
-        auto* cabinetMenu = menu->addMenu("实机授权");
-        authorizeAction = cabinetMenu->addAction("现场启停授权…", this, &Workstation::authorize);
         menu->addAction("界面与工程流程说明…", this, [this] {
             QMessageBox::information(this, "界面与工程流程",
                 "工程文件：完整显示主程序、前置程序及 SRD 变量。旧工程可能自带 go_home，本机回程由上位机独立规划，不调用该文件。选择文件查看，点「编辑文件」修改本地副本，再另存 ZIP。\n\n"
                 "转换流程：G 代码转 STEP 工程 → STEPStudio 仿真验证 → 导入同版本 ZIP。映射文件用于关联 G 代码和原生行号。\n\n"
                 "WORLD / 相对起点：以记录的 TCP 起点为零，轴向平行世界坐标系，单位 mm。等轴、XY、XZ 是观察角度。\n\n"
                 "绿线是已走过路径，黄线是当前段，灰线待走；蓝色虚线是控制器回读轨迹，十字圆标记是当前 TCP。\n\n"
-                "仿真示例、实验记录目录和实机授权也在本菜单。软件「停止发送」使用普通 STOP，实体急停在示教器上操作。");
+                "仿真示例和实验记录目录也在本菜单。「停止发送」用普通 STOP，「急停」直发 STOP+MSTOP 并中断点动/回程循环；两者都是网络软件指令，断电级急停始终在示教器实体按钮上操作。柜内程序可在自动模式下由上位机加载并启动，程序文件传入控制柜仍需 STEPStudio 或 U 盘。");
         });
         more->setMenu(menu);
         toolbar->addWidget(more);
@@ -575,7 +780,7 @@ private:
         connect(linkButton, &QPushButton::clicked, this, [this] {
             if (session.connected()) session.disconnect();
             else if (linkType->currentIndex() == 0) prepare();
-            else if (linkType->currentIndex() == 1) connectReal(false);
+            else if (linkType->currentIndex() == 1) connectReal();
         });
         linkLabel = new QLabel;
         machine = new QLabel;
@@ -703,7 +908,7 @@ private:
         manualLayout->addWidget(linearJogSpeed, 1, 1);
         manualLayout->addWidget(new QLabel("关节/姿态速度"), 1, 2);
         manualLayout->addWidget(angularJogSpeed, 1, 3);
-        manualFeedback = new QLabel("输入目标速度。手动 TCP 速度上限 250 mm/s，单次点动 0.30 s。");
+        manualFeedback = new QLabel("输入目标速度。手动 TCP 速度上限 250 mm/s，按住方向按钮连续点动，松开即停。");
         manualFeedback->setWordWrap(true);
         manualLayout->addWidget(manualFeedback, 2, 0, 1, 4);
         for (int axis = 0; axis < 6; ++axis) {
@@ -717,15 +922,22 @@ private:
                 auto* button = new QPushButton(dir ? "+" : "−");
                 manualButtons << button;
                 manualLayout->addWidget(button, axis + 3, dir + 2);
-                connect(button, &QPushButton::clicked, this, [this, axis, dir] {
+                // 按住期间后台持续点动，松开排队 stop；queued 时 stop 会直接撤销该点动。
+                const auto holding = std::make_shared<bool>(false);
+                connect(button, &QPushButton::pressed, this, [this, axis, dir, holding] {
                     const int reported = session.value("jogref").toInt();
                     const int ref = reported == 4 && session.value("refname") == "ROBOTBASE" ? 2 : reported;
                     if (ref < 0 || ref > 4) return;
                     const auto speed = ref != 0 && axis < 3 ? linearJogSpeed->value() : angularJogSpeed->value();
                     if (!(speed > 0)) return;
                     if (session.request(QString("jog %1 %2%3 %4").arg(QString("JWBTU").mid(ref, 1)).arg(axis + 1).arg(dir ? '+' : '-')
-                                        .arg(speed, 0, 'f', 3)))
+                                        .arg(speed, 0, 'f', 3))) {
+                        *holding = true;
                         homeDirty = true;
+                    }
+                });
+                connect(button, &QPushButton::released, this, [this, holding] {
+                    if (std::exchange(*holding, false)) session.stop();
                 });
             }
         }
@@ -754,7 +966,7 @@ private:
         homeInfo = new QLabel("尚未设置起点。先手动移动，再记录当前位置。");
         homeInfo->setWordWrap(true);
         homeLayout->addWidget(homeInfo, 1, 0, 1, 4);
-        auto* homeHint = new QLabel("起点由上位机按控制器身份保存，与当前工程无关。回程先生成六轴及 TCP 预览，再由你确认；路径为关节分段运动，未做环境碰撞检测。仅本机仿真允许移动，实机连接保持只读。");
+        auto* homeHint = new QLabel("起点由上位机按控制器身份保存，与当前工程无关。回程先生成六轴及 TCP 预览，再由你确认；路径为关节分段运动，未做环境碰撞检测。手动和自动模式下均可回程：自动模式会先切到手动执行、完成后切回。仿真与实机均可用。");
         homeHint->setWordWrap(true);
         homeLayout->addWidget(homeHint, 2, 0, 1, 4);
         manualLayout->addWidget(homeGroup, 10, 0, 1, 4);
@@ -791,14 +1003,51 @@ private:
         stopButton->setObjectName("stop");
         run->addWidget(stopButton);
         connect(stopButton, &QPushButton::clicked, this, [this] { session.stop(); });
-        run->addWidget(new QLabel("真正的急停请用示教器实体按钮"));
+        estopButton = new QPushButton("急停");
+        estopButton->setObjectName("estop");
+        estopButton->setToolTip("软件急停：立即发送 STOP（停程序）+ MSTOP（停运动），并中断点动/回程循环。走网络指令，不是断电级急停；断电级急停用示教器实体按钮。");
+        run->addWidget(estopButton);
+        connect(estopButton, &QPushButton::clicked, this, [this] { session.emergencyStop(); });
+        run->addWidget(new QLabel("急停为软件停止指令；断电级急停用示教器实体按钮"));
         modeManual = new QPushButton("切到手动");
         modeAuto = new QPushButton("切到自动");
+        enableMotorButton = new QPushButton("使能伺服");
+        enableMotorButton->setToolTip("单独请求伺服使能，不启动程序。手动模式仍受柜内模式选择、安全回路及示教器使能装置约束，以实际回读为准。");
         auto* mode = new QHBoxLayout;
-        for (auto* button : {modeManual, modeAuto}) mode->addWidget(button);
+        for (auto* button : {modeManual, modeAuto, enableMotorButton}) mode->addWidget(button);
         run->addLayout(mode);
-        connect(modeManual, &QPushButton::clicked, this, [this] { session.request("manual"); });
-        connect(modeAuto, &QPushButton::clicked, this, [this] { session.request("auto"); });
+        connect(modeManual, &QPushButton::clicked, this, [this] { requestControl("manual", "已请求切到手动；保留已加载程序，不请求伺服使能。"); });
+        connect(modeAuto, &QPushButton::clicked, this, [this] { requestControl("auto", "已请求切到自动；保留已加载程序，不请求伺服使能。"); });
+        connect(enableMotorButton, &QPushButton::clicked, this, [this] { requestControl("enable", "已单独请求伺服使能，不启动程序；等待控制器回读确认。"); });
+        auto* programActions = new QHBoxLayout;
+        loadCurrentProgramButton = new QPushButton("加载当前程序");
+        loadCurrentProgramButton->setToolTip("加载左侧 STEP 程序：停稳后卸载柜内旧程序，再加载同名的柜内程序；不使能、不启动。ZIP 必须已通过 STEPStudio 或 U 盘传入控制柜。");
+        unloadProgramButton = new QPushButton("卸载程序");
+        unloadProgramButton->setToolTip("仅在停稳状态下卸载当前前台程序，不删除柜内文件，不启动或使能机器人。");
+        programActions->addWidget(loadCurrentProgramButton);
+        programActions->addWidget(unloadProgramButton);
+        run->addLayout(programActions);
+        connect(loadCurrentProgramButton, &QPushButton::clicked, this, [this] {
+            projectNameEdit->setText(job.project);
+            programNameEdit->setText(job.sourceProgram.isEmpty() ? job.program : job.sourceProgram);
+            loadCabinetProgram();
+        });
+        connect(unloadProgramButton, &QPushButton::clicked, this, [this] { requestControl("unload", "已请求卸载当前柜内程序，等待空程序回读；不会删除文件。"); });
+        auto* cabinetProgram = new QGridLayout;
+        cabinetProgram->addWidget(new QLabel("柜内程序"), 0, 0);
+        projectNameEdit = new QLineEdit;
+        projectNameEdit->setPlaceholderText("工程名");
+        projectNameEdit->setToolTip("控制柜内已存在的工程名，如 SR175_3200_Helix。限英文/数字/._-。");
+        cabinetProgram->addWidget(projectNameEdit, 0, 1);
+        programNameEdit = new QLineEdit;
+        programNameEdit->setPlaceholderText("程序名");
+        programNameEdit->setToolTip("该工程下的程序名，如 helix_25mms。限英文/数字/._-。");
+        cabinetProgram->addWidget(programNameEdit, 0, 2);
+        loadProgramButton = new QPushButton("加载");
+        loadProgramButton->setToolTip("把柜内指定工程/程序加载为当前程序（自动模式下加载后可点开始）。程序文件传入控制柜仍需 STEPStudio 文件管理或 U 盘，SDK 未开放文件导入。");
+        cabinetProgram->addWidget(loadProgramButton, 0, 3);
+        run->addLayout(cabinetProgram);
+        connect(loadProgramButton, &QPushButton::clicked, this, &Workstation::loadCabinetProgram);
         stateLabel = new QLabel;
         stateLabel->setObjectName("statusBanner");
         stateLabel->setWordWrap(true);
@@ -870,8 +1119,8 @@ private:
     }
 
     bool canOpenFile() const {
-        if (session.preparing || experiment.active()) return false;
-        return !session.connected() || (session.simulated ? session.canClose() : !session.control && session.fresh());
+        if (session.preparing || experiment.active() || homePlanPending) return false;
+        return !session.connected() || (session.fresh() && session.canClose() && session.value("motion_rest") == "1");
     }
 
     void selectJob(Job selected) {
@@ -882,20 +1131,20 @@ private:
             session.disconnect();
             if (session.active()) return;
         }
+        const bool unloadOld = session.connected() && !session.simulated && session.control && selected.error.isEmpty();
+        if (unloadOld && (session.value("error") == "1" || !session.request("unload"))) {
+            log("新作业未导入：当前不能卸载旧程序，请先停止并处理控制器报警或等待中的操作。");
+            return;
+        }
         lastOperationError.clear();
+        submittedSdkProgram.clear();
+        sdkControllerProgram.clear();
+        sdkProgramFile.reset();
         load(std::move(selected));
+        if (unloadOld) log("新作业已导入上位机，已请求卸载柜内旧程序；卸载确认后点「加载当前程序」，加载不会使能或运行。");
+        else if (session.connected() && !session.simulated && !session.control)
+            log("当前为只读连接：新文件仅用于本地查看，未卸载或加载柜内程序。");
         if (replaceSimulation && job.runnable()) prepare();
-    }
-
-    bool canAuthorize() const {
-        return job.reviewed && linkType->currentIndex() == 1 && !experiment.active() &&
-            (!session.active() || (session.fresh() && !session.control && (session.value("state") == "1" || session.value("state") == "2")));
-    }
-
-    void authorize() {
-        if (!canAuthorize()) return;
-        if (session.connected()) session.disconnect();
-        if (!session.active()) connectReal(true);
     }
 
     void exportJob() {
@@ -1014,6 +1263,8 @@ private:
     void load(Job value) {
         if (value.nativeInput && value.sourceIsGcode) restoreMappedPreview(value, nativeTemplate);
         job = std::move(value);
+        projectNameEdit->setText(job.project);
+        programNameEdit->setText(job.sourceProgram.isEmpty() ? job.program : job.sourceProgram);
         skippedRows.clear();
         for (const auto& step : job.steps) if (step.skipped) skippedRows.insert(step.row);
         resetProgress();
@@ -1071,7 +1322,7 @@ private:
         }
     }
 
-    void connectReal(bool authorize) {
+    void connectReal() {
         if (session.active() || linkType->currentIndex() != 1) return;
         const auto parts = ip->text().trimmed().split(':');
         const auto address = QHostAddress(parts.value(0));
@@ -1081,18 +1332,10 @@ private:
             log("请输入控制柜的内网 IPv4，STEP SDK 端口固定为 30312。");
             return;
         }
-        QString serial;
-        if (authorize) {
-            if (!job.reviewed) { log("现场启停授权需要先载入已核对的螺旋 v4。"); return; }
-            if (QMessageBox::question(this, "现场启停授权", "请确认现场已验收同版工程和路径、柜号已核对，且现场人员允许电脑启停。") != QMessageBox::Yes) return;
-            bool ok = false;
-            serial = QInputDialog::getText(this, "核对控制柜身份", "请输入现场核对的控制器序列号", QLineEdit::Normal, {}, &ok).trimmed();
-            if (!ok || serial.isEmpty()) return;
-        }
         resetProgress();
         hadFeedback = false;
         lastOperationError.clear();
-        session.connectReal(address.toString(), serial);
+        session.connectReal(address.toString());
     }
 
     void prepare() {
@@ -1123,7 +1366,8 @@ private:
     }
 
     void planHomeReturn() {
-        if (!session.fresh() || !session.simulated || !session.control || session.value("mode") != "1" ||
+        const auto mode = session.value("mode");
+        if (!session.fresh() || !session.control || (mode != "0" && mode != "1" && mode != "2" && mode != "3") ||
             session.value("enabled") != "1" || session.value("motion_rest") != "1" || !workstationOrigin ||
             homeDeviceKey.isEmpty() || homeDeviceKey != originDeviceKey(session.simulated, session.model, session.identity, session.address)) return;
         if (workstationOrigin->tool != session.value("toolname")) {
@@ -1170,7 +1414,9 @@ private:
                 (i < 6 ? axes : tcp) << QString::number(value, 'f', 2);
             }
             Point point{tcp[0].toDouble(), tcp[1].toDouble(), tcp[2].toDouble()};
-            if (session.simulated) { point.x -= plotReference.x; point.y -= plotReference.y; point.z -= plotReference.z; }
+            point.x -= plotReference.x;
+            point.y -= plotReference.y;
+            point.z -= plotReference.z;
             planned << point;
             rows << QString("%1  A1–A6: %2°\n    WORLD TCP: X %3, Y %4, Z %5 mm  /  A %6, B %7, C %8°")
                 .arg(++index).arg(axes.join(" / ")).arg(tcp[0], tcp[1], tcp[2], tcp[3], tcp[4], tcp[5]);
@@ -1181,9 +1427,13 @@ private:
         plot->plannedHome = planned;
         plot->update();
         const auto estimated = session.value("home_plan_seconds").toDouble();
+        const auto currentMode = session.value("mode");
+        const QString modeNote = (currentMode == "2" || currentMode == "3")
+            ? "\n\n当前处于自动模式：确认后上位机会先切到手动完成返回，结束后自动切回自动模式。"
+            : "";
         QMessageBox message(QMessageBox::Warning, "返回起点路径预览",
-            QString("上位机按六轴关节分段规划，预计约 %1。末端速度上限 %2 mm/s，实际速度可能更低。\n\n%3\n\n仅做关节限位检查和 TCP 正运动学预览；没有工件、夹具和围栏模型，未执行环境碰撞检测。请先确认整个路径净空。实机移动未开放，当前只在隔离仿真中执行。")
-                .arg(duration(estimated)).arg(session.value("home_plan_speed")).arg(homePlanPath),
+            QString("上位机按六轴关节分段规划，预计约 %1。末端速度上限 %2 mm/s，实际速度可能更低。\n\n%3\n\n仅做关节限位检查和 TCP 正运动学预览；没有工件、夹具和围栏模型，未执行环境碰撞检测。请先确认整个路径净空。确认后将按预览路径低速返回，手动和自动模式下均可执行。%4")
+                .arg(duration(estimated)).arg(session.value("home_plan_speed")).arg(homePlanPath).arg(modeNote),
             QMessageBox::Cancel, this);
         auto* run = message.addButton("确认低速返回", QMessageBox::AcceptRole);
         message.setDefaultButton(QMessageBox::Cancel);
@@ -1193,30 +1443,43 @@ private:
             log("已取消回程，机器人未移动。");
             return;
         }
+        const auto confirmMode = session.value("mode");
         if (!session.fresh() || session.value("home_plan_ready") != "1" || session.value("home_plan_id") != id ||
-            session.value("mode") != "1" || session.value("motion_rest") != "1" || !session.request("returnhome " + id)) {
+            (confirmMode != "0" && confirmMode != "1" && confirmMode != "2" && confirmMode != "3") ||
+            session.value("motion_rest") != "1" || !session.request("returnhome " + id)) {
             log("回程确认过期或控制器状态已变化，未发送运动命令。请重新规划。");
             return;
         }
-        log("回程已确认，按预览路径在手动模式低速执行；可随时点「停止发送」。");
+        log("回程已确认，按预览路径低速执行（自动模式会先切手动、完成后切回）；可随时点「停止发送」或「急停」。");
     }
 
     bool loaded() const {
-        const QString project = session.simulated ? job.project : "SR175_3200_Helix.sr";
-        const QString program = session.simulated ? job.program : "helix_25mms";
+        if (!session.simulated && !job.nativeInput) {
+            // 实机上的 G-code 转换作业：sendprog 直发后，控制器回读的程序名即作业程序名。
+            return !submittedSdkProgram.isEmpty() && submittedSdkProgram == job.sdkProgram &&
+                !sdkControllerProgram.isEmpty() && session.value("program") == sdkControllerProgram;
+        }
+        const QString project = job.project;
+        const QString program = job.program;
         return !project.isEmpty() && (session.value("project") == project || session.value("project") == project.chopped(3)) &&
             session.value("program") == program;
     }
 
-    bool ready() const { return session.fresh() && session.control && session.pending.isEmpty() && !session.waitingStop; }
+    bool ready() const { return session.fresh() && session.control && session.pending.isEmpty() && !session.waitingStop && !session.waitingEstop; }
 
     bool canStart() const {
-        if (!session.simulated && !job.reviewed) return false;
-        const auto override = session.value("override").toDouble();
         return !experiment.active() && ready() && loaded() && !homeDirty && (!session.simulated || session.value("outcome") == "none") && session.value("error") != "1" &&
-            session.value("continuous") == "1" && session.value("mode") == "2" && session.value("enabled") == "1" &&
-            session.value("state") == "2" && (session.value("line") == "1" || session.value("line") == "2") &&
-            (session.simulated || (override > 0 && override <= 20));
+            session.value("continuous") == "1" && (session.value("mode") == "2" || (!session.simulated && session.value("mode") == "3")) && session.value("enabled") == "1" &&
+            session.value("state") == "2" && (session.value("line") == "1" || session.value("line") == "2");
+    }
+
+    // 柜内任意程序（非本工作台生成的作业程序）：加载后从当前行启动。
+    bool canStartAny() const {
+        return !experiment.active() && ready() && job.name.isEmpty() && !loaded() && !session.value("program").isEmpty() &&
+            session.value("error") != "1" && session.value("continuous") == "1" &&
+            (session.value("mode") == "2" || (!session.simulated && session.value("mode") == "3")) &&
+            session.value("enabled") == "1" && session.value("state") == "2" &&
+            session.value("line").toInt() >= 1 && !homePlanPending;
     }
 
     bool canReprepare() const {
@@ -1225,19 +1488,75 @@ private:
     }
 
     void start() {
-        if (canAuthorize()) { authorize(); return; }
-        if (session.fresh() && !session.simulated && !session.control && job.runnable() && !job.reviewed) { exportJob(); return; }
         if (!session.active() && linkType->currentIndex() == 0) { prepare(); return; }
         if (canReprepare()) { session.disconnect(); if (!session.active()) prepare(); return; }
-        if (!canStart()) return;
-        if (QMessageBox::question(this, "开始前确认", "确认护目镜、围栏和示教器实体急停已检查。当前为空跑，出光未接入。") == QMessageBox::Yes && canStart())
+        if (canStart()) {
+            if (session.simulated &&
+                QMessageBox::question(this, "开始前确认", "确认护目镜、围栏和示教器实体急停已检查。当前为空跑，出光未接入。") != QMessageBox::Yes)
+                return;
             queueExperiment();
+            return;
+        }
+        if (canSend()) {
+            if (QMessageBox::question(this, "发送转换程序",
+                    QString("将把 G-code 转换程序（%1 个点）直发到控制器并立即在自动连续模式下运行。起点 = 发送时的机器人当前位置；示教器实体急停保持有效，可随时点「停止发送」或「急停」。")
+                        .arg(job.points.size() - 1)) != QMessageBox::Yes)
+                return;
+            auto file = std::make_unique<QTemporaryFile>(QDir::temp().filePath("STEPWS_sdk_XXXXXX.txt"));
+            if (!file->open() || file->write(job.sdkProgram) != job.sdkProgram.size() || !file->flush()) {
+                log("转换程序指令文件写入失败，未发送。请检查临时目录权限。");
+                return;
+            }
+            file->close();
+            const auto command = QString("sendrun \"%1\"").arg(QDir::fromNativeSeparators(file->fileName()));
+            if (queueExperiment(command)) {
+                submittedSdkProgram = job.sdkProgram;
+                sdkControllerProgram.clear();
+                sdkProgramFile = std::move(file);
+                log("转换程序已请求直发并启动，等待控制器确认。");
+            }
+            return;
+        }
+        if (canStartAny()) {
+            if (QMessageBox::question(this, "启动柜内程序",
+                    QString("将从第 %1 行启动柜内程序 %2 / %3（自动连续模式）。示教器实体急停保持有效，可随时点「停止发送」或「急停」。")
+                        .arg(session.value("line"), session.value("project"), session.value("program"))) != QMessageBox::Yes)
+                return;
+            if (session.request("start")) log("已请求启动柜内程序，等待控制器确认。");
+            return;
+        }
     }
 
-    bool queueExperiment() {
-        if (!canStart()) return false;
-        const auto reference = session.simulated ? origin : std::nullopt;
-        if (!experiment.begin(recordRoot, job, experimentLabel->text().trimmed(), session.simulated,
+    void requestControl(const QString& command, const QString& message) {
+        if (!session.request(command)) { log("操作未发送：请等待回读、停止确认或当前操作结束。"); return; }
+        lastOperationError.clear();
+        log(message);
+        refresh();
+    }
+
+    void loadCabinetProgram() {
+        static const QRegularExpression name("^[A-Za-z0-9_.-]{1,64}$");
+        const auto project = projectNameEdit->text().trimmed(), program = programNameEdit->text().trimmed();
+        if (!name.match(project).hasMatch() || !name.match(program).hasMatch()) {
+            log("工程/程序名限 1–64 位英文、数字、点、下划线、连字符。");
+            return;
+        }
+        if (!ready() || session.value("motion_rest") != "1" || session.value("error") == "1") return;
+        requestControl(QString("loadproj %1 %2").arg(project, program),
+            QString("已请求卸载旧程序并加载 %1 / %2；不使能、不启动。程序文件须已传入控制柜，等待工程名与程序名回读确认。").arg(project, program));
+    }
+
+    // 实机 G-code 转换作业尚未直发（或已被卸载）时，允许再次下发。
+    bool canSend() const {
+        return !experiment.active() && ready() && !session.simulated && !job.nativeInput &&
+            !job.sdkProgram.isEmpty() && !loaded() && session.value("motion_rest") == "1" && session.value("error") != "1";
+    }
+
+    bool queueExperiment(const QString& command = "start") {
+        if (command.startsWith("sendrun ") ? !canSend() : !canStart()) return false;
+        const bool simulation = session.simulated || session.address == "127.0.0.1";
+        const auto reference = simulation ? origin : std::nullopt;
+        if (!experiment.begin(recordRoot, job, experimentLabel->text().trimmed(), simulation,
                               session.model, session.value("override"), reference)) {
             log("无法创建实验记录，本次启动未发送。请检查磁盘空间和记录目录权限。");
             return false;
@@ -1247,7 +1566,7 @@ private:
         plot->measured.clear();
         captureFeedback(0, false);
         experiment.event("start_requested_by_workstation");
-        if (!experiment.healthy() || !session.request("start")) {
+        if (!experiment.healthy() || !session.request(command)) {
             finishExperiment("start_not_sent");
             return false;
         }
@@ -1272,7 +1591,8 @@ private:
             feedback.insert(key, session.value(key));
         const auto state = session.value("state");
         const auto outcome = session.value("outcome");
-        const auto measured = session.simulated && loaded() && origin && !homeDirty ? plot->tcp : std::nullopt;
+        const auto measuring = session.simulated || (!job.nativeInput && !job.sdkProgram.isEmpty());
+        const auto measured = measuring && loaded() && origin && !homeDirty ? plot->tcp : std::nullopt;
         const auto distance = measured && state == "0" ? distanceToPlan(job, *measured, observedSource) : std::nullopt;
         experiment.sample(feedback, observedSource, measured, distance);
         if (measured && (state == "0" || experiment.observedRunning())) {
@@ -1284,12 +1604,12 @@ private:
             reportedWriteError = true;
             log("实验记录写入失败，已保存样本保留。记录将标为不完整。");
         }
-        if (!evaluateOutcome || session.pending == "start") return;
+        if (!evaluateOutcome || session.pending == "start" || session.pending.startsWith("sendrun ")) return;
         if (!startFailure.isEmpty()) {
             if (state != "0") { finishExperiment(startFailure); return; }
             startFailure.clear();
         }
-        if (session.simulated && outcome == "completed" && state == "2") {
+        if (outcome == "completed" && state == "2") {
             std::optional<double> endpoint;
             if (measured && !job.points.isEmpty()) {
                 const auto target = job.points.last();
@@ -1304,12 +1624,40 @@ private:
     }
 
     void log(const QString& text) {
-        if (text.startsWith("Refused:")) {
+        if (text.startsWith("sendprog_prepared ") || text.startsWith("sendprog_ok ")) {
+            static const QRegularExpression observed("(?:^| )observed=([^ ]+)");
+            sdkControllerProgram = observed.match(text).captured(1);
+            if (text.startsWith("sendprog_prepared ")) {
+                static const QRegularExpression position("(?:^| )origin=([^ ]+)");
+                const auto xyz = position.match(text).captured(1).split(',');
+                bool xOk = false, yOk = false, zOk = false;
+                const Point point{xyz.value(0).toDouble(&xOk), xyz.value(1).toDouble(&yOk), xyz.value(2).toDouble(&zOk)};
+                if (xyz.size() == 3 && xOk && yOk && zOk && std::isfinite(point.x) && std::isfinite(point.y) && std::isfinite(point.z)) {
+                    origin = point;
+                    homeDirty = false;
+                    plot->tcp = Point{};
+                    experiment.setStreamOrigin(point);
+                }
+            }
+        }
+        if (text.startsWith("control_error ")) {
+            const auto field = [&](const QString& name) { return QRegularExpression("(?:^| )" + name + "=([^ ]*)").match(text).captured(1); };
+            const auto operation = field("operation"), stage = field("stage");
+            const auto detail = QString("SDK=%1，回读模式=%2，使能=%3，消息=%4").arg(field("rc"), field("mode"), field("enabled"), field("msgid"));
+            if (operation == "mode") {
+                const auto target = field("target") == "manual" ? "手动" : "自动";
+                lastOperationError = QString("切换%1未确认（%2）。%3").arg(target, detail,
+                    stage == "not_stopped_or_alarm" ? "请先停稳并处理报警。" : "请核对柜面/示教器模式选择及控制权限；已加载程序保留。");
+            } else if (operation == "enable")
+                lastOperationError = "伺服使能未确认（" + detail + "）。请核对示教器使能装置、安全回路与控制器消息。";
+            else lastOperationError = QString("%1未确认（%2），阶段=%3；不会自动启动。").arg(operation == "unload" ? "卸载旧程序" : "加载新程序", detail, stage);
+        } else if (text.startsWith("Refused:")) {
             lastOperationError = refuseHint(text.mid(8));
         } else if (text == "virtual_command_result=refused" || text.startsWith("result=unconfirmed") ||
             text.startsWith("jog_frame_unconfirmed") || text.startsWith("base_reference_unconfirmed")) {
-            lastOperationError = "操作未确认，请查看记录中的原因";
-        } else if (text == "virtual_command_result=ok" || text.startsWith("start_confirmed=") || text.startsWith("stop_confirmed=")) {
+            if (lastOperationError.isEmpty()) lastOperationError = "操作未确认，请查看记录中的原因";
+        } else if (text == "virtual_command_result=ok" || text.startsWith("mode_change_ok ") || text.startsWith("enable_ok ") ||
+            text.startsWith("loadproj_ok ") || text.startsWith("start_confirmed=") || text.startsWith("stop_confirmed=")) {
             lastOperationError.clear();
         }
         const auto row = QDateTime::currentDateTime().toString("HH:mm:ss  ") + text;
@@ -1320,12 +1668,14 @@ private:
         }
         if (experiment.active()) {
             experiment.event(text);
-            if (text.startsWith("start_cancelled=")) {
+            if (text.startsWith("sendprog_error=")) {
+                finishExperiment("send_failed");
+            } else if (text.startsWith("start_cancelled=")) {
                 finishExperiment("start_cancelled");
             } else if (session.pending == "start") {
                 if (text.startsWith("Refused:")) startFailure = "start_rejected";
                 else if (text.startsWith("result=unconfirmed")) startFailure = "start_unconfirmed";
-            } else if (text.startsWith("stop_confirmed=")) confirmedStop = true;
+            } else if (text.startsWith("stop_confirmed=") || text.contains("estop_confirmed=stopped")) confirmedStop = true;
         }
         if (text == "virtual_command_result=ok" && session.pending == "capture") resetProgress();
     }
@@ -1380,14 +1730,17 @@ private:
         const auto now = elapsed.elapsed();
         if (lastRun >= 0) seconds += std::min<qint64>(3000, now - lastRun) / 1000.;
         lastRun = state == "0" ? now : -1;
-        if (session.simulated && session.control && (loaded() || session.value("home_returning") == "1")) {
+        const bool sdkPath = !session.simulated && !job.nativeInput && !job.sdkProgram.isEmpty();
+        // 直发前程序名还没对上：静止时先取一次起点，作为 sendrun 读取的原点。
+        if ((session.simulated || sdkPath) && session.control &&
+            (loaded() || session.value("home_returning") == "1" || (sdkPath && !origin && !homeDirty && state == "2"))) {
             const auto xyz = session.value("xyz").split(',');
             if (xyz.size() == 3) {
                 bool xOk = false, yOk = false, zOk = false;
                 const Point point{xyz[0].toDouble(&xOk), xyz[1].toDouble(&yOk), xyz[2].toDouble(&zOk)};
                 const bool poseValid = xOk && yOk && zOk && std::isfinite(point.x) && std::isfinite(point.y) && std::isfinite(point.z);
                 const auto line = session.value("line").toInt();
-                if (poseValid && !origin && !homeDirty && state == "2" && (line == 1 || line == 2)) origin = point;
+                if (poseValid && !origin && !homeDirty && state == "2" && (line == 1 || line == 2 || sdkPath)) origin = point;
                 if (poseValid && origin) plot->tcp = Point{point.x - origin->x, point.y - origin->y, point.z - origin->z};
                 else plot->tcp.reset();
                 const int previous = current, previousDone = done;
@@ -1493,11 +1846,11 @@ private:
         }
         const auto state = session.value("state");
         const bool settled = state == "1" || state == "2";
-        const bool simSetup = !experiment.active() && ready() && session.simulated && settled;
+        const bool operable = !experiment.active() && ready() && settled;
         const auto mode = session.value("mode");
         const auto rate = session.value("override").toDouble();
         const auto jogRef = session.value("jogref");
-        const bool manual = simSetup && (mode == "0" || mode == "1") && session.value("enabled") == "1";
+        const bool manual = operable && (mode == "0" || mode == "1") && session.value("enabled") == "1";
         const auto jointLimits = session.value("manual_joints").split(',');
         double maximumReturnSpeed = 0;
         if (session.value("manual_profile") == "1") {
@@ -1511,7 +1864,7 @@ private:
             complete ? "✓ 已完成" : state == "0" ? "▶ 运行中" : state == "1" ? "Ⅱ 已暂停" : state == "2" ? "■ 已停止" : "↺ 回归中";
         if (!job.error.isEmpty()) runText = "! 解析失败";
         else if (fresh && session.value("error") == "1") runText = "! 控制器错误";
-        const QString connection = fresh ? (session.simulated ? "● 仿真已连接" : session.control ? "● 实机已授权" : "● 实机只读") :
+        const QString connection = fresh ? (session.simulated ? "● 仿真已连接" : session.control ? "● 实机已连接" : "● 实机只读") :
             session.preparing ? "○ 正在准备" : session.connected() ? "○ 等待回读" : session.lost ? "! 已断开" : "○ 未连接";
         linkLabel->setText(connection);
         const bool linkError = session.lost || (session.connected() && hadFeedback && !fresh);
@@ -1526,7 +1879,6 @@ private:
         linkType->setEnabled(idle);
         ip->setReadOnly(!idle);
         sampleAction->setEnabled(canOpenFile());
-        authorizeAction->setEnabled(canAuthorize());
         exportAction->setEnabled(job.error.isEmpty() && !job.files.isEmpty());
         saveProjectButton->setEnabled(exportAction->isEnabled());
         associateAction->setEnabled(job.nativeInput && canOpenFile() && job.error.isEmpty());
@@ -1538,25 +1890,39 @@ private:
         linkButton->setText(session.connected() ? "断开" : "连接");
         const bool prepareable = idle && linkType->currentIndex() == 0 && (job.name.isEmpty() || job.runnable());
         linkButton->setEnabled((idle && linkType->currentIndex() == 1) || prepareable || (session.connected() && session.canClose()));
-        const bool exportForReal = fresh && !session.simulated && !session.control && job.runnable() && !job.reviewed;
-        startButton->setText(canAuthorize() ? "现场启停授权…" : exportForReal ? "导出 STEP 工程" :
-            canStart() ? (session.simulated ? "开始仿真作业" : "请求实机启动") : canReprepare() ? "重新准备仿真" : prepareable ? "准备仿真" : "开始");
-        startButton->setEnabled(canStart() || canReprepare() || prepareable || canAuthorize() || exportForReal);
+        startButton->setText(canStart() ? (session.simulated ? "开始仿真作业" : "请求实机启动") :
+            canStartAny() ? "启动柜内程序" : canSend() ? "直发转换程序" :
+            canReprepare() ? "重新准备仿真" : prepareable ? "准备仿真" : "开始");
+        startButton->setEnabled(canStart() || canStartAny() || canSend() || canReprepare() || prepareable);
+        estopButton->setEnabled(session.control && session.connected());
         stopButton->setEnabled(session.control && session.connected() && !session.waitingStop &&
             (session.pending == "start" || session.pending.startsWith("returnhome ") || returning ||
              (fresh && session.value("home_return_result") == "unconfirmed" && session.value("motion_rest") != "1") ||
-             (fresh && loaded() && (state == "0" || state == "1" || state == "3"))));
-        modeManual->setEnabled(simSetup && (mode != "0" && mode != "1"));
-        modeAuto->setEnabled(simSetup && job.runnable() && (mode != "2" || session.value("enabled") != "1"));
+             (fresh && !session.value("program").isEmpty() && (state == "0" || state == "1" || state == "3"))));
+        const bool modeChangeable = operable && session.value("motion_rest") == "1" && session.value("error") != "1";
+        modeManual->setEnabled(modeChangeable && (mode != "0" && mode != "1"));
+        modeAuto->setEnabled(modeChangeable && mode != "2" && mode != "3");
+        enableMotorButton->setEnabled(modeChangeable && session.value("enabled") != "1");
         const bool canSaveOrigin = fresh && session.value("motion_rest") == "1" && session.value("error") != "1" &&
             session.pending.isEmpty() && !session.waitingStop && !returning;
         const bool matchingHome = workstationOrigin && !homeDeviceKey.isEmpty() &&
             homeDeviceKey == originDeviceKey(session.simulated, session.model, session.identity, session.address) &&
             workstationOrigin->tool == session.value("toolname");
         recordHomeButton->setEnabled(canSaveOrigin);
-        returnHomeButton->setEnabled(manual && maximumReturnSpeed >= .1 && matchingHome && !returning &&
+        const bool homeAvailable = operable && (mode == "0" || mode == "1" || mode == "2" || mode == "3") &&
+            session.value("enabled") == "1";
+        returnHomeButton->setEnabled(homeAvailable && maximumReturnSpeed >= .1 && matchingHome && !returning &&
                                      session.pending.isEmpty() && !session.waitingStop);
-        returnHomeSpeed->setEnabled(manual && maximumReturnSpeed >= .1 && !returning);
+        returnHomeSpeed->setEnabled(homeAvailable && maximumReturnSpeed >= .1 && !returning);
+        const bool programEditable = fresh && session.control && !experiment.active() && settled &&
+            session.value("motion_rest") == "1" && session.value("error") != "1" &&
+            session.pending.isEmpty() && !session.waitingStop && !session.waitingEstop;
+        loadProgramButton->setEnabled(programEditable);
+        loadCurrentProgramButton->setEnabled(programEditable && job.nativeInput && job.error.isEmpty() &&
+            !job.localEdits && !job.project.isEmpty() && !job.program.isEmpty());
+        unloadProgramButton->setEnabled(programEditable && !session.value("program").isEmpty());
+        projectNameEdit->setEnabled(programEditable);
+        programNameEdit->setEnabled(programEditable);
         const auto homeResult = session.value("home_return_result");
         const QString originAxes = workstationOrigin ? QStringList{QString::number(workstationOrigin->axes[0], 'f', 2),
             QString::number(workstationOrigin->axes[1], 'f', 2), QString::number(workstationOrigin->axes[2], 'f', 2),
@@ -1606,13 +1972,13 @@ private:
                                      frame == 3 && fresh ? "沿工具坐标轴" : "等待回读");
             jointReadouts[i]->setText(QString("A%1  %2").arg(i + 1).arg(fresh && joints.size() == 6 ? QString::number(joints[i].toDouble(), 'f', 2) + " °" : "等待回读"));
         }
-        if (!fresh) manualFeedback->setText("连接虚拟控制器或实机只读后显示六轴角度。点动使用隔离虚拟控制器。");
-        else if (!session.simulated) manualFeedback->setText("六轴角度为控制柜回读。现场手动操作使用示教器。");
+        if (!fresh) manualFeedback->setText("连接虚拟控制器或实机后显示六轴角度。切到手动模式即可点动。");
+        else if (!session.simulated) manualFeedback->setText("六轴角度为控制柜回读。按住方向按钮连续点动，松开即停；示教器急停始终有效。");
         else if (!profileReady) manualFeedback->setText("尚未核对虚拟控制器手动速度参数。");
         else if (angularSpeed <= 0 || (frame > 0 && frame <= 4 && linearSpeed <= 0)) manualFeedback->setText("手动速度回读未就绪，暂不能点动。");
-        else if (session.value("jogset").toDouble() > 0) manualFeedback->setText(QString("控制器速度设定 %1 %2 · 单次 0.30 s · TCP 上限 250 mm/s")
+        else if (session.value("jogset").toDouble() > 0) manualFeedback->setText(QString("控制器速度设定 %1 %2 · 按住连续点动，松开停止 · TCP 上限 250 mm/s")
             .arg(session.value("jogset"), session.value("jogunit") == "mm_s" ? "mm/s" : "°/s"));
-        else manualFeedback->setText("输入目标速度，控制器按可用精度向下取值并回读应用速度。单次 0.30 s。");
+        else manualFeedback->setText("输入目标速度，控制器按可用精度向下取值并回读应用速度。按住方向按钮连续点动，松开即停。");
         if (!fresh) {
             if (current) {
                 const auto old = current;
@@ -1645,25 +2011,29 @@ private:
         else if (idle) { instruction = "下一步 · 连接运行目标"; next = linkButton; }
         else if (!fresh) instruction = hadFeedback ? "需处理 · 回读中断，软件在自动重试。连续中断请按通信中断处理：到柜子现场确认状态。" : "进行中 · 等待首次回读";
         else if (job.name.isEmpty() && canOpenFile()) { instruction = "下一步 · 打开 G 代码或 STEP ZIP"; next = openButton; }
-        else if (canAuthorize()) { instruction = "下一步 · 核对现场启停授权"; next = startButton; }
-        else if (exportForReal) { instruction = "下一步 · 导出 STEP 工程进行验证"; next = startButton; }
+        else if (loadCurrentProgramButton->isEnabled() && !loaded()) {
+            instruction = "下一步 · 加载当前程序（柜内须已存在同名文件；加载不使能、不启动）";
+            next = loadCurrentProgramButton;
+        }
         else if (canStart()) { instruction = "下一步 · 开始作业"; next = startButton; }
         else if (canReprepare()) { instruction = "下一步 · 重新准备仿真作业"; next = startButton; }
         else if (modeAuto->isEnabled()) { instruction = "下一步 · 切到自动运行"; next = modeAuto; }
+        else if (enableMotorButton->isEnabled()) { instruction = "下一步 · 按现场操作条件单独请求伺服使能"; next = enableMotorButton; }
         else if (fresh && state == "2" && session.value("outcome") != "none" && !complete)
             instruction = "已停止 · STEP 程序停止后停在当前行，直接再启动会被拒绝：请在柜内重新载入程序回到首行，再回本界面操作。";
         if (!lastOperationError.isEmpty()) instruction = "需处理 · " + lastOperationError;
         stateLabel->setText(instruction);
         setVisualProperty(stateLabel, "tone", tone);
         setVisualProperty(progress, "tone", tone);
-        for (auto* button : {linkButton, openButton, startButton, modeAuto})
+        for (auto* button : {linkButton, openButton, startButton, modeAuto, loadCurrentProgramButton, enableMotorButton})
             setVisualProperty(button, "primary", button == next && button->isEnabled());
         const auto row = job.nativeInput ? current : fresh ? current ? current : done : done;
         sourcePosition->setText(QString("L%1 / %2").arg(row ? QString::number(row) : "—").arg(job.source.size()));
         if (job.nativeInput && fresh && !job.sourceFile.endsWith(".srd") && !job.localEdits) {
             const bool match = (session.value("project") == job.project || session.value("project") + ".sr" == job.project) &&
                 session.value("program") == job.sourceProgram;
-            sourceHint->setText(!match ? "柜内当前程序与左侧不一致，未高亮。请选择对应程序。" :
+            sourceHint->setText(session.value("program").isEmpty() ? "柜内尚未加载程序，未高亮。文件传入控制柜后，点「加载当前程序」。" :
+                !match ? "柜内当前程序与左侧不一致，未高亮。可选对应文件，或停稳后点「加载当前程序」。" :
                 !current && (state == "0" || state == "1") && job.sourceIsGcode ? "当前 SRP 行没有 G 代码映射，未高亮。可切换 SRP 原文查看。" :
                 "高亮来自控制器程序行号回读。实机运行前需核对柜内程序版本。");
         }
@@ -1691,15 +2061,18 @@ private:
         QString checkTone = "idle";
         if (!fresh) checkText = "程序核对 · 待核对（等待柜子回读）";
         else if (job.project.isEmpty()) checkText = "程序核对 · 未打开作业";
+        else if (!job.nativeInput && !job.sdkProgram.isEmpty())
+            checkText = loaded() ? "程序核对 · 已绑定本次直发的 SDK 程序与源行。" :
+                "程序核对 · G 代码已转换，点「直发转换程序」发送并启动；不使用柜内文件加载。";
         else if (session.value("project").isEmpty() && session.value("program").isEmpty())
-            checkText = "程序核对 · 待核对：柜内未报告程序名，启动前请在柜内载入作业程序。";
+            checkText = "程序核对 · 尚未加载：文件传入控制柜后，点「加载当前程序」。导入电脑与加载控制器是两个步骤。";
         else {
             const bool projectMatch = session.value("project") == job.project || session.value("project") + ".sr" == job.project;
             const bool programMatch = session.value("program") == job.program;
             if (projectMatch && programMatch) checkText = "程序核对 · 名称匹配（" + session.value("project") + " / " + session.value("program") + "），内容版本仍需人工核对。";
             else {
                 checkText = "程序核对 · 不一致！柜内是 " + session.value("project") + " / " + session.value("program") +
-                    "，作业要求 " + job.project + " / " + job.program + "。直接启动会被拒绝，请先在柜内载入正确程序。";
+                    "，作业要求 " + job.project + " / " + job.program + "。请停稳后点「加载当前程序」；旧程序会先卸载。";
                 checkTone = "error";
             }
         }
@@ -1755,6 +2128,9 @@ private:
     QString directory;
     WorkstationPaths paths;
     QString workspace, recordRoot;
+    QByteArray submittedSdkProgram;
+    QString sdkControllerProgram;
+    std::unique_ptr<QTemporaryFile> sdkProgramFile;
     QString lastOperationError;
     bool hadFeedback = false;
     Job nativeTemplate, job;
@@ -1775,8 +2151,10 @@ private:
     double seconds = 0, rowEntered = 0;
     std::optional<Point> origin;
     QSet<int> skippedRows, executedRows;
-    QAction *sampleAction = nullptr, *authorizeAction = nullptr, *exportAction = nullptr, *associateAction = nullptr, *saveSourceAction = nullptr;
+    QAction *sampleAction = nullptr, *exportAction = nullptr, *associateAction = nullptr, *saveSourceAction = nullptr;
     QPushButton *openButton = nullptr, *linkButton = nullptr, *startButton = nullptr, *stopButton = nullptr,
+                *estopButton = nullptr, *loadProgramButton = nullptr,
+                *loadCurrentProgramButton = nullptr, *unloadProgramButton = nullptr, *enableMotorButton = nullptr,
                 *modeManual = nullptr, *modeAuto = nullptr, *csvButton = nullptr, *openRecord = nullptr;
     QLabel *fileLabel = nullptr, *linkLabel = nullptr, *machine = nullptr, *sourcePosition = nullptr, *summaryLabel = nullptr,
            *telemetry = nullptr, *stateLabel = nullptr, *runPosition = nullptr, *runTime = nullptr, *cabinetInfo = nullptr, *footer = nullptr,
@@ -1794,6 +2172,7 @@ private:
     QDoubleSpinBox* returnHomeSpeed = nullptr;
     QLabel* homeInfo = nullptr;
     QLineEdit* ip = nullptr;
+    QLineEdit *projectNameEdit = nullptr, *programNameEdit = nullptr;
     QLineEdit* experimentLabel = nullptr;
     QLabel* experimentStatus = nullptr;
     QTableWidget* sourceTable = nullptr;
@@ -1818,6 +2197,9 @@ int main(int argc, char** argv) {
         QPushButton:disabled { color:#657783; background:#f2f5f7; }
         QPushButton[primary="true"]:enabled { background:#175991; color:white; border-color:#175991; font-weight:600; }
         QPushButton#stop:enabled { background:#eef3f7; color:#172b3a; border-color:#91a6b5; font-weight:600; }
+        QPushButton#estop { font-weight:700; padding:10px 12px; }
+        QPushButton#estop:enabled { background:#a62938; color:white; border-color:#8d2029; }
+        QPushButton#estop:disabled { background:#f2f5f7; color:#657783; }
         QLabel[tone="idle"] { color:#526777; }
         QLabel[tone="busy"] { color:#175991; }
         QLabel[tone="error"] { color:#a62938; }
@@ -1836,14 +2218,27 @@ int main(int argc, char** argv) {
         QLabel#footer[tone="error"] { color:#ffb6bd; }
     )");
     const auto args = app.arguments();
+    if (args.contains("--smoke") || args.contains("--sim-smoke") || args.contains("--manual-smoke") ||
+        args.contains("--source-smoke") || args.contains("--sdk-smoke") || args.contains("--home-smoke") || args.contains("--control-smoke")) {
+        static const QString qtLog = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).filePath("STEPWS/qt-messages.log");
+        qInstallMessageHandler([](QtMsgType type, const QMessageLogContext&, const QString& message) {
+            QFile file(qtLog);
+            if (file.open(QIODevice::WriteOnly | QIODevice::Append))
+                file.write(QString("%1 pid=%2 [%3] %4\n").arg(QDateTime::currentDateTime().toString("HH:mm:ss"))
+                    .arg(QCoreApplication::applicationPid())
+                    .arg(type == QtWarningMsg ? "W" : type == QtCriticalMsg || type == QtFatalMsg ? "C" : type == QtInfoMsg ? "I" : "D")
+                    .arg(message).toLocal8Bit());
+        });
+    }
     const auto explicitDir = args.indexOf("--control-dir");
     const QString dir = explicitDir >= 0 ? args.value(explicitDir + 1) : QDir(app.applicationDirPath()).absoluteFilePath("..");
     Workstation workstation(QDir(dir).absolutePath());
     const auto startupFile = args.indexOf("--open");
     if (startupFile >= 0) workstation.openPath(args.value(startupFile + 1));
     workstation.show();
+    if (args.contains("--control-smoke")) QTimer::singleShot(0, &workstation, [&] { workstation.runControlSmoke(); });
     if (args.contains("--home-smoke")) QTimer::singleShot(0, &workstation, [&] { workstation.runHomeSmoke(); });
-    if (args.contains("--smoke") || args.contains("--sim-smoke") || args.contains("--manual-smoke") || args.contains("--source-smoke"))
-        QTimer::singleShot(0, &workstation, [&] { workstation.runSmoke(!args.contains("--smoke"), args.contains("--manual-smoke"), args.contains("--source-smoke")); });
+    if (args.contains("--smoke") || args.contains("--sim-smoke") || args.contains("--manual-smoke") || args.contains("--source-smoke") || args.contains("--sdk-smoke"))
+        QTimer::singleShot(0, &workstation, [&] { workstation.runSmoke(!args.contains("--smoke"), args.contains("--manual-smoke"), args.contains("--source-smoke"), args.contains("--sdk-smoke")); });
     return app.exec();
 }

@@ -1,0 +1,35 @@
+{
+  "schema": 1,
+  "verified_at": "2026-11-13T15:08:46+08:00",
+  "cause": "Real SDK model SR175/3200 was rejected by exact comparison with SR175-3200.",
+  "accepted_models": [
+    "SR175-3200",
+    "SR175/3200"
+  ],
+  "other_models_remain_read_only": true,
+  "official_alias_reference": "https://www.stepelectric.com/Download/1701841014158921728-348-12.html",
+  "ctest": {
+    "passed": 5,
+    "total": 5,
+    "log": "D:\\Desktop\\STEPROBOTICS\\reports\\codex-motion-fix-20261113\\model-alias-ctest.log"
+  },
+  "physical_identity_reconnect": {
+    "endpoint": "192.168.39.220:30312",
+    "robot": "SR175/3200",
+    "cabinet": "SRC4L6",
+    "ui_connection": "实机已连接",
+    "log_at": "2026-11-13T15:07:27+08:00",
+    "log_message": "SR175/3200 / SRC4L6 · 已授权",
+    "mode": "外部自动",
+    "servo_enabled": false,
+    "tcp_mm_s": 0,
+    "state": "已停止",
+    "manual_and_auto_buttons_enabled": true,
+    "enable_or_motion_commands_sent": false,
+    "physical_motion_validated": false
+  },
+  "helper_sha256": "360f6094e8f72185ef6474c71d0fb685afd5a19f2b702f1e8e954e16fb0fceba",
+  "backup": "D:\\Desktop\\STEPHelixWorkstation\\repair-backups\\20261113-model-alias",
+  "motion_regression_helper_sha256": "880f5f49864d7b9784ebe9f6c1fcabca5472f41242b2c97aab62d1bf5c27d9a3",
+  "regression_note": "Earlier virtual-controller motion smoke results precede this model-alias-only helper change. Current alias change passed five unit/regression tests and physical identity-only reconnect."
+}

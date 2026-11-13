@@ -17,6 +17,7 @@ public:
     void sample(const QMap<QString, QString>& feedback, int sourceRow, std::optional<Point> measured,
                 std::optional<double> distance);
     void event(const QString& text);
+    void setStreamOrigin(Point origin);
     bool finish(const QString& result, std::optional<double> endpointError = {});
 
     bool active() const { return recording; }

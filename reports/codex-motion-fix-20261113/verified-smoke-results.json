@@ -1,0 +1,32 @@
+[
+  {
+    "flag": "--sdk-smoke",
+    "exit_code": 0,
+    "binary_sha256": "FBA6328433C652ACC01438DCAE5650BFC43262F681B7812E03954F5859C47505",
+    "finished_at": "2026-11-13T14:36:00.5822821+08:00"
+  },
+  {
+    "flag": "--smoke",
+    "exit_code": 0,
+    "binary_sha256": "FBA6328433C652ACC01438DCAE5650BFC43262F681B7812E03954F5859C47505",
+    "finished_at": "2026-11-13T14:36:01.7581517+08:00"
+  },
+  {
+    "flag": "--sim-smoke",
+    "exit_code": 0,
+    "binary_sha256": "FBA6328433C652ACC01438DCAE5650BFC43262F681B7812E03954F5859C47505",
+    "finished_at": "2026-11-13T14:36:59.5066507+08:00"
+  },
+  {
+    "flag": "--manual-smoke",
+    "exit_code": 0,
+    "binary_sha256": "FBA6328433C652ACC01438DCAE5650BFC43262F681B7812E03954F5859C47505",
+    "finished_at": "2026-11-13T14:37:21.1204864+08:00"
+  },
+  {
+    "flag": "--home-smoke",
+    "exit_code": 0,
+    "binary_sha256": "FBA6328433C652ACC01438DCAE5650BFC43262F681B7812E03954F5859C47505",
+    "finished_at": "2026-11-13T14:37:38.0991020+08:00"
+  }
+]

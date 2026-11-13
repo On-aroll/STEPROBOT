@@ -53,6 +53,7 @@ struct Job {
     QMap<QString, QByteArray> files;
     QVector<Point> points;
     QVector<Step> steps;
+    QByteArray sdkProgram;
     int start = 1;
     bool reviewed = false;
     bool nativeInput = false;

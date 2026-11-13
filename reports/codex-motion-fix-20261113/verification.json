@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "verified_at": "2026-11-13T14:49:04.0382466+08:00",
+  "scope": "Prior local virtual-controller motion/stop regressions; current model-alias unit tests and physical SDK identity-only reconnect",
+  "physical_robot_tested": false,
+  "controller_endpoint": "127.0.0.1:30316/30317",
+  "active_launcher": "D:\\Desktop\\STEPHelixWorkstation\\Start-Workstation.cmd",
+  "ctest": {
+    "passed": 5,
+    "total": 5,
+    "log": "D:\\Desktop\\STEPROBOTICS\\reports\\codex-motion-fix-20261113\\model-alias-ctest.log"
+  },
+  "baseline_session_regression": {
+    "expected_failure_count": 12,
+    "baseline_source": "D:\\Desktop\\STEPHelixWorkstation\\repair-backups\\20261113-codex-handoff\\pc_control\\workstation_session.cpp"
+  },
+  "smoke_tests": [
+    {
+      "flag": "--sdk-smoke",
+      "exit_code": 0,
+      "binary_sha256": "894740495621BB366F453419652DFD34C69FBAF8093EFAD2ED7D980A70C72593",
+      "finished_at": "2026-11-13T14:47:24.7929504+08:00"
+    },
+    {
+      "flag": "--smoke",
+      "exit_code": 0,
+      "binary_sha256": "894740495621BB366F453419652DFD34C69FBAF8093EFAD2ED7D980A70C72593",
+      "finished_at": "2026-11-13T14:47:26.0613235+08:00"
+    },
+    {
+      "flag": "--sim-smoke",
+      "exit_code": 0,
+      "binary_sha256": "894740495621BB366F453419652DFD34C69FBAF8093EFAD2ED7D980A70C72593",
+      "finished_at": "2026-11-13T14:48:24.1022911+08:00"
+    },
+    {
+      "flag": "--manual-smoke",
+      "exit_code": 0,
+      "binary_sha256": "894740495621BB366F453419652DFD34C69FBAF8093EFAD2ED7D980A70C72593",
+      "finished_at": "2026-11-13T14:48:47.0630848+08:00"
+    },
+    {
+      "flag": "--home-smoke",
+      "exit_code": 0,
+      "binary_sha256": "894740495621BB366F453419652DFD34C69FBAF8093EFAD2ED7D980A70C72593",
+      "finished_at": "2026-11-13T14:49:04.0382466+08:00"
+    }
+  ],
+  "sdk_trials": [
+    {
+      "folder": "D:\\Desktop\\STEPROBOTICS\\reports\\codex-motion-fix-20261113\\release-sdk-smoke\\tmp\\workstation_experiment_verification\\20261113-144649-xESJlF",
+      "job": "sdk_short.nc",
+      "result": "completed",
+      "mode": "simulation",
+      "samples": 60,
+      "endpoint_mm": 0.0013777780258174516,
+      "peak_tcp_mm_s": 0.4,
+      "last_offset_mm": [
+        0.000974,
+        0.0,
+        0.999026
+      ]
+    },
+    {
+      "folder": "D:\\Desktop\\STEPROBOTICS\\reports\\codex-motion-fix-20261113\\release-sdk-smoke\\tmp\\workstation_experiment_verification\\20261113-144704-ioegXn",
+      "job": "absolute_modal.nc",
+      "result": "completed",
+      "mode": "simulation",
+      "samples": 74,
+      "endpoint_mm": 0.0013774926461031067,
+      "peak_tcp_mm_s": 0.99995,
+      "last_offset_mm": [
+        0.000974,
+        0.0,
+        0.999026
+      ]
+    },
+    {
+      "folder": "D:\\Desktop\\STEPROBOTICS\\reports\\codex-motion-fix-20261113\\release-sdk-smoke\\tmp\\workstation_experiment_verification\\20261113-144722-zosilZ",
+      "job": "sdk_stop.nc",
+      "result": "stopped",
+      "mode": "simulation",
+      "samples": 6,
+      "endpoint_mm": null,
+      "peak_tcp_mm_s": 0.199166,
+      "last_offset_mm": [
+        0.090974,
+        0.0,
+        -0.000973
+      ]
+    }
+  ],
+  "active_binaries": [
+    {
+      "path": "D:\\Desktop\\STEPHelixWorkstation\\pc_control\\native\\StepWorkstation.exe",
+      "sha256": "894740495621bb366f453419652dfd34c69fbaf8093efad2ed7d980a70c72593"
+    },
+    {
+      "path": "D:\\Desktop\\STEPHelixWorkstation\\pc_control\\helix_pc.exe",
+      "sha256": "360f6094e8f72185ef6474c71d0fb685afd5a19f2b702f1e8e954e16fb0fceba"
+    },
+    {
+      "path": "D:\\Desktop\\STEPHelixWorkstation\\pc_control\\native\\helix_pc.exe",
+      "sha256": "360f6094e8f72185ef6474c71d0fb685afd5a19f2b702f1e8e954e16fb0fceba"
+    },
+    {
+      "path": "D:\\Desktop\\STEPHelixWorkstation\\pc_control\\native\\StepGcodeConverter.exe",
+      "sha256": "d7adad40a85a4cafcccb652935e52e4a0e5ce8529a7a1a652eb0bd952c2dc7eb"
+    }
+  ],
+  "source_manifest": "D:\\Desktop\\STEPHelixWorkstation\\ACTIVE_SOURCE_MANIFEST.json",
+  "backup": "D:\\Desktop\\STEPHelixWorkstation\\repair-backups\\20261113-codex-handoff",
+  "canonical_source": "D:\\Desktop\\STEPROBOTICS\\workstation",
+  "existing_release_installer_rebuilt": false,
+  "external_automatic_button_condition": "Aligned with backend; physical cabinet validation not performed",
+  "updated_at": "2026-11-13T15:08:46+08:00",
+  "physical_identity_tested": true,
+  "physical_motion_tested": false,
+  "model_alias_fix": "D:\\Desktop\\STEPHelixWorkstation\\MODEL_ALIAS_FIX_20261113.json",
+  "motion_regression_helper_sha256": "880f5f49864d7b9784ebe9f6c1fcabca5472f41242b2c97aab62d1bf5c27d9a3",
+  "current_helper_change": "Earlier virtual-controller motion smoke results precede this model-alias-only helper change. Current alias change passed five unit/regression tests and physical identity-only reconnect."
+}

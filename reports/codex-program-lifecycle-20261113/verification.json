@@ -1,0 +1,79 @@
+{
+  "schema": 1,
+  "verified_at": "2026-11-13T15:41:55+08:00",
+  "diagnosis": {
+    "screenshot_1": "UI program-name mismatch/empty-name hint; not proof of a controller load conflict. Physical loaded() previously hardcoded the helix identity.",
+    "screenshot_2": "Prior real requests only logged virtual_command_result=refused; exact rejection stage cannot be recovered. Old mode action coupled switching, override and enable.",
+    "virtual_load_failure_fixed": "ProgramLoadCmd requires the project stem; normalize .sr suffix from imported job/controller feedback."
+  },
+  "changes": [
+    "Import valid new job at rest requests unloading the old foreground program",
+    "Explicit current-program load and unload buttons",
+    "Load confirms old program unloaded and new project/program before allowing start",
+    "Mode switch preserves loaded program and does not enable or set override",
+    "Independent enable action",
+    "Detailed SDK return/state diagnostics",
+    "Block mismatched program starts while a local job is open"
+  ],
+  "ctest": {
+    "passed": 6,
+    "total": 6,
+    "controller_ops_assertions": 26,
+    "log": "D:\\Desktop\\STEPROBOTICS\\reports\\codex-program-lifecycle-20261113\\ctest.log"
+  },
+  "manufacturer_virtual_controller_smoke": [
+    {
+      "flag": "--control-smoke",
+      "exit_code": 0,
+      "finished_at": "2026-11-13T15:34:26.1060390+08:00",
+      "gui_sha256": "508E532872EE64D4AF331A9F44AB50024EA3110847DB3F2034FD0D91FA60D67F",
+      "helper_sha256": "AD279AF261671F3FEC6F0E089CD60DD6351C95511109DD772AF2877767A796E7"
+    },
+    {
+      "flag": "--sdk-smoke",
+      "exit_code": 0,
+      "finished_at": "2026-11-13T15:37:55.5334987+08:00",
+      "gui_sha256": "508E532872EE64D4AF331A9F44AB50024EA3110847DB3F2034FD0D91FA60D67F",
+      "helper_sha256": "AD279AF261671F3FEC6F0E089CD60DD6351C95511109DD772AF2877767A796E7"
+    },
+    {
+      "flag": "--sim-smoke",
+      "exit_code": 0,
+      "finished_at": "2026-11-13T15:38:52.0191041+08:00",
+      "gui_sha256": "508E532872EE64D4AF331A9F44AB50024EA3110847DB3F2034FD0D91FA60D67F",
+      "helper_sha256": "AD279AF261671F3FEC6F0E089CD60DD6351C95511109DD772AF2877767A796E7"
+    }
+  ],
+  "virtual_endpoint": "127.0.0.1:30316/30317",
+  "physical_mode_switch_tested": false,
+  "physical_unload_load_tested": false,
+  "physical_enable_or_motion_commands_sent": false,
+  "physical_identity_only_reconnect": {
+    "verified": true,
+    "verified_at": "2026-11-13T15:49:52+08:00",
+    "method": "Deployed helper: init/identity/status/quit only; no control command",
+    "log": "D:\\Desktop\\STEPROBOTICS\\reports\\codex-program-lifecycle-20261113\\physical-identity-readonly.stdout.log",
+    "robot": "SR175/3200",
+    "cabinet": "SRC4L6",
+    "access": "start_stop",
+    "project": "",
+    "program": "",
+    "mode": "external automatic",
+    "enabled": false,
+    "tcp_mm_s": 0,
+    "at_rest": true
+  },
+  "native_zip_transfer": "STEPStudio or USB still required; importing to the PC does not upload to the cabinet",
+  "gui_sha256": "508e532872ee64d4af331a9f44ab50024ea3110847db3f2034fd0d91fa60d67f",
+  "helper_sha256": "ad279af261671f3fec6f0e089cd60dd6351c95511109dd772af2877767a796e7",
+  "source_files_verified": 32,
+  "source_manifest": "D:\\Desktop\\STEPHelixWorkstation\\ACTIVE_SOURCE_MANIFEST.json",
+  "backup": "D:\\Desktop\\STEPHelixWorkstation\\repair-backups\\20261113-program-lifecycle",
+  "installer_rebuilt": false,
+  "desktop_gui": {
+    "path": "D:\\Desktop\\STEPHelixWorkstation\\pc_control\\native\\StepWorkstation.exe",
+    "opened_zip": "D:\\Desktop\\STEPHelixWorkstation\\SR175_3200_Helix_Ready_25mms_v4.zip",
+    "connection_button_required": true,
+    "note": "GUI restarted with original ZIP. Native UI tested in virtual-control smoke; real GUI connection not triggered."
+  }
+}

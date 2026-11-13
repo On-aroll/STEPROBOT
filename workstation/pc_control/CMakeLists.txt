@@ -16,6 +16,10 @@ add_executable(StepReturnSpeedTest tests/return_tcp_speed_test.cpp)
 target_compile_features(StepReturnSpeedTest PRIVATE cxx_std_20)
 add_test(NAME return_tcp_speed_limit COMMAND StepReturnSpeedTest)
 
+add_executable(StepIdentityTest tests/identity_test.cpp)
+target_compile_features(StepIdentityTest PRIVATE cxx_std_20)
+add_test(NAME robot_identity_aliases COMMAND StepIdentityTest)
+
 add_executable(StepGcodeJobTest tests/gcode_job_test.cpp workstation_job.cpp)
 target_compile_features(StepGcodeJobTest PRIVATE cxx_std_20)
 target_compile_options(StepGcodeJobTest PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8> $<$<CXX_COMPILER_ID:MSVC>:/W4>)
@@ -23,6 +27,15 @@ target_link_libraries(StepGcodeJobTest PRIVATE Qt6::Core Qt6::CorePrivate)
 add_test(NAME gcode_job COMMAND StepGcodeJobTest)
 add_custom_command(TARGET StepGcodeJobTest POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::Core> $<TARGET_FILE_DIR:StepGcodeJobTest>)
+
+add_executable(StepSessionControlTest tests/session_control_test.cpp workstation_session.cpp workstation_job.cpp)
+target_compile_features(StepSessionControlTest PRIVATE cxx_std_20)
+target_compile_options(StepSessionControlTest PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8> $<$<CXX_COMPILER_ID:MSVC>:/W4>)
+target_link_libraries(StepSessionControlTest PRIVATE Qt6::Core Qt6::CorePrivate ws2_32)
+add_test(NAME session_stop_priority COMMAND StepSessionControlTest)
+set_tests_properties(session_stop_priority PROPERTIES TIMEOUT 10)
+add_custom_command(TARGET StepSessionControlTest POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different $<TARGET_FILE:Qt6::Core> $<TARGET_FILE_DIR:StepSessionControlTest>)
 
 add_executable(StepReplayTest tests/replay_test.cpp workstation_replay.cpp)
 target_compile_features(StepReplayTest PRIVATE cxx_std_20)
@@ -37,6 +50,11 @@ add_custom_command(TARGET StepReplayTest POST_BUILD
 
 set(STEP_SDK_DIR "$ENV{STEP_SDK_DIR}" CACHE PATH "STEP C++ SDK x64 directory containing RobotCom.hpp and Robot-SDK.lib")
 if(EXISTS "${STEP_SDK_DIR}/RobotCom.hpp" AND EXISTS "${STEP_SDK_DIR}/Robot-SDK.lib")
+    add_executable(StepControllerOpsTest tests/controller_ops_test.cpp)
+    target_compile_features(StepControllerOpsTest PRIVATE cxx_std_20)
+    target_compile_options(StepControllerOpsTest PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8> $<$<CXX_COMPILER_ID:MSVC>:/wd4828>)
+    target_include_directories(StepControllerOpsTest SYSTEM PRIVATE "${STEP_SDK_DIR}")
+    add_test(NAME controller_program_modes COMMAND StepControllerOpsTest)
     add_executable(helix_pc helix_pc.cpp)
     target_compile_features(helix_pc PRIVATE cxx_std_20)
     target_compile_options(helix_pc PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/utf-8> $<$<CXX_COMPILER_ID:MSVC>:/wd4828>)

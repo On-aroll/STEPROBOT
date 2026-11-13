@@ -14,10 +14,11 @@ public:
     ~Session() override;
 
     void prepare(const Job& job);
-    void connectReal(QString ip, QString serial = {});
+    void connectReal(QString ip);
     void disconnect();
     bool request(QString command);
     void stop();
+    bool emergencyStop();
 
     bool connected() const;
     bool fresh() const;
@@ -34,6 +35,7 @@ public:
     bool simulated = false;
     bool control = false;
     bool waitingStop = false;
+    bool waitingEstop = false;
     bool lost = false;
     QString pending;
     QString model;

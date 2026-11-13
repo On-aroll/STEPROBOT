@@ -1,0 +1,105 @@
+Start testing: Nov 13 15:33 中国标准时间
+----------------------------------------------------------
+1/6 Testing: return_tcp_speed_limit
+1/6 Test: return_tcp_speed_limit
+Command: "D:/Desktop/STEPROBOTICS/workstation/build/StepReturnSpeedTest.exe"
+Directory: D:/Desktop/STEPROBOTICS/workstation/build
+"return_tcp_speed_limit" start time: Nov 13 15:33 中国标准时间
+Output:
+----------------------------------------------------------
+413 TCP-bound cases checked; failures=0
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"return_tcp_speed_limit" end time: Nov 13 15:33 中国标准时间
+"return_tcp_speed_limit" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/6 Testing: robot_identity_aliases
+2/6 Test: robot_identity_aliases
+Command: "D:/Desktop/STEPROBOTICS/workstation/build/StepIdentityTest.exe"
+Directory: D:/Desktop/STEPROBOTICS/workstation/build
+"robot_identity_aliases" start time: Nov 13 15:33 中国标准时间
+Output:
+----------------------------------------------------------
+robot_identity_aliases: failures=0
+<end of output>
+Test time =   0.03 sec
+----------------------------------------------------------
+Test Passed.
+"robot_identity_aliases" end time: Nov 13 15:33 中国标准时间
+"robot_identity_aliases" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/6 Testing: gcode_job
+3/6 Test: gcode_job
+Command: "D:/Desktop/STEPROBOTICS/workstation/build/StepGcodeJobTest.exe"
+Directory: D:/Desktop/STEPROBOTICS/workstation/build
+"gcode_job" start time: Nov 13 15:33 中国标准时间
+Output:
+----------------------------------------------------------
+gcode_job_test: all checks passed (0)
+<end of output>
+Test time =   0.06 sec
+----------------------------------------------------------
+Test Passed.
+"gcode_job" end time: Nov 13 15:33 中国标准时间
+"gcode_job" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/6 Testing: session_stop_priority
+4/6 Test: session_stop_priority
+Command: "D:/Desktop/STEPROBOTICS/workstation/build/StepSessionControlTest.exe"
+Directory: D:/Desktop/STEPROBOTICS/workstation/build
+"session_stop_priority" start time: Nov 13 15:33 中国标准时间
+Output:
+----------------------------------------------------------
+session_control_test: failures=0
+<end of output>
+Test time =   0.45 sec
+----------------------------------------------------------
+Test Passed.
+"session_stop_priority" end time: Nov 13 15:33 中国标准时间
+"session_stop_priority" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/6 Testing: history_replay
+5/6 Test: history_replay
+Command: "D:/Desktop/STEPROBOTICS/workstation/build/StepReplayTest.exe"
+Directory: D:/Desktop/STEPROBOTICS/workstation/build
+"history_replay" start time: Nov 13 15:33 中国标准时间
+Output:
+----------------------------------------------------------
+QFontDatabase: Cannot find font directory D:/Desktop/STEPROBOTICS/workstation/build/lib/fonts.
+Note that Qt no longer ships fonts. Deploy some (from https://dejavu-fonts.github.io/ for example) or switch to fontconfig.
+Opening replay
+This plugin does not support propagateSizeHints()
+Replay closed; opening comparison
+This plugin does not support propagateSizeHints()
+replay_test: failures=0
+<end of output>
+Test time =   0.49 sec
+----------------------------------------------------------
+Test Passed.
+"history_replay" end time: Nov 13 15:33 中国标准时间
+"history_replay" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/6 Testing: controller_program_modes
+6/6 Test: controller_program_modes
+Command: "D:/Desktop/STEPROBOTICS/workstation/build/StepControllerOpsTest.exe"
+Directory: D:/Desktop/STEPROBOTICS/workstation/build
+"controller_program_modes" start time: Nov 13 15:33 中国标准时间
+Output:
+----------------------------------------------------------
+controller_ops_test: checks=26 failures=0
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"controller_program_modes" end time: Nov 13 15:33 中国标准时间
+"controller_program_modes" time elapsed: 00:00:00
+----------------------------------------------------------
+
+End testing: Nov 13 15:33 中国标准时间

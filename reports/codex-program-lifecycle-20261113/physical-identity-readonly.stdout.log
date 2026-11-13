@@ -1,0 +1,11 @@
+SUCCESS: SOCKET 连接成功
+Wait Link !SUCCESS: SOCKET 连接成功
+
+Background thread started !
+Step robot sdk init successed.
+robot=SR175/3200 cabinet=SRC4L6 serial=300001000343 target=real ip=192.168.39.220 access=start_stop
+status=connected project= program= mode=3 enabled=0 jogref=1 state=2 line=1 command_busy=0 override=20 alarm=0 xyz=835.37,87.0286,1142.31 abc=-177.974,-0.742141,1.53888 speed=0 toolname=Default home_returning=0 home_return_result=none motion_rest=1 home_plan_ready=0 home_plan_id=0 home_plan_speed=0 home_plan_unit=mm_s home_plan_seconds=0 home_plan_waypoints=0 home_plan_error=none return_speed=0 return_unit=none outcome=none continuous=1 error=0 manual_linear=0 manual_return_linear=0 manual_angular=0 manual_profile=0 jogset=0 jogunit=none refname=WORLD base=835.37,87.0286,1142.31,-177.974,-0.742141,1.53888 user=835.37,87.0286,1142.31,-177.974,-0.742141,1.53888 manual_joints=0,0,0,0,0,0  axes=-5.43109,-49.7678,67.0405,-2.01534,73.4336,-6.22636
+status=connected project= program= mode=3 enabled=0 jogref=1 state=2 line=1 command_busy=0 override=20 alarm=0 xyz=835.37,87.0286,1142.31 abc=-177.974,-0.742141,1.53888 speed=0 toolname=Default home_returning=0 home_return_result=none motion_rest=1 home_plan_ready=0 home_plan_id=0 home_plan_speed=0 home_plan_unit=mm_s home_plan_seconds=0 home_plan_waypoints=0 home_plan_error=none return_speed=0 return_unit=none outcome=none continuous=1 error=0 manual_linear=0 manual_return_linear=0 manual_angular=0 manual_profile=0 jogset=0 jogunit=none refname=WORLD base=835.37,87.0286,1142.31,-177.974,-0.742141,1.53888 user=835.37,87.0286,1142.31,-177.974,-0.742141,1.53888 manual_joints=0,0,0,0,0,0  axes=-5.43109,-49.7678,67.0405,-2.01534,73.4336,-6.22636
+Closing SDK session. Use the local pendant to verify robot state.
+任务结束
+任务结束
