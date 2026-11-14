@@ -73,10 +73,23 @@ void setVisualProperty(QWidget* widget, const char* name, const QVariant& value)
 }
 }
 
+// 工作区根：exe 旁的 workspace.txt（一行路径）优先；否则安装根（exe 上溯一级）内含
+// STEPStudio 4.7.0 时取安装根；再否则回退开发布局（exe 上溯三级）。
+QString resolveWorkspace(const QString& exeDir) {
+    QFile override(QDir(exeDir).filePath("workspace.txt"));
+    if (override.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        const QString line = QString::fromUtf8(override.readLine()).trimmed();
+        if (!line.isEmpty()) return QDir::fromNativeSeparators(line);
+    }
+    const QDir installRoot(exeDir + "/..");
+    if (installRoot.exists("STEPStudio 4.7.0")) return installRoot.absolutePath();
+    return QDir(exeDir).absoluteFilePath("../../..");
+}
+
 class Workstation : public QMainWindow {
 public:
     explicit Workstation(const QString& dir)
-        : directory(dir), workspace(QDir(dir).absoluteFilePath("../../..")),
+        : directory(dir), workspace(resolveWorkspace(QCoreApplication::applicationDirPath())),
           recordRoot(QDir(workspace).filePath("outputs/workstation_runs")),
           nativeTemplate(readNativeJob(QDir(dir).absoluteFilePath("../SR175_3200_Helix_Ready_25mms_v4.zip"))),
           session(workspace, QCoreApplication::applicationDirPath() + "/helix_pc.exe") {

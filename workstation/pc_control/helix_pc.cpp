@@ -53,15 +53,21 @@ static double homePlanRadius = 0;
 static const char* homePlanError = "none";
 static bool atRest(RobotComClient& client);
 
-// helix_pc.exe 固定位于 <workspace>/RobotPrograms/<机型>/pc_control/，向上四级即为工作区根。
+// 工作区根优先取 UI 传入的环境变量 STEPROBOT_WORKSPACE；无该变量时回退老布局
+// （exe 固定位于 <workspace>/RobotPrograms/<机型>/pc_control/，向上五级）。
 static const std::wstring& workspaceRoot() {
     static const std::wstring root = [] {
         wchar_t buffer[32768]{};
-        const DWORD length = GetModuleFileNameW(nullptr, buffer, 32768);
-        if (!length || length >= 32768) return std::wstring{};
-        std::filesystem::path directory(buffer);
-        // 从 exe 文件路径出发:native → pc_control → SR175_3200_Helix → RobotPrograms → 工作区根,共 5 级
-        for (int depth = 0; depth < 5 && !directory.empty(); ++depth) directory = directory.parent_path();
+        std::filesystem::path directory;
+        const DWORD env = GetEnvironmentVariableW(L"STEPROBOT_WORKSPACE", buffer, 32768);
+        if (env > 0 && env < 32768) {
+            directory = std::wstring(buffer, env);
+        } else {
+            const DWORD length = GetModuleFileNameW(nullptr, buffer, 32768);
+            if (!length || length >= 32768) return std::wstring{};
+            directory = std::filesystem::path(buffer);
+            for (int depth = 0; depth < 5 && !directory.empty(); ++depth) directory = directory.parent_path();
+        }
         std::error_code error;
         const auto canonical = std::filesystem::weakly_canonical(directory, error);
         return error || directory.empty() ? std::wstring{} : canonical.wstring() + L'\\';

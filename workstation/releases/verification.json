@@ -1,7 +1,7 @@
 {
   "version": "2026.11.14",
   "revision": "triple-mode-fusion",
-  "package_bytes": 11028908,
+  "package_bytes": 11030130,
   "package_limit_bytes": 50000000,
   "platform": "Windows 10/11 x64",
   "build": "MSVC 2022 x64 (14.44), Qt 6.8.2, Ninja Release",
@@ -22,10 +22,10 @@
     "home_return": "passed: saved-target return, TCP caps 100/25 mm/s, mid-motion stop; peak TCP 3.83991 mm/s",
     "controller_motion_core_changed": false
   },
-  "control_agent": "helix_pc.exe rebuilt from source against vendor/sdk_cpp SR.SDK_C++_X64_Win_V2.4.1.20250801; previous installers shipped the legacy snapshot exe (2026-11-11) instead",
+  "control_agent": "helix_pc.exe rebuilt from source against vendor/sdk_cpp SR.SDK_C++_X64_Win_V2.4.1.20250801; workspace root is now configurable (workspace.txt next to the exe, or install root containing STEPStudio 4.7.0) and is passed to the control agent via STEPROBOT_WORKSPACE instead of the hard-coded drive root",
   "studio_and_seed": "external dependencies, configurable paths retained",
   "physical_robot_tested": false,
-  "installer_sha256": "542888d868c95e757acc1ceb071951def3e1b32747f4dca7f113b24167fafc5d",
+  "installer_sha256": "8ee89b8f6b791ba66d12d02a6b9648f4f6500c8b87837706849bbc536acf14c9",
   "omitted": [
     "STEPStudio installation",
     "licensed workstation seed and registration",

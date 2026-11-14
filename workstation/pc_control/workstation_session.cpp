@@ -61,7 +61,12 @@ void cleanOldRuns(const QString& logs) {
 
 Session::Session(QString workspace, QString client)
     : workspace(std::move(workspace)), client(std::move(client)) {
-    for (auto* process : {&kernel, &motion, &bootstrap, &worker}) hideConsole(*process);
+    QProcessEnvironment child = QProcessEnvironment::systemEnvironment();
+    child.insert("STEPROBOT_WORKSPACE", this->workspace);
+    for (auto* process : {&kernel, &motion, &bootstrap, &worker}) {
+        hideConsole(*process);
+        process->setProcessEnvironment(child);
+    }
     clock.start();
     timer.setInterval(60);
     connect(&timer, &QTimer::timeout, this, &Session::poll);
