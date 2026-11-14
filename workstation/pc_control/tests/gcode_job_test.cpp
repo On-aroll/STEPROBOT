@@ -48,10 +48,12 @@ int main() {
     check(valid.steps.size() == 2, "two motion steps recorded");
 
     const auto speedChanges = compileGcodeJob("speeds.nc", {"G91", "G1 X1 F60", "G1 X1 F120", "G1 X1 F60", "M30"}, 1, base);
-    QList<double> sdkSpeeds;
-    for (const auto& line : speedChanges.sdkProgram.split('\n'))
-        if (line.startsWith("DYN ")) sdkSpeeds << line.split(' ').value(2).toDouble();
-    check(sdkSpeeds == QList<double>{1, 2, 1}, "SDK stream restores a previously used feed speed");
+    // 同一进给值只生成一个速度组：60/120/60 mm/s 三段仅产生 dyn1=1、dyn2=2 两条 DYNAMIC。
+    QStringList dynamicValues;
+    for (const auto& line : QString::fromUtf8(speedChanges.files.value("gcode_path.srd")).split('\n'))
+        if (line.startsWith("DYNAMIC "))
+            dynamicValues << line.section(QChar('{'), 1).section(QChar(','), 0, 0);
+    check(dynamicValues == QStringList{"1.000000000", "2.000000000"}, "reused feed speeds share one dynamic group");
 
     // 模态运动 + 增量/绝对混合。
     const auto mixed = compileGcodeJob("mixed.nc", {"G91", "G1 F600 X1", "Y1", "G90 X5", "M2"}, 1, base);

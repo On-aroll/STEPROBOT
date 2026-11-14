@@ -62,3 +62,7 @@ desktop.ini
 # Small, versioned workstation release and the reviewed native program template.
 !/workstation/releases/*.exe
 !/workstation/SR175_3200_Helix_Ready_25mms_v4.zip
+
+# 本机构建目录与依赖下载日志（可再生，不入库，2026-11-14）
+build_ninja/
+aqtinstall.log

@@ -28,7 +28,7 @@ struct RunSummary {
 // 扫描记录根目录下每个含 run.json 的试次文件夹，新的在前。
 QVector<RunSummary> scanRuns(const QString& root);
 
-// 按相邻回读间隔估计运行秒数，剔除暂停和停止期间。
+// trace.csv 里 program_state==0 的首末时间差，即机器人实际运行的秒数。
 double runningSeconds(const QString& folder);
 
 // 历史试次浏览：列表、离线回放、两两对比的统一入口。

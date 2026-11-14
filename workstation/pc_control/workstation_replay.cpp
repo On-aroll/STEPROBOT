@@ -15,7 +15,7 @@
 #include <limits>
 
 namespace {
-// 读取归档中的单行字段，处理逗号与双引号转义。
+// Experiment 写 trace/plan 用的是 joinCsv（含引号转义），回读按 RFC 4180 逐字段还原。
 QStringList parseCsvLine(const QString& line) {
     QStringList fields;
     QString field;
@@ -109,22 +109,18 @@ QVector<RunSummary> scanRuns(const QString& root) {
 double runningSeconds(const QString& folder) {
     QFile file(QDir(folder).filePath("trace.csv"));
     if (!file.open(QIODevice::ReadOnly)) return 0;
-    double total = 0, previous = 0;
-    bool wasRunning = false;
+    double first = -1, last = 0;
     const auto lines = QString::fromUtf8(file.readAll()).split('\n');
     for (int i = 1; i < lines.size(); ++i) {
         const auto line = lines.at(i).trimmed();
         if (line.isEmpty()) continue;
         const auto f = parseCsvLine(line);
-        if (f.size() < 4) continue;
-        bool ok = false;
-        const double elapsed = f.at(1).toDouble(&ok);
-        if (!ok || !std::isfinite(elapsed)) continue;
-        if (wasRunning && elapsed >= previous) total += elapsed - previous;
-        previous = elapsed;
-        wasRunning = f.at(3) == "0";
+        if (f.size() < 4 || f.at(3) != "0") continue;
+        const double elapsed = f.at(1).toDouble();
+        if (first < 0) first = elapsed;
+        last = elapsed;
     }
-    return total;
+    return first < 0 ? 0 : last - first;
 }
 
 namespace {
@@ -164,7 +160,7 @@ public:
         frames = loadTrace(run.folder);
         measuredPoints.reserve(frames.size());
         for (const auto& frame : frames)
-            measuredPoints << (frame.hasMeasured ? frame.measured : Point{std::numeric_limits<double>::quiet_NaN(), 0, 0});
+            measuredPoints << Point{frame.hasMeasured ? frame.measured.x : std::numeric_limits<double>::quiet_NaN(), 0, 0};
         if (planPoints.size() >= 2) plot->points = &planPoints;
 
         auto* eventList = new QListWidget;
@@ -215,14 +211,10 @@ public:
             int next = current;
             while (next + 1 < frames.size() && frames.at(next + 1).elapsed <= cursor) ++next;
             if (next >= frames.size() - 1) { playing = false; playButton->setText("播放"); }
-            if (next != current) {
-                const double playbackTime = cursor;
-                slider->setValue(next);
-                cursor = playbackTime;
-            }
+            if (next != current) slider->setValue(next);
         });
         ticker.start();
-        showFrame(0);
+        slider->setValue(0);
     }
 
 private:
@@ -283,14 +275,12 @@ private:
         current = index;
         cursor = frames.at(index).elapsed;
         const auto& frame = frames.at(index);
-        int completed = 0, active = 0;
-        const int line = frame.sourceLine.toInt();
+        int completed = 0;
+        const int line = frame.nativeLine.toInt();
         if (line > 0)
             for (int i = 1; i < planRows.size(); ++i)
-                if (planRows.at(i) > 0 && planRows.at(i) < line) completed = i;
-                else if (planRows.at(i) == line && !active) active = i;
+                if (planRows.at(i) > 0 && planRows.at(i) <= line) completed = i;
         plot->completed = completed;
-        plot->active = active;
         plot->measured = measuredPoints.mid(0, index + 1);
         if (frame.hasMeasured) plot->tcp = frame.measured;
         else if (!planPoints.isEmpty()) plot->tcp = planPoints.at(std::min(completed, static_cast<int>(planPoints.size()) - 1));
@@ -357,16 +347,12 @@ public:
         addValue("起始行", a.startLine, b.startLine, "", 0);
         addValue("倍率 %", a.overridePct, b.overridePct, "%", 0);
         addValue("样本帧数", a.samples, b.samples, "帧", 0);
-        addValue("运行时长（采样估计）s", runningSeconds(a.folder), runningSeconds(b.folder), "s", 1);
-        if (a.hasDistance && b.hasDistance) {
+        addValue("运行时长 s", runningSeconds(a.folder), runningSeconds(b.folder), "s", 1);
+        if (a.hasDistance || b.hasDistance) {
             addValue("路径 RMS mm", a.rmsMm, b.rmsMm, "mm", 3);
             addValue("路径峰值 mm", a.maxMm, b.maxMm, "mm", 3);
-        } else if (a.hasDistance || b.hasDistance) {
-            addRow("路径 RMS mm", a.hasDistance ? QString::number(a.rmsMm, 'f', 3) : "未记录", b.hasDistance ? QString::number(b.rmsMm, 'f', 3) : "未记录");
-            addRow("路径峰值 mm", a.hasDistance ? QString::number(a.maxMm, 'f', 3) : "未记录", b.hasDistance ? QString::number(b.maxMm, 'f', 3) : "未记录");
         }
-        if (a.hasEndpoint && b.hasEndpoint) addValue("端点误差 mm", a.endpointMm, b.endpointMm, "mm", 3);
-        else if (a.hasEndpoint || b.hasEndpoint) addRow("端点误差 mm", a.hasEndpoint ? QString::number(a.endpointMm, 'f', 3) : "未记录", b.hasEndpoint ? QString::number(b.endpointMm, 'f', 3) : "未记录");
+        if (a.hasEndpoint || b.hasEndpoint) addValue("端点误差 mm", a.endpointMm, b.endpointMm, "mm", 3);
         addRow("结果", resultText(a.result), resultText(b.result));
         addRow("记录完整", a.complete ? "完整" : "不完整", b.complete ? "完整" : "不完整");
         table->setRowCount(rows.size());
@@ -439,10 +425,13 @@ RunBrowserDialog::RunBrowserDialog(const QString& root, QWidget* parent) : QDial
     else layout->addWidget(new QLabel("选中一行点「回放」拖时间轴重看；按住 Ctrl 选两行点「对比」。双击一行也直接回放。"));
     auto* actions = new QHBoxLayout;
     auto* openFolder = new QPushButton("打开记录文件夹");
+    auto* exportSummary = new QPushButton("导出汇总 CSV");
+    exportSummary->setToolTip("把全部试次的参数与偏差指标导出成一张 CSV 表，可用 Excel 打开，写报告直接引用。");
     auto* replayButton = new QPushButton("回放");
     auto* compareButton = new QPushButton("对比");
     auto* closeButton = new QPushButton("关闭");
     actions->addWidget(openFolder);
+    actions->addWidget(exportSummary);
     actions->addStretch(1);
     actions->addWidget(replayButton);
     actions->addWidget(compareButton);
@@ -493,5 +482,31 @@ RunBrowserDialog::RunBrowserDialog(const QString& root, QWidget* parent) : QDial
         CompareDialog(runs.at(picked.first()), runs.at(picked.last()), this).exec();
     });
     connect(openFolder, &QPushButton::clicked, this, [root] { QDesktopServices::openUrl(QUrl::fromLocalFile(root)); });
+    exportSummary->setEnabled(!runs.isEmpty());
+    connect(exportSummary, &QPushButton::clicked, this, [this, root, runs] {
+        const auto path = QFileDialog::getSaveFileName(this, "导出试次汇总",
+            QDir(root).filePath("试次汇总.csv"), "CSV (*.csv)");
+        if (path.isEmpty()) return;
+        QString csv = "开始时间,试次文件夹,备注,作业,目标,结果,样本帧,运行时长s,RMS mm,峰值mm,端点mm,柜内工程,柜内程序,起始行,倍率%,记录完整\r\n";
+        for (const auto& run : runs) {
+            QStringList cells{run.requestedUtc, QDir(run.folder).dirName(), run.label, run.jobName,
+                run.mode == "real" ? "实机" : "仿真", resultText(run.result), QString::number(run.samples),
+                QString::number(runningSeconds(run.folder), 'f', 1),
+                run.hasDistance ? QString::number(run.rmsMm, 'f', 3) : QString(),
+                run.hasDistance ? QString::number(run.maxMm, 'f', 3) : QString(),
+                run.hasEndpoint ? QString::number(run.endpointMm, 'f', 3) : QString(),
+                run.controllerProject, run.controllerProgram,
+                run.startLine > 0 ? QString::number(run.startLine) : QString(),
+                run.overridePct > 0 ? QString::number(run.overridePct, 'f', 0) : QString(),
+                run.complete ? "是" : "否"};
+            for (auto& cell : cells)
+                if (cell.contains(',') || cell.contains('"') || cell.contains('\n')) cell = '"' + cell + '"';
+            csv += cells.join(',') + "\r\n";
+        }
+        QFile output(path);
+        if (!output.open(QIODevice::WriteOnly) || output.write(QByteArray("\xEF\xBB\xBF") + csv.toUtf8()) < 0)
+            QMessageBox::warning(this, "导出失败", "无法写入所选文件，请换一个位置再试。");
+        else QMessageBox::information(this, "导出完成", "试次汇总已保存到：\n" + QDir::toNativeSeparators(path));
+    });
     connect(closeButton, &QPushButton::clicked, this, &QDialog::accept);
 }

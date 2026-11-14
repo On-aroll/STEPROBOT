@@ -295,8 +295,6 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
     }
     QStringList code{"# Generated dry-run path. Validate in STEPStudio before use.", "simDone := FALSE;", "IF(homeSaved==TRUE)THEN", "Tool(Default);", "RefSys(WORLD);"};
     QStringList data{"BOOL simDone := FALSE", "OVERLAPREL ovlPath := 50", "CARTPOS cpTarget := {0,0,0,0,0,0,0,0,0,0,0,0,0}"};
-    // 同一份转换结果的 SDK 逐行下发版本：行号与 SRP 严格一致，供 helix_pc sendprog 直发实机。
-    QStringList sdk{"HOME", "TOOL 4 Default", "REFSYS 5 WORLD"};
     const QRegularExpression comment(R"(\([^()]*\))");
     const QRegularExpression word(R"(([A-Z])[ \t]*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)))");
     QMap<double, QString> speeds;
@@ -305,7 +303,6 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
     bool relative = false;
     int modalMotion = -1;
     double feed = 0;
-    double sdkFeed = 0;
     bool ended = false;
     int turns = 0;
     double dwell = 0;
@@ -386,7 +383,6 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
             if (row < start) continue;
             code << QString("WaitTime(%1);").arg(static_cast<int>(std::nearbyint(seconds * 1000)));
             const int n = static_cast<int>(code.size());
-            sdk << QString("WAIT %1 %2").arg(n).arg(static_cast<int>(std::nearbyint(seconds * 1000)));
             job.steps << Step{row, n, n, firstPoint, firstPoint, 0, seconds};
             continue;
         }
@@ -445,11 +441,6 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
             speeds.insert(speed, key);
             data << QString("DYNAMIC %1 := {%2,200,200,1000,30,80,80,300,10,20,20,20}").arg(key, QString::number(speed, 'f', 9));
         }
-        if (sdkFeed != speed) {
-            // 新速度组的首条 Lin 位于 code.size()+3（注释、RelRef 之后），Dyn 指令与它同行生效。
-            sdk << QString("DYN %1 %2 200 200 1000 30 80 80 300 10 20 20 20").arg(static_cast<int>(code.size()) + 3).arg(speed, 0, 'f', 9);
-            sdkFeed = speed;
-        }
         code << QString("# Source line %1").arg(row);
         const int firstLine = static_cast<int>(code.size()) + 1;
         double seconds = 0;
@@ -462,9 +453,6 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
             job.points << offset;
             data << QString("POSOFFSET %1 := {%2,%3,%4,0,0,0}").arg(point, QString::number(offset.x, 'f', 9),
                      QString::number(offset.y, 'f', 9), QString::number(offset.z, 'f', 9));
-            sdk << QString("LIN %1 %2 %3 %4 %5 %6").arg(static_cast<int>(code.size()) + 2, 5).arg(offset.x, 0, 'f', 6)
-                    .arg(offset.y, 0, 'f', 6).arg(offset.z, 0, 'f', 6)
-                    .arg(speeds.value(speed).mid(3).toInt()).arg(index + 1 == targets.size() ? 0 : 1);
             code << QString("cpTarget := RelRef(pHomeCart,%1);").arg(point);
             code << QString("Lin(cpTarget,%1,%2,NULL,Default,WORLD);").arg(speeds.value(speed), index + 1 == targets.size() ? "NULL" : "ovlPath");
         }
@@ -479,13 +467,11 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
         return job;
     }
     code << "simDone := TRUE;" << "SaveData(simDone);" << "ELSE" << "Message(\"Run capture_home before gcode_path.\",eInfo);" << "END_IF";
-    sdk << QString("EOF %1").arg(static_cast<int>(code.size()) + 1);
     job.files.insert("gcode_path.srp", (code.join('\n') + '\n').toLatin1());
     job.files.insert("gcode_path.srd", (data.join('\n') + '\n').toLatin1());
     for (const auto* member : {"_project.srd", "capture_home.srd", "capture_home.srp"}) {
         job.files.insert(member, nativeTemplate.files.value(member));
     }
-    job.sdkProgram = (sdk.join('\n') + '\n').toLatin1();
     const auto endpoint = job.points.last();
     job.summary = QString("%1 个点 · %2 整圈 · 终点 (%3, %4, %5) mm · 等待 %6 s")
         .arg(job.points.size() - 1).arg(turns).arg(endpoint.x).arg(endpoint.y).arg(endpoint.z).arg(dwell);

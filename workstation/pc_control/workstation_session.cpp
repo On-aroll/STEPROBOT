@@ -8,7 +8,6 @@
 #include <QFileInfo>
 #include <QRegularExpression>
 #include <QTemporaryDir>
-#include <QStandardPaths>
 
 #include <windows.h>
 
@@ -53,19 +52,15 @@ void hideConsole(QProcess& process) {
 
 void cleanOldRuns(const QString& logs) {
     const QDir folder(logs);
-    const auto root = QFileInfo(logs).canonicalFilePath();
-    if (root.isEmpty()) return;
     const auto now = QDateTime::currentDateTime();
-    for (const auto& entry : folder.entryInfoList({"cpp_*"}, QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks)) {
-        const auto canonical = entry.canonicalFilePath();
-        if (QFileInfo(canonical).dir().canonicalPath() == root && entry.lastModified().daysTo(now) >= 30)
-            QDir(canonical).removeRecursively();
-    }
+    for (const auto& entry : folder.entryInfoList({"cpp_*"}, QDir::Dirs | QDir::NoDotAndDotDot))
+        if (entry.lastModified().daysTo(now) >= 30)
+            QDir(entry.absoluteFilePath()).removeRecursively();
 }
 }
 
-Session::Session(QString workspace, QString client, QString studioRoot, QString simulationSeed)
-    : workspace(std::move(workspace)), client(std::move(client)), studioRoot(std::move(studioRoot)), simulationSeed(std::move(simulationSeed)) {
+Session::Session(QString workspace, QString client)
+    : workspace(std::move(workspace)), client(std::move(client)) {
     for (auto* process : {&kernel, &motion, &bootstrap, &worker}) hideConsole(*process);
     clock.start();
     timer.setInterval(60);
@@ -77,7 +72,7 @@ Session::Session(QString workspace, QString client, QString studioRoot, QString 
         lost = !closing;
         feedback.clear();
         pending.clear();
-        waitingStop = control = ownedRun = waitingEstop = false;
+        waitingStop = control = ownedRun = false;
         cleanVirtual();
         closing = false;
         if (ended) ended(lost);
@@ -90,10 +85,6 @@ Session::Session(QString workspace, QString client, QString studioRoot, QString 
 }
 
 Session::~Session() {
-    timer.stop();
-    // QProcess destruction can emit finished after Session's feedback buffers are destroyed.
-    for (auto* process : {&worker, &bootstrap, &motion, &kernel})
-        QObject::disconnect(process, nullptr, this, nullptr);
     disconnect();
     cleanVirtual();
 }
@@ -107,7 +98,7 @@ bool Session::fresh() const {
 }
 
 bool Session::canClose() const {
-    if (preparing || waitingStop || waitingEstop || !pending.isEmpty()) return false;
+    if (preparing || waitingStop || !pending.isEmpty()) return false;
     if (value("home_returning") == "1" || (value("home_return_result") == "unconfirmed" && value("motion_rest") != "1")) return false;
     return !control || !connected() || (fresh() && value("state") != "0" && value("state") != "3");
 }
@@ -127,28 +118,12 @@ void Session::waitForVirtualPorts(const Job& job, qint64 deadline) {
         else QTimer::singleShot(150, this, [this, job, deadline] { waitForVirtualPorts(job, deadline); });
         return;
     }
-    const QDir studio(studioRoot);
-    const auto seed = simulationSeed;
+    const QDir studio(QDir(workspace).filePath("STEPStudio 4.7.0/STEPStudio 4.7.0"));
+    const auto seed = studio.filePath("project/luoxuan-sim-20261104");
     const auto env = studio.filePath("RobotController_PC/Environment");
-    if (studioRoot.isEmpty() || seed.isEmpty() || !QFileInfo::exists(QDir(env).filePath("1-NonReal.exe")) ||
-        !QFileInfo::exists(QDir(env).filePath("2-RobotMoveControl.exe")) || !QDir(seed).exists("SRSystemFile") || !QDir(seed).exists("home")) {
-        fail("未配置完整 STEPStudio 仿真环境。请先运行 Configure-STEPStudio.cmd，预览与 G 代码转换可独立使用。");
-        return;
-    }
-    auto logs = qEnvironmentVariable("STEP_SIMULATION_RUN_ROOT");
-    if (logs.isEmpty()) logs = QDir(QStandardPaths::writableLocation(QStandardPaths::TempLocation)).filePath("STEPWS");
-    if (!QDir().mkpath(logs)) { fail("无法创建厂家仿真临时目录。请设置 STEP_SIMULATION_RUN_ROOT 到可写的短路径。"); return; }
-    wchar_t shortPath[32768]{};
-    const auto nativeLogs = QDir::toNativeSeparators(QDir(logs).absolutePath()).toStdWString();
-    const DWORD shortLength = GetShortPathNameW(nativeLogs.c_str(), shortPath, 32768);
-    logs = shortLength > 0 && shortLength < 32768 ? QString::fromWCharArray(shortPath) : QDir(logs).absolutePath();
-    if (logs.size() > 64) { fail("厂家仿真目录过长。请将 STEP_SIMULATION_RUN_ROOT 设置到较短的可写路径后重启工作台。"); return; }
+    const auto logs = QDir(workspace).filePath("tmp/pendant_ui_runs");
+    QDir().mkpath(logs);
     cleanOldRuns(logs);
-    auto environment = QProcessEnvironment::systemEnvironment();
-    environment.insert("STEP_WORKSTATION_RUN_ROOT", QDir::toNativeSeparators(logs));
-    environment.insert("STEP_VIRTUAL_KERNEL", QDir::toNativeSeparators(QDir(env).filePath("1-NonReal.exe")));
-    bootstrap.setProcessEnvironment(environment);
-    worker.setProcessEnvironment(environment);
     QTemporaryDir run(QDir(logs).filePath("cpp_XXXXXX"));
     if (!run.isValid()) { fail("无法创建隔离仿真目录。"); return; }
     run.setAutoRemove(false);
@@ -188,49 +163,11 @@ void Session::waitForVirtualPorts(const Job& job, qint64 deadline) {
             if (motion.state() != QProcess::Running) { fail("仿真运动进程未启动，请检查 motion.log。"); return; }
             const auto pid = QString::number(kernel.processId());
             const auto manualProfile = QDir(station).filePath("SRSystemFile/ConfigureFiles/RobotParameter.xml");
-            bootstrap.setStandardOutputFile(QDir(logFolder).filePath("prepare.log"), QIODevice::Append);
+            bootstrap.setStandardOutputFile(QDir(logFolder).filePath("prepare.log"));
             QObject::disconnect(&bootstrap, nullptr, this, nullptr);
-            const auto prepareLog = QDir(logFolder).filePath("prepare.log");
-            const auto prepareLogPos = QFileInfo(prepareLog).size();
-            connect(&bootstrap, &QProcess::finished, this, [this, suffix, pid, manualProfile, prepareLog, prepareLogPos, attempts = 0](int code, QProcess::ExitStatus status) mutable {
+            connect(&bootstrap, &QProcess::finished, this, [this, suffix, pid, manualProfile](int code, QProcess::ExitStatus status) {
                 if (!preparing) return;
-                const auto restart = [this, suffix, pid, manualProfile] {
-                    QTimer::singleShot(250, this, [this, suffix, pid, manualProfile] {
-                        if (preparing && QString::number(kernel.processId()) == pid)
-                            bootstrap.start(client, {QString("virtual-prepare") + suffix, pid, manualProfile});
-                    });
-                };
-                if (code == 3 && status == QProcess::NormalExit && kernel.state() == QProcess::Running && motion.state() == QProcess::Running) {
-                    // Exit 3 preserves the helper's PID/path/port checks. A newly started vendor
-                    // controller can expose its listeners later than its process and motion service.
-                    restart();
-                    return;
-                }
-                if (code || status != QProcess::NormalExit) {
-                    // SDK 后台线程收尾时可能访问违规，把已完成的准备变成崩溃退出。以 prepare.log 中
-                    // 本次尝试的 virtual_prepared= 为准：读到成功标记就照常接入，否则重试一次。
-                    const auto tries = attempts++;
-                    QTimer::singleShot(150, this, [this, restart, suffix, pid, manualProfile, prepareLog, prepareLogPos, tries, code, status] {
-                        if (!preparing) return;
-                        QFile record(prepareLog);
-                        QString tail;
-                        if (record.open(QIODevice::ReadOnly)) {
-                            record.seek(qMin<qint64>(prepareLogPos, record.size()));
-                            tail = QString::fromLocal8Bit(record.readAll());
-                        }
-                        if (tail.contains("virtual_prepared=1")) {
-                            if (note) note("SDK 控制端收尾崩溃，但本次准备已确认成功，按就绪接入。");
-                            preparing = false;
-                            attach(QString("virtual") + suffix, {pid, manualProfile});
-                            return;
-                        }
-                        if (tries < 1) { restart(); return; }
-                        fail(QString("仿真准备失败（退出码 %1，%2），请检查 prepare.log。")
-                                 .arg(code)
-                                 .arg(status == QProcess::NormalExit ? "正常退出" : "进程崩溃"));
-                    });
-                    return;
-                }
+                if (code || status != QProcess::NormalExit) { fail("仿真准备失败，请检查 prepare.log。"); return; }
                 preparing = false;
                 attach(QString("virtual") + suffix, {pid, manualProfile});
             });
@@ -242,22 +179,12 @@ void Session::waitForVirtualPorts(const Job& job, qint64 deadline) {
     });
 }
 
-void Session::connectReal(QString ip) {
+void Session::connectReal(QString ip, QString serial) {
     if (active()) return;
     simulated = false;
     logFolder.clear();
     QStringList params{ip};
-    const auto seedProfile = simulationSeed.isEmpty() ? QString() :
-        QDir(simulationSeed).filePath("SRSystemFile/ConfigureFiles/RobotParameter.xml");
-    const auto bundled = QDir(QFileInfo(client).absolutePath()).filePath("RobotParameter.xml");
-    const auto profile = !seedProfile.isEmpty() && QFileInfo::exists(seedProfile) ? seedProfile :
-        QFileInfo::exists(bundled) ? bundled : QString();
-    auto environment = QProcessEnvironment::systemEnvironment();
-    if (!profile.isEmpty()) {
-        environment.insert("STEP_WORKSTATION_RUN_ROOT", QDir::toNativeSeparators(QFileInfo(profile).absolutePath()));
-        params << QDir::toNativeSeparators(profile);
-    }
-    worker.setProcessEnvironment(environment);
+    if (!serial.isEmpty()) params << serial;
     attach("real", params);
 }
 
@@ -269,7 +196,7 @@ void Session::attach(QString mode, QStringList parameters) {
     identity.clear();
     address.clear();
     lastStatus = -1;
-    lost = control = waitingStop = waitingEstop = ownedRun = timeoutStop = commandSent = closing = false;
+    lost = control = waitingStop = ownedRun = timeoutStop = commandSent = closing = false;
     outstanding = true;
     parameters.prepend(mode);
     parameters << "--panel";
@@ -278,11 +205,11 @@ void Session::attach(QString mode, QStringList parameters) {
 }
 
 bool Session::send(const QString& command) {
-    return worker.state() == QProcess::Running && worker.write((command + '\n').toUtf8()) >= 0;
+    return worker.state() == QProcess::Running && worker.write((command + '\n').toLatin1()) >= 0;
 }
 
 bool Session::request(QString command) {
-    if (!control || !fresh() || waitingStop || waitingEstop || !pending.isEmpty()) return false;
+    if (!control || !fresh() || waitingStop || !pending.isEmpty()) return false;
     pending = std::move(command);
     queuedAt = clock.elapsed();
     if (changed) changed();
@@ -291,13 +218,15 @@ bool Session::request(QString command) {
 
 void Session::stop() {
     if (!control || !connected() || waitingStop) return;
-    const bool cancelled = !pending.isEmpty() && !commandSent;
-    const bool start = cancelled && (pending == "start" || pending.startsWith("sendrun ") || pending.startsWith("runproj "));
-    pending.clear();
-    if (cancelled && note) note("已取消排队中的操作。");
-    waitingStop = send("stop");
-    if (note) note(waitingStop ? "停止发送请求已提交。" : "停止请求未送达控制端。");
-    if (start && event) event("start_cancelled");
+    if ((pending == "start" || pending.startsWith("returnhome ")) && !commandSent) {
+        const bool start = pending == "start";
+        pending.clear();
+        if (note) note(start ? "已取消排队中的 START。" : "已取消排队中的返回起点。");
+        if (start && event) event("start_cancelled");
+    } else {
+        waitingStop = send("stop");
+        if (note) note(waitingStop ? "停止发送请求已提交。" : "停止请求未送达控制端。");
+    }
     if (changed) changed();
 }
 
@@ -306,17 +235,6 @@ void Session::disconnect() {
     closing = true;
     send("quit");
     if (!worker.waitForFinished(1300)) worker.kill();
-}
-
-// 急停绕过回读队列直发：点动/回程循环和启动预检都会因管道里出现 estop 而立即中断。
-bool Session::emergencyStop() {
-    if (!control || !connected()) return false;
-    pending.clear();
-    waitingEstop = true;
-    const bool ok = send("estop");
-    if (note) note(ok ? "急停指令已直发（STOP+MSTOP）。" : "急停指令未送达控制端。");
-    if (changed) changed();
-    return ok;
 }
 
 void Session::cleanVirtual() {
@@ -409,14 +327,11 @@ void Session::handle(const QString& line) {
         feedback.clear();
         outstanding = commandSent = false;
         pending.clear();
-        waitingEstop = false;
     } else if (line == "start_request_rc=0" || line.startsWith("home_return_request_rc=0")) {
         ownedRun = true;
         timeoutStop = false;
     } else if (line == "command_done=stop") {
         waitingStop = false;
-    } else if (line == "command_done=estop") {
-        waitingEstop = false;
     } else if (!line.isEmpty() && note) {
         if (line.startsWith("stop_confirmed=")) ownedRun = false;
         note(line);
@@ -435,7 +350,7 @@ void Session::poll() {
             waitingStop = send("stop");
             if (note) note(waitingStop ? "回读超时，已尝试停止发送。" : "回读超时，停止未送达。");
         }
-        if (!outstanding && !waitingStop && !waitingEstop && (lastStatus < 0 || clock.elapsed() - lastStatus >= 230)) {
+        if (!outstanding && !waitingStop && (lastStatus < 0 || clock.elapsed() - lastStatus >= 230)) {
             commandSent = !pending.isEmpty();
             outstanding = send(commandSent ? pending : "status");
             if (commandSent && !outstanding) {

@@ -5,16 +5,12 @@
 #include <windows.h>
 #include "RobotCom.hpp"
 #include "workstation_motion.h"
-#include "workstation_identity.h"
-#include "workstation_controller_ops.h"
 #include <chrono>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
-#include <cstdlib>
 #include <iostream>
 #include <fstream>
-#include <iomanip>
 #include <filesystem>
 #include <regex>
 #include <sstream>
@@ -48,7 +44,6 @@ static ManualProfile manualProfile;
 static double appliedJogSpeed = 0;
 static const char* appliedJogUnit = "none";
 static bool returningHome = false, homePlanReady = false;
-static bool panelMode = false;
 static const char* homeReturnResult = "none";
 static JointReturnPlan homePlan;
 static unsigned long homePlanId = 0;
@@ -56,26 +51,32 @@ static std::chrono::steady_clock::time_point homePlanTime;
 static std::string homePlanTool;
 static double homePlanRadius = 0;
 static const char* homePlanError = "none";
-static bool switchedToManual = false;
-static std::string sentProgramName;
-static int sentLastMotionLine = 0;
-static bool sentRunning = false;
-static double sentTarget[3]{};
-static bool sentLastMotionObserved = false;
 static bool atRest(RobotComClient& client);
-static bool autoMode(RobotComClient& client);
 
-static ManualProfile readManualProfile(const char* filename) {
+// helix_pc.exe 固定位于 <workspace>/RobotPrograms/<机型>/pc_control/，向上四级即为工作区根。
+static const std::wstring& workspaceRoot() {
+    static const std::wstring root = [] {
+        wchar_t buffer[32768]{};
+        const DWORD length = GetModuleFileNameW(nullptr, buffer, 32768);
+        if (!length || length >= 32768) return std::wstring{};
+        std::filesystem::path directory(buffer);
+        // 从 exe 文件路径出发:native → pc_control → SR175_3200_Helix → RobotPrograms → 工作区根,共 5 级
+        for (int depth = 0; depth < 5 && !directory.empty(); ++depth) directory = directory.parent_path();
+        std::error_code error;
+        const auto canonical = std::filesystem::weakly_canonical(directory, error);
+        return error || directory.empty() ? std::wstring{} : canonical.wstring() + L'\\';
+    }();
+    return root;
+}
+
+static ManualProfile readManualProfile(const std::filesystem::path& raw) {
     ManualProfile profile;
     std::error_code error;
-    const auto path = std::filesystem::weakly_canonical(filename, error);
+    const auto path = std::filesystem::weakly_canonical(raw, error);
     const auto native = path.wstring();
-    const auto* configuredRoot = _wgetenv(L"STEP_WORKSTATION_RUN_ROOT");
-    if (!configuredRoot || !*configuredRoot) return profile;
-    const auto rootPath = std::filesystem::weakly_canonical(configuredRoot, error);
-    if (error) return profile;
-    const std::wstring root = rootPath.wstring() + L"\\";
-    if (error || native.size() <= root.size() || _wcsnicmp(native.c_str(), root.c_str(), root.size()) != 0 ||
+    const auto& base = workspaceRoot();
+    const std::wstring root = base.empty() ? base : base + L"tmp\\pendant_ui_runs\\";
+    if (root.empty() || error || native.size() <= root.size() || _wcsnicmp(native.c_str(), root.c_str(), root.size()) != 0 ||
         path.filename() != "RobotParameter.xml" || std::filesystem::file_size(path, error) > 200000 || error) return profile;
     std::ifstream file(path);
     const std::string xml((std::istreambuf_iterator<char>(file)), {});
@@ -114,6 +115,28 @@ static ManualProfile readManualProfile(const char* filename) {
     return profile;
 }
 
+// 示教器参数文件缺失时的内置限速：点动速度取官方手册表 2-3 中 SR175-3200
+// 关节额定速度的 10% 作为保守值，限位用官方关节行程表；
+// 直线 100mm/s、回起点 50mm/s、臂展 3200mm，均在 T2 点动 250mm/s 上限之内。
+static ManualProfile defaultManualProfile() {
+    ManualProfile profile;
+    const double hardware[] = {110, 100, 100, 170, 160, 220};
+    const double lower[] = {-183, -60, -130, -220, -125, -360};
+    const double upper[] = {183, 85, 80, 220, 125, 360};
+    for (int i = 0; i < 6; ++i) {
+        profile.hardwareJoints[i] = hardware[i];
+        profile.joints[i] = hardware[i] / 10;
+        profile.lower[i] = lower[i];
+        profile.upper[i] = upper[i];
+    }
+    profile.linear = 100;
+    profile.angular = 30;
+    profile.returnLinear = 50;
+    profile.returnRadius = 3200;
+    profile.valid = true;
+    return profile;
+}
+
 static bool verifiedVirtualListener(DWORD owner) {
     if (!owner) return false;
     DWORD size = 0;
@@ -137,12 +160,10 @@ static bool verifiedVirtualListener(DWORD owner) {
     DWORD length = 32768;
     const bool found = QueryFullProcessImageNameW(process, 0, path, &length) != 0;
     CloseHandle(process);
-    const auto* configuredKernel = _wgetenv(L"STEP_VIRTUAL_KERNEL");
-    if (!found || !configuredKernel || !*configuredKernel) return false;
-    std::error_code error;
-    const auto kernel = std::filesystem::weakly_canonical(configuredKernel, error);
-    return !error && kernel.filename() == L"1-NonReal.exe" && kernel.parent_path().filename() == L"Environment" &&
-        kernel.parent_path().parent_path().filename() == L"RobotController_PC" && std::filesystem::equivalent(path, kernel, error) && !error;
+    const auto& base = workspaceRoot();
+    const std::wstring kernel = base.empty() ? std::wstring{}
+        : base + L"STEPStudio 4.7.0\\STEPStudio 4.7.0\\RobotController_PC\\Environment\\1-NonReal.exe";
+    return found && !kernel.empty() && _wcsicmp(path, kernel.c_str()) == 0;
 }
 
 static bool isPrivateIPv4(const std::string& ip) {
@@ -198,40 +219,39 @@ static void printStatus(RobotComClient& client, const char* outcome = nullptr, b
     for (int i = 0; i < 6; ++i) std::cout << joints.m_Joint[i] << (i == 5 ? '\n' : ',');
 }
 
-static const char* startBlocker(RobotComClient& client, const Job& job, bool* completionArmed = nullptr) {
-    const bool workflow = matchingProgram(client, job);
-    if (!workflow && client.getProgramName().empty())
-        return "no program is loaded; pick one with loadproj or on the pendant";
-    if (workflow) {
-        bool saved = false;
-        AXISPOS home{};
-        SDynamicPercent dynamic{};
-        if (client.VariableBoolReadCmd(job.project, job.program, "homeSaved", saved) != 0 || !saved)
-            return "no saved home; use the pendant capture_home procedure";
-        if (client.VariableAxisposReadCmd(job.project, job.program, "pHome", home) != 0)
-            return "could not read pHome";
-        if (&job == &Helix && (client.VariableDynamicReadCmd(job.project, job.program, "dynPath", dynamic) != 0 ||
-            !std::isfinite(dynamic.m_SegmentDynamic.m_Vel) || std::abs(dynamic.m_SegmentDynamic.m_Vel - 25.0) > 0.001))
-            return "could not verify the 25 mm/s dynPath setting";
-        const auto joints = client.getAxisPos();
-        for (int i = 0; i < 6; ++i) {
-            if (!std::isfinite(joints.m_Joint[i]) || !std::isfinite(home.m_Joint[i]) ||
-                std::abs(joints.m_Joint[i] - home.m_Joint[i]) > 0.1)
-                return "actual joints do not match pHome";
-        }
-        if (completionArmed) {
-            bool alreadyDone = true;
-            *completionArmed = client.VariableBoolReadCmd(job.project, job.program, "simDone", alreadyDone) == 0 && !alreadyDone;
-        }
-    }
-    if (!autoMode(client) || client.getProgramMode() != eContinue || client.getMotorEnableState() != 1)
+static const char* startBlocker(RobotComClient& client, bool simulated, const Job& job, bool* completionArmed = nullptr) {
+    if (!matchingProgram(client, job)) return "the expected project and program must be loaded";
+    if (client.getOperationMode() != eAutomatic || client.getProgramMode() != eContinue || client.getMotorEnableState() != 1)
         return "local AUT, continuous mode and local servo enable are required";
-    if (client.getProgramState() != eStop || client.getCurrentLine() < 1)
-        return "program must be stopped; set the entry line before a new run";
+    if (client.getProgramState() != eStop || client.getCurrentLine() < 1 || client.getCurrentLine() > 2)
+        return "program must be stopped at its entry; reload on the pendant before a new run";
+    if (!simulated && !(client.getOverride() > 0))
+        return "physical start requires a positive override";
     if (client.getMessageData().m_MessageType == eError) return "controller reports an error";
-    if (client.ConnectStatus() != 0 || !autoMode(client) ||
+    bool saved = false;
+    AXISPOS home{};
+    SDynamicPercent dynamic{};
+    if (client.VariableBoolReadCmd(job.project, job.program, "homeSaved", saved) != 0 || !saved)
+        return "no saved home; use the pendant capture_home procedure";
+    if (client.VariableAxisposReadCmd(job.project, job.program, "pHome", home) != 0)
+        return "could not read pHome";
+    if (&job == &Helix && (client.VariableDynamicReadCmd(job.project, job.program, "dynPath", dynamic) != 0 ||
+        !std::isfinite(dynamic.m_SegmentDynamic.m_Vel) || std::abs(dynamic.m_SegmentDynamic.m_Vel - 25.0) > 0.001))
+        return "could not verify the 25 mm/s dynPath setting";
+    const auto joints = client.getAxisPos();
+    for (int i = 0; i < 6; ++i) {
+        if (!std::isfinite(joints.m_Joint[i]) || !std::isfinite(home.m_Joint[i]) ||
+            std::abs(joints.m_Joint[i] - home.m_Joint[i]) > 0.1)
+            return "actual joints do not match pHome";
+    }
+    if (completionArmed) {
+        bool alreadyDone = true;
+        *completionArmed = client.VariableBoolReadCmd(job.project, job.program, "simDone", alreadyDone) == 0 && !alreadyDone;
+    }
+    if (client.ConnectStatus() != 0 || !matchingProgram(client, job) || client.getOperationMode() != eAutomatic ||
         client.getProgramMode() != eContinue || client.getMotorEnableState() != 1 || client.getProgramState() != eStop ||
-        client.getCurrentLine() < 1 || client.getMessageData().m_MessageType == eError)
+        client.getCurrentLine() < 1 || client.getCurrentLine() > 2 || client.getMessageData().m_MessageType == eError ||
+        (!simulated && !(client.getOverride() > 0)))
         return "controller state changed during preflight";
     return nullptr;
 }
@@ -250,25 +270,18 @@ static bool readPanelCommand(std::string& command) {
 }
 
 static bool panelStartAllowed() {
-    char queued[8]{};
+    char queued[6]{};
     DWORD count = 0;
-    if (!PeekNamedPipe(GetStdHandle(STD_INPUT_HANDLE), queued, sizeof queued, &count, nullptr, nullptr)) return false;
-    const auto line = [&](const char* word, size_t length) {
-        return count >= length + 1 && std::memcmp(queued, word, length) == 0 &&
-            (queued[length] == '\n' || queued[length] == '\r');
-    };
-    return !(line("stop", 4) || line("quit", 4) || line("estop", 5));
+    return PeekNamedPipe(GetStdHandle(STD_INPUT_HANDLE), queued, sizeof queued, &count, nullptr, nullptr) &&
+        !(count >= 5 && (std::memcmp(queued, "stop", 4) == 0 || std::memcmp(queued, "quit", 4) == 0) &&
+          (queued[4] == '\n' || queued[4] == '\r'));
 }
 
 static bool atRest(RobotComClient& client);
 
 static bool issue(RobotComClient& client, MODEKEY key, bool panel = false) {
-    const bool starting = key == START;
-    if (starting && panel && !panelStartAllowed()) {
-        std::cout << "start_cancelled=stop_or_panel_closed\n";
-        return false;
-    }
     const int rc = client.SetModeCmd(key, false);
+    const bool starting = key == START;
     std::cout << (starting ? "start" : "stop") << "_request_rc=" << rc << '\n';
     int stable = 0;
     for (int i = 0; rc == 0 && i < 60 && client.ConnectStatus() == 0; ++i) {
@@ -308,35 +321,6 @@ static bool isManual(RobotComClient& client) {
     return mode == eManual || mode == eManualHigh;
 }
 
-static bool autoMode(RobotComClient& client) {
-    const auto mode = client.getOperationMode();
-    return mode == eAutomatic || mode == eAutomaticExternal;
-}
-
-// 返回起点在手动和自动模式下都可用：自动时先由上位机切到手动，完成后再切回。
-static bool ensureManualMode(RobotComClient& client) {
-    if (isManual(client)) return true;
-    if (!autoMode(client) || !atRest(client) || client.getMessageData().m_MessageType == eError) return false;
-    if (client.SetModeCmd(MANUAL, false) != 0 || !waitFor(client, [&] { return isManual(client); })) return false;
-    switchedToManual = true;
-    if (!client.getMotorEnableState()) {
-        if (client.EnableMotorCmd() != 0 || !waitFor(client, [&] { return client.getMotorEnableState() == 1; })) return false;
-        std::this_thread::sleep_for(350ms);
-    }
-    return client.getMotorEnableState() == 1;
-}
-
-static void restoreAutoMode(RobotComClient& client) {
-    if (!switchedToManual) return;
-    switchedToManual = false;
-    if (!atRest(client) || client.getMessageData().m_MessageType == eError) {
-        std::cout << "auto_mode_restore=skipped_not_safe mode=" << int(client.getOperationMode()) << '\n';
-        return;
-    }
-    const bool restored = client.SetModeCmd(AUTO, false) == 0 && waitFor(client, [&] { return autoMode(client); });
-    std::cout << "auto_mode_restored=" << (restored ? 1 : 0) << " mode=" << int(client.getOperationMode()) << '\n';
-}
-
 static bool atRest(RobotComClient& client) {
     const auto state = client.getProgramState();
     const auto* data = client.getSDKStruct();
@@ -355,7 +339,7 @@ static bool setOverride(RobotComClient& client, double value) {
 
 static bool setVirtualMode(RobotComClient& client, const Job& job, bool manual) {
     if (!atRest(client)) return false;
-    const auto inMode = [&] { return manual ? isManual(client) : autoMode(client); };
+    const auto inMode = [&] { return manual ? isManual(client) : client.getOperationMode() == eAutomatic; };
     if (!inMode() && (client.SetModeCmd(manual ? MANUAL : AUTO, false) || !waitFor(client, inMode))) return false;
     if (!setOverride(client, manual ? 5 : (&job == &Gcode ? 100 : 20))) return false;
     appliedJogSpeed = 0;
@@ -391,47 +375,23 @@ static bool loadNativeProgram(RobotComClient& client, const Job& job, const char
 static bool captureAndLoad(RobotComClient& client, const Job& job) {
     const auto load = [&](const char* name) { return loadNativeProgram(client, job, name); };
     const auto initial = client.getAxisPos();
-    if (!load("capture_home")) return false;
-    const int startRc = client.SetModeCmd(START, false);
-    if (startRc) { std::cout << "capture_fail: start rc=" << startRc << '\n'; return false; }
-    const auto started = std::chrono::steady_clock::now();
-    // START 返回 0 不代表已起跑：起跑竞态下状态仍是 eStop，只等 eStop 会立刻误判完成。
-    // 必须等到 homeSaved 置位且程序回到停止态，才认为采集真正结束。
+    if (!load("capture_home") || client.SetModeCmd(START, false)) return false;
+    std::this_thread::sleep_for(1000ms);
     bool saved = false;
-    for (int i = 0; i < 160 && client.ConnectStatus() == 0; ++i) {
-        client.VariableBoolReadCmd(job.project, "capture_home", "homeSaved", saved);
-        if (saved && client.getProgramState() == eStop) break;
-        std::this_thread::sleep_for(50ms);
-    }
-    const auto settle = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
-    if (settle > 1500) std::cout << "capture_slow: settle_ms=" << settle << '\n';
-    if (!saved || client.getProgramState() != eStop) {
-        std::cout << "capture_fail: capture_home 未完成 saved=" << saved << " state=" << client.getProgramState()
-                  << " line=" << client.getCurrentLine() << " settle_ms=" << settle << '\n';
-        return false;
-    }
     AXISPOS home{};
-    if (int rc = client.VariableAxisposReadCmd(job.project, "capture_home", "pHome", home); rc) {
-        std::cout << "capture_fail: pHome rc=" << rc << '\n';
-        return false;
-    }
+    if (client.getProgramState() != eStop ||
+        client.VariableBoolReadCmd(job.project, "capture_home", "homeSaved", saved) || !saved ||
+        client.VariableAxisposReadCmd(job.project, "capture_home", "pHome", home)) return false;
     const auto current = client.getAxisPos();
     for (int i = 0; i < 6; ++i) {
         if (!std::isfinite(initial.m_Joint[i]) || !std::isfinite(home.m_Joint[i]) ||
             !std::isfinite(current.m_Joint[i]) || std::abs(home.m_Joint[i] - initial.m_Joint[i]) > 0.001 ||
-            std::abs(current.m_Joint[i] - initial.m_Joint[i]) > 0.001) {
-            std::cout << "capture_fail: joint_mismatch axis=" << i << " initial=" << initial.m_Joint[i]
-                      << " home=" << home.m_Joint[i] << " current=" << current.m_Joint[i] << '\n';
-            return false;
-        }
+            std::abs(current.m_Joint[i] - initial.m_Joint[i]) > 0.001) return false;
     }
-    if (int rc = client.ProgramKillCmd(job.project, "capture_home", true); rc) {
-        std::cout << "capture_fail: kill rc=" << rc << '\n';
-        return false;
-    }
+    if (client.ProgramKillCmd(job.project, "capture_home", true)) return false;
     std::this_thread::sleep_for(500ms);
     if (!load(job.program)) return false;
-    if (const auto* blocker = startBlocker(client, job)) {
+    if (const auto* blocker = startBlocker(client, true, job)) {
         std::cout << "Refused: " << blocker << '\n';
         return false;
     }
@@ -439,24 +399,9 @@ static bool captureAndLoad(RobotComClient& client, const Job& job) {
 }
 
 static bool prepareVirtual(RobotComClient& client, const Job& job) {
-    const auto programName = client.getProgramName();
-    if (!programName.empty() || client.getProgramState() != eStop) {
-        // 上次准备的 capture_home 可能残留运行态（起跑竞态下准备已返回失败）。沙箱内
-        // 只会是我们自己的程序，杀掉后继续，而不是直接拒绝整个准备。
-        std::cout << "prepare_recover: busy program=" << programName << " state=" << client.getProgramState() << '\n';
-        client.ProgramKillCmd(job.project, programName.empty() ? "capture_home" : programName, true);
-        std::this_thread::sleep_for(400ms);
-        if (!client.getProgramName().empty() || client.getProgramState() != eStop) {
-            std::cout << "prepare_fail: busy_after_kill program=" << client.getProgramName()
-                      << " state=" << client.getProgramState() << '\n';
-            return false;
-        }
-    }
-    int rc = client.ProgramRunModeCmd(0);
-    if (rc) { std::cout << "prepare_fail: runmode rc=" << rc << '\n'; return false; }
-    rc = client.ToolSetCmd("Default");
-    if (rc) { std::cout << "prepare_fail: toolset rc=" << rc << '\n'; return false; }
-    if (!setVirtualMode(client, job, !job.program)) { std::cout << "prepare_fail: set_virtual_mode\n"; return false; }
+    if (!client.getProgramName().empty() || client.getProgramState() != eStop ||
+        client.ProgramRunModeCmd(0) || client.ToolSetCmd("Default")) return false;
+    if (!setVirtualMode(client, job, !job.program)) return false;
     return job.program ? captureAndLoad(client, job) : setFrame(client, "JOINTS", eJoints);
 }
 
@@ -480,9 +425,7 @@ static bool pulseJog(RobotComClient& client, REFSYS frame, int axis, bool positi
     const int rc = client.SetModeCmd(static_cast<MODEKEY>((positive ? POSITIVE1 : NEGATIVE1) + axis), false);
     double peakTCP = 0, peakAxis = 0;
     bool safe = true;
-    // In panel mode the jog keeps running until the GUI releases the button
-    // (which queues "stop", visible to panelStartAllowed) or 10 s elapse.
-    for (int i = 0; rc == 0; ++i) {
+    for (int i = 0; rc == 0 && i < 30; ++i) {
         std::this_thread::sleep_for(10ms);
         const auto* snapshot = client.getSDKStruct();
         const auto speed = std::abs(client.getActCartDynState().m_Vel);
@@ -492,8 +435,6 @@ static bool pulseJog(RobotComClient& client, REFSYS frame, int axis, bool positi
         peakAxis = std::max(peakAxis, std::abs(snapshot->m_JointDynState[axis].m_Vel));
         if (requested > 0 && i % 10 == 9) printStatus(client, "none", true);
         if (!panelStartAllowed()) break;
-        if (!panelMode && i >= 30) break;
-        if (panelMode && i >= 1000) { std::cout << "jog_hold_timeout\n"; break; }
     }
     const int stop = client.SetModeCmd(MSTOP, false);
     int stable = 0;
@@ -514,7 +455,7 @@ static bool pulseJog(RobotComClient& client, REFSYS frame, int axis, bool positi
 static bool planReturnHome(RobotComClient& client, double speed, const JointPose& target) {
     homePlanError = "none";
     homePlanReady = false;
-    if (!manualProfile.valid || !ensureManualMode(client) || !atRest(client) || client.getMotorEnableState() != 1 ||
+    if (!manualProfile.valid || !isManual(client) || !atRest(client) || client.getMotorEnableState() != 1 ||
         client.getMessageData().m_MessageType == eError || client.getToolName().empty()) {
         homePlanError = "manual_mode_or_feedback";
         std::cout << "home_plan_error=" << homePlanError << '\n';
@@ -590,7 +531,7 @@ static bool planReturnHome(RobotComClient& client, double speed, const JointPose
 
 static bool executeReturnHome(RobotComClient& client, unsigned long id) {
     if (!homePlanReady || id != homePlanId || std::chrono::steady_clock::now() - homePlanTime > 60s ||
-        !ensureManualMode(client) || !atRest(client) || client.getMotorEnableState() != 1 || client.getMessageData().m_MessageType == eError ||
+        !isManual(client) || !atRest(client) || client.getMotorEnableState() != 1 || client.getMessageData().m_MessageType == eError ||
         client.getToolName() != homePlanTool) {
         std::cout << "home_return_error=precondition_changed mode=" << int(client.getOperationMode())
                   << " enabled=" << client.getMotorEnableState() << " alarm=" << client.getMessageData().m_MessageID
@@ -710,7 +651,6 @@ static bool executeReturnHome(RobotComClient& client, unsigned long id) {
     if (!settled) std::cout << "home_return_error=stop_not_confirmed\n";
     if (settled && !overrideRestored) std::cout << "home_return_error=override_restore_failed\n";
     returningHome = false;
-    restoreAutoMode(client);
     homeReturnResult = arrived && safe && overrideRestored ? "arrived" : interrupted && settled ? "stopped" : "unconfirmed";
     appliedJogSpeed = 0;
     appliedJogUnit = "none";
@@ -725,253 +665,8 @@ static bool cancelHomePlan(unsigned long id) {
     return true;
 }
 
-// G-code 转换产物的 SDK 指令流逐行下发：无需任何文件传输，实机与虚拟走同一份转换结果。
-struct SdkLine {
-    char type = 0;  // T tool, R refsys, D dyn, L lin, W wait, E eof
-    int line = 0;
-    std::string name;
-    double x = 0, y = 0, z = 0;
-    int dynIndex = 0;
-    bool blend = false;
-    double dyn[12]{};
-    int waitMs = 0;
-};
-
-static bool sendSdkProgram(RobotComClient& client, const std::string& path, bool run) {
-    if (!run) {
-        std::cout << "sendprog_error=stream_requires_sendrun\n";
-        return false;
-    }
-    std::ifstream file(std::filesystem::u8path(path));
-    if (!file) { std::cout << "sendprog_error=file_unreadable\n"; return false; }
-    std::vector<SdkLine> program;
-    int dynSeen = 0, previousLine = 0;
-    std::string currentTool = "Default", currentRef = "WORLD", text;
-    while (std::getline(file, text)) {
-        if (!text.empty() && text.back() == '\r') text.pop_back();
-        if (text.empty() || text[0] == '#' || text == "HOME") continue;
-        std::istringstream input(text);
-        std::string kind, trailing;
-        SdkLine entry;
-        // 新速度组的 DYN 与它生效的首条 LIN 同行号（GUI 生成约定），其余行号必须严格递增。
-        if (!(input >> kind >> entry.line) || entry.line < previousLine || entry.line > 100000 ||
-            program.size() >= 1250 ||
-            (entry.line == previousLine && kind != "DYN" && (program.empty() || program.back().type != 'D'))) {
-            std::cout << "sendprog_error=bad_stream line=" << text.substr(0, 40) << '\n';
-            return false;
-        }
-        previousLine = entry.line;
-        entry.type = kind[0];
-        if (kind == "TOOL" || kind == "REFSYS") {
-            if (!(input >> entry.name) || !std::regex_match(entry.name, std::regex("[A-Za-z][A-Za-z0-9_]{0,30}"))) {
-                std::cout << "sendprog_error=bad_name\n";
-                return false;
-            }
-            if (kind == "TOOL") currentTool = entry.name; else currentRef = entry.name;
-        } else if (kind == "DYN") {
-            for (double& value : entry.dyn)
-                if (!(input >> value) || !std::isfinite(value)) { std::cout << "sendprog_error=bad_dyn\n"; return false; }
-            if (!(entry.dyn[0] > 0 && entry.dyn[0] <= 25)) { std::cout << "sendprog_error=speed_out_of_range speed=" << entry.dyn[0] << '\n'; return false; }
-        } else if (kind == "LIN") {
-            if (!(input >> entry.x >> entry.y >> entry.z >> entry.dynIndex >> entry.blend) ||
-                !std::isfinite(entry.x) || !std::isfinite(entry.y) || !std::isfinite(entry.z) ||
-                std::abs(entry.x) > 1000 || std::abs(entry.y) > 1000 || std::abs(entry.z) > 1000 ||
-                entry.dynIndex < 1 || entry.dynIndex > dynSeen) {
-                std::cout << "sendprog_error=bad_lin\n";
-                return false;
-            }
-            entry.name = currentTool + '|' + currentRef;
-        } else if (kind == "WAIT") {
-            if (!(input >> entry.waitMs) || entry.waitMs < 0 || entry.waitMs > 3600000) {
-                std::cout << "sendprog_error=bad_wait\n";
-                return false;
-            }
-        } else if (kind != "EOF") {
-            std::cout << "sendprog_error=unknown_kind kind=" << kind << '\n';
-            return false;
-        }
-        if (kind == "DYN") ++dynSeen;
-        program.push_back(entry);
-    }
-    if (program.empty() || program.back().type != 'E') {
-        std::cout << "sendprog_error=no_eof\n";
-        return false;
-    }
-    if (!atRest(client) || client.getProgramState() != eStop || client.getMessageData().m_MessageType == eError) {
-        std::cout << "sendprog_error=controller_not_ready state=" << int(client.getProgramState()) << '\n';
-        return false;
-    }
-    if (client.getToolName() != "Default") {
-        std::cout << "sendprog_error=default_tool_required\n";
-        return false;
-    }
-    if (panelMode && !panelStartAllowed()) return false;
-    const auto loaded = client.getProgramName();
-    if (!loaded.empty()) {
-        const auto project = client.getProjectName();
-        const int unload = loaded == "SDK" && project == "SDK.sr" ? client.SDKSimulateProgramKill(true) :
-            client.ProgramKillCmd(project, loaded, true);
-        if (unload != 0 || !waitFor(client, [&] { return client.getProgramName().empty() && atRest(client); })) {
-            std::cout << "sendprog_error=unload rc=" << unload << " program=" << client.getProgramName() << '\n';
-            return false;
-        }
-    }
-    // Prepare the stream in the mode that will execute it.
-    if (!autoMode(client) && (!run || client.SetModeCmd(AUTO, false) != 0 ||
-        !waitFor(client, [&] { return autoMode(client); }))) {
-        std::cout << "sendprog_error=automatic_mode_required\n";
-        return false;
-    }
-    if (client.getProgramMode() != eContinue && client.ProgramRunModeCmd(0) != 0) return false;
-    const auto home = client.getCartPosWorld();
-    for (int i = 0; i < 6; ++i) {
-        if (!std::isfinite(home.cart[i])) {
-            std::cout << "sendprog_error=home_unavailable\n";
-            return false;
-        }
-    }
-    auto fail = [&](const char* stage, int rc, int line) {
-        const auto message = client.getMessageData();
-        std::cout << "sendprog_error=" << stage << " rc=" << rc << " line=" << line
-                  << " msgid=" << message.m_MessageID << " msg=";
-        for (int i = 0; i < 96 && message.m_MessageString[i]; ++i) std::cout << message.m_MessageString[i];
-        std::cout << '\n';
-        client.SetModeCmd(STOP, false);
-        client.SetModeCmd(MSTOP, false);
-        client.SDKSimulateProgramKill(true);
-        sentRunning = false;
-        return false;
-    };
-    sentRunning = false;
-    int lastMotionLine = 0;
-    int sent = 0, batches = 0, instructions = 0;
-    const auto flush = [&] {
-        const int count = client.NumOfPro;
-        if (count == 0) return true;
-        const int result = client.SDKSimulateProgramSend(sent);
-        if (result != 0) {
-            std::cout << "sendprog_batch_error rc=" << result << " ack_line=" << sent << " count=" << count << '\n';
-            std::this_thread::sleep_for(100ms);
-            return false;
-        }
-        ++batches;
-        instructions += count;
-        printStatus(client, "none", true);
-        return true;
-    };
-    if (panelMode && !panelStartAllowed()) return false;
-    int rc = client.SDKSimulateProgramLoad(true);
-    if (rc != 0) return fail("load", rc, 0);
-    if (!waitFor(client, [&] { return client.getProgramName() == "SDK"; })) return fail("load_feedback", -1, 0);
-    sentProgramName = client.getProgramName();
-    sentLastMotionObserved = false;
-    for (const auto& entry : program) {
-        if (entry.type == 'L') lastMotionLine = entry.line;
-        if (entry.type == 'L') {
-            sentTarget[0] = home.cart[0] + entry.x;
-            sentTarget[1] = home.cart[1] + entry.y;
-            sentTarget[2] = home.cart[2] + entry.z;
-        }
-    }
-    sentLastMotionLine = lastMotionLine;
-    if (panelMode && !panelStartAllowed()) return fail("cancelled", 0, 0);
-    if (client.getMotorEnableState() != 1 &&
-        (client.EnableMotorCmd() != 0 || !waitFor(client, [&] { return client.getMotorEnableState() == 1; })))
-        return fail("servo_enable", -1, 0);
-    std::ostringstream prepared;
-    prepared << std::setprecision(15) << "sendprog_prepared observed=" << sentProgramName
-             << " origin=" << home.cart[0] << ',' << home.cart[1] << ',' << home.cart[2] << '\n';
-    std::cout << prepared.str();
-    // SDK accepts streamed statements only while its empty SDK task is running.
-    if (!issue(client, START, panelMode)) return fail("start_unconfirmed", -1, 0);
-    sentRunning = true;
-    printStatus(client, "none", true);
-    for (const auto& entry : program) {
-        if (panelMode && !panelStartAllowed()) return fail("cancelled", 0, entry.line);
-        if (client.NumOfPro >= MAX_PRO_NUM && !flush()) return fail("send_batch", -1, entry.line);
-        if (entry.type == 'L') lastMotionLine = entry.line;
-        if (entry.type == 'T') {
-            rc = client.SDKSimulateSetToolCmd(entry.name, entry.line);
-        } else if (entry.type == 'R') {
-            rc = client.SDKSimulateSetRefSysCmd(entry.name, entry.line);
-        } else if (entry.type == 'D') {
-            SDynamicPercent dyn{};
-            const auto fill = [&](SubDynamic& group, const double* values) {
-                group.m_Vel = values[0]; group.m_Acc = values[1]; group.m_Dec = values[2];
-                group.m_Jerk = values[3]; group.m_Tjolt = values[4];
-            };
-            fill(dyn.m_SegmentDynamic, entry.dyn);
-            fill(dyn.m_OriDynamic, entry.dyn + 5);
-            // GUI 流只带关节组的速度/加速度（12 值），SDK 结构要求 15 值齐全；
-            // 控制器把 0 值校验为“减速度/加加速度小于等于 0”直接拒绝，缺省三值
-            // 用路径组同值补齐。SRP 语义：Dyn 为后续运动语句的动态默认值。
-            dyn.m_JointPercent.m_Vel = entry.dyn[10];
-            dyn.m_JointPercent.m_Acc = entry.dyn[11];
-            dyn.m_JointPercent.m_Dec = entry.dyn[2];
-            dyn.m_JointPercent.m_Jerk = entry.dyn[3];
-            dyn.m_JointPercent.m_Tjolt = entry.dyn[4];
-            rc = client.SDKSimulateDynProCmd(dyn, entry.line);
-        } else if (entry.type == 'L') {
-            const auto separator = entry.name.find('|');
-            HMIPos target{};
-            target.m_PosType = eCartPos;
-            target.m_Pos.m_postyp = ePosCart;
-            target.m_Pos.m_CartPos.m_X = home.cart[0] + entry.x;
-            target.m_Pos.m_CartPos.m_Y = home.cart[1] + entry.y;
-            target.m_Pos.m_CartPos.m_Z = home.cart[2] + entry.z;
-            target.m_Pos.m_CartPos.m_A = home.cart[3];
-            target.m_Pos.m_CartPos.m_B = home.cart[4];
-            target.m_Pos.m_CartPos.m_C = home.cart[5];
-            target.m_Pos.m_CartPos.m_Mode = home.m_Mode;
-            SDKOverlap ovl{};
-            ovl.m_OveTyp = eOVLREL;
-            ovl.m_Percent = entry.blend ? 50 : 0;
-            rc = client.SDKSimulateLinProCmd(target, -1, ovl, eOriNULL, entry.name.substr(0, separator),
-                                             entry.name.substr(separator + 1), entry.line);
-        } else if (entry.type == 'W') {
-            rc = client.SDKSimulateWaitTimeProCmd(entry.waitMs, entry.line);
-        } else if (entry.type == 'E') {
-            rc = client.SDKSimulateEOFCmd(entry.line);
-        }
-        if (rc != 0) {
-            std::cout << "sendprog_instruction=" << entry.type << " mode=" << int(client.getOperationMode())
-                      << " buffered=" << client.NumOfPro << '\n';
-            return fail("instruction", rc, entry.line);
-        }
-    }
-    if (panelMode && !panelStartAllowed()) return fail("cancelled", 0, 0);
-    if (!flush()) return fail("send", -1, 0);
-    std::this_thread::sleep_for(400ms);
-    const auto observed = client.getProgramName();
-    sentProgramName = observed;
-    sentLastMotionLine = lastMotionLine;
-    std::cout << "sendprog_ok lines=" << sent << " observed=" << observed << " last_motion_line=" << lastMotionLine
-              << " batches=" << batches << " instructions=" << instructions << '\n';
-    return true;
-}
-
-static bool remoteCommand(RobotComClient& client, const Job& job, const std::string& command) {
-    const auto wait = [&](auto check) { return waitFor(client, check); };
-    if (command == "manual" || command == "auto")
-        return StepControl::changeMode(client, command == "manual", atRest(client), wait);
-    if (command == "enable") {
-        if (!atRest(client) || client.getMessageData().m_MessageType == eError) {
-            StepControl::error(client, "enable", "not_stopped_or_alarm", -1);
-            return false;
-        }
-        const int rc = client.getMotorEnableState() == 1 ? 0 : client.EnableMotorCmd();
-        if (rc != 0 || !wait([&] { return client.getMotorEnableState() == 1; })) {
-            StepControl::error(client, "enable", rc != 0 ? "request" : "feedback", rc);
-            return false;
-        }
-        std::cout << "enable_ok enabled=1\n";
-        return true;
-    }
-    if (command == "unload") {
-        const bool ok = StepControl::unload(client, atRest(client), wait);
-        if (ok) { sentRunning = false; sentProgramName.clear(); }
-        return ok;
-    }
+static bool virtualCommand(RobotComClient& client, const Job& job, const std::string& command) {
+    if (command == "manual" || command == "auto") return setVirtualMode(client, job, command == "manual");
     if (command.rfind("planhome_tcp ", 0) == 0) {
         std::istringstream input(command.substr(13));
         double speed = 0;
@@ -991,50 +686,13 @@ static bool remoteCommand(RobotComClient& client, const Job& job, const std::str
         std::istringstream input(command.substr(11));
         unsigned long id = 0;
         std::string trailing;
-        const bool cancelled = input >> id && !(input >> trailing) && cancelHomePlan(id);
-        if (cancelled) restoreAutoMode(client);
-        return cancelled;
-    }
-    if (command.rfind("loadproj ", 0) == 0 || command.rfind("runproj ", 0) == 0) {
-        const bool run = command[0] == 'r';
-        std::istringstream input(command.substr(run ? 8 : 9));
-        std::string project, program, trailing;
-        const std::regex name("[A-Za-z0-9_.-]{1,64}");
-        if (!(input >> project >> program) || (input >> trailing) ||
-            !std::regex_match(project, name) || !std::regex_match(program, name)) return false;
-        if (!atRest(client) || client.getMessageData().m_MessageType == eError) return false;
-        if (run && (!autoMode(client) &&
-                    (client.SetModeCmd(AUTO, false) != 0 || !waitFor(client, [&] { return autoMode(client); })))) return false;
-        if (run && client.getProgramMode() != eContinue && client.ProgramRunModeCmd(0) != 0) return false;
-        if (panelMode && !panelStartAllowed()) {
-            std::cout << "loadproj_error rc=-1 stage=cancelled\n";
-            return false;
-        }
-        // A controller only allows one loaded foreground program. Loading does not start/enable it.
-        const auto loadWait = [&](auto check) {
-            return waitFor(client, [&] { return (!panelMode || panelStartAllowed()) && check(); });
-        };
-        if (!StepControl::load(client, project, program, atRest(client), loadWait)) return false;
-        sentRunning = false;
-        sentProgramName.clear();
-        if (!run) return true;
-        if (client.getMotorEnableState() != 1 &&
-            (client.EnableMotorCmd() != 0 || !waitFor(client, [&] { return client.getMotorEnableState() == 1; }))) return false;
-        return issue(client, START, panelMode);
+        return input >> id && !(input >> trailing) && cancelHomePlan(id);
     }
     if (command == "capture") {
         return matchingProgram(client, job) && client.getOperationMode() == eAutomatic && atRest(client) &&
             client.getMotorEnableState() == 1 && client.getMessageData().m_MessageType != eError &&
             client.ProgramKillCmd(job.project, job.program, true) == 0 &&
             waitFor(client, [&] { return client.getProgramName().empty(); }) && captureAndLoad(client, job);
-    }
-    if (command.rfind("sendprog ", 0) == 0 || command.rfind("sendrun ", 0) == 0) {
-        const bool run = command.rfind("sendrun ", 0) == 0;
-        std::string trailing;
-        std::istringstream input(command.substr(run ? 8 : 9));
-        std::string path;
-        if (!(input >> std::quoted(path)) || (input >> trailing) || path.size() > 300) return false;
-        return sendSdkProgram(client, path, run);
     }
     if (!isManual(client) || !atRest(client)) return false;
     if (command == "joints") return setFrame(client, "JOINTS", eJoints);
@@ -1080,11 +738,13 @@ static bool remoteCommand(RobotComClient& client, const Job& job, const std::str
 int main(int argc, char** argv) {
     std::cout << std::unitbuf;
     const bool panel = argc > 2 && std::string(argv[argc - 1]) == "--panel";
-    if (panel) { --argc; panelMode = true; }
+    if (panel) --argc;
     if (argc == 1 || (argc == 2 && std::string(argv[1]) == "--help")) {
-        std::cout << "helix_pc virtual VERIFIED_KERNEL_PID [RobotParameter.xml]\n"
-                     "helix_pc real CONTROLLER_IPV4 [RobotParameter.xml]\n"
-                     "Commands: status, start, stop, estop, quit, manual, auto, enable, unload, jog, frames, planhome_tcp, returnhome, cancelhome, loadproj, runproj, capture, sendprog, sendrun.\n";
+        std::cout << "helix_pc virtual VERIFIED_KERNEL_PID\n"
+                     "helix_pc real CONTROLLER_IPV4\n"
+                     "Connecting to SR175-3200 grants full start/stop, manual/auto, jog and home control.\n"
+                     "Commands: status, start, stop, quit; manual/auto, jog, speed, planhome/returnhome/cancelhome\n"
+                     "need tmp/pendant_ui_runs/RobotParameter.xml. No automatic start or resume.\n";
         return 0;
     }
     const std::string mode = argv[1];
@@ -1102,11 +762,14 @@ int main(int argc, char** argv) {
             std::cerr << "Refused: verified local virtual controller is absent.\n";
             return 3;
         }
+        if (argc == 4) manualProfile = readManualProfile(std::filesystem::path(argv[3]));
     } else {
         ip = argv[2];
         if (!isPrivateIPv4(ip)) { std::cerr << "Refused: use the confirmed private IPv4 of the cabinet.\n"; return 3; }
+        // 实机手动点动/回起点的速度限幅优先取示教器参数文件(工作区固定位置)；
+        // 缺失时落到内置官方默认限速，不阻塞实机操作。
+        manualProfile = readManualProfile(workspaceRoot() + L"tmp\\pendant_ui_runs\\RobotParameter.xml");
     }
-    if (argc == 4) manualProfile = readManualProfile(argv[3]);
     RobotComClient client;
     client.setInterfaceWaitTime(1500);
     const int rc = client.init(ip.c_str(), simulated ? VirtualPort : RealPort);
@@ -1121,40 +784,31 @@ int main(int argc, char** argv) {
     const std::string robotName(robot.m_Name, strnlen_s(robot.m_Name, sizeof robot.m_Name));
     const std::string cabinetName(cabinet.m_ElecBoxName, strnlen_s(cabinet.m_ElecBoxName, sizeof cabinet.m_ElecBoxName));
     const std::string serial(cabinet.m_ElecBoxSNo, strnlen_s(cabinet.m_ElecBoxSNo, sizeof cabinet.m_ElecBoxSNo));
-    const bool control = isSupportedStepRobot(robotName) && (simulated ? cabinetName == "SRC2.7" : true);
+    // 控制权只看机型白名单：连上 SR175-3200 即可操作，不再要求柜型或序列号人工比对。
+    const bool control = robotName == "SR175-3200";
     if (preparing) {
         const bool ready = control && prepareVirtual(client, job);
-        if (!ready && !control)
-            std::cout << "prepare_fail: identity robot=" << robotName << " cabinet=" << cabinetName << '\n';
         std::cout << "virtual_prepared=" << (ready ? 1 : 0) << '\n';
         if (ready) printStatus(client);
-        // SDK 析构/关闭在后台线程收尾时可能堆损坏并把退出状态变成崩溃，准备结果已输出，直接硬退出。
-        std::_Exit(ready ? 0 : 5);
+        client.close();
+        return ready ? 0 : 5;
     }
     std::cout << "robot=" << robotName << " cabinet=" << cabinetName << " serial=" << serial
               << " target=" << mode << " ip=" << ip << " access=" << (control ? "start_stop" : "read_only") << '\n';
-    if (!control) std::cout << "control_disabled=model_or_virtual_identity_mismatch expected_robot=SR175-3200_or_SR175/3200\n";
+    const bool profileFromFile = manualProfile.valid;
+    if (!profileFromFile) manualProfile = defaultManualProfile();
+    std::cout << "manual_profile_file=" << (profileFromFile ? "loaded" : "built_in_default") << '\n';
     const char* outcome = "none";
     bool observeEnd = false;
     bool completionArmed = false;
     const auto report = [&] {
-        const bool sentMatch = !sentProgramName.empty() && client.getProgramName() == sentProgramName;
-        if (sentRunning && sentMatch && client.getProgramState() == eRun && client.getCurrentLine() >= sentLastMotionLine)
-            sentLastMotionObserved = true;
-        if ((observeEnd || sentRunning) && client.ConnectStatus() == 0 && atRest(client) &&
-            (matchingProgram(client, job) || sentMatch)) {
+        if (observeEnd && client.ConnectStatus() == 0 && matchingProgram(client, job) && atRest(client)) {
             observeEnd = false;
-            sentRunning = false;
             bool completed = false;
             if (completionArmed && client.getProgramState() == eStop &&
                 client.VariableBoolReadCmd(job.project, job.program, "simDone", completed) == 0 && completed &&
                 client.ConnectStatus() == 0 && matchingProgram(client, job) && atRest(client) && client.getProgramState() == eStop) {
                 outcome = "completed";
-            } else if (sentMatch && sentLastMotionObserved && client.getProgramState() == eStop &&
-                       (client.getCurrentLine() == -1 || client.getCurrentLine() >= sentLastMotionLine)) {
-                const auto actual = client.getCartPosWorld();
-                const double error = std::hypot(actual.cart[0] - sentTarget[0], actual.cart[1] - sentTarget[1], actual.cart[2] - sentTarget[2]);
-                outcome = std::isfinite(error) && error <= .1 ? "completed" : "ended_unverified";
             } else {
                 outcome = "ended_unverified";
             }
@@ -1187,7 +841,7 @@ int main(int argc, char** argv) {
             completionArmed = false;
             const char* blocker = nullptr;
             if (!panel || panelStartAllowed()) {
-                blocker = startBlocker(client, job, panel && simulated ? &completionArmed : nullptr);
+                blocker = startBlocker(client, simulated, job, panel && simulated ? &completionArmed : nullptr);
             }
             if (panel && !panelStartAllowed()) {
                 std::cout << "start_cancelled=stop_or_panel_closed\n";
@@ -1206,42 +860,22 @@ int main(int argc, char** argv) {
                     std::cout << "stop_confirmed=stopped\n";
                     if (returningHome || std::strcmp(homeReturnResult, "arrived") != 0) homeReturnResult = "stopped";
                     outcome = "stopped";
-                    restoreAutoMode(client);
                 } else { std::cout << "result=unconfirmed check_local_pendant\n"; outcome = "ended_unverified"; }
-            } else if (!client.getProgramName().empty()) {
+            } else if (matchingProgram(client, job)) {
                 observeEnd = false;
-                sentRunning = false;
                 outcome = issue(client, STOP) ? "stopped" : "ended_unverified";
             } else {
-                std::cout << "Refused: no program is loaded; use the local pendant.\n";
+                std::cout << "Refused: expected program is not loaded; use the local pendant.\n";
             }
-        } else if (command == "estop") {
-            const int programStop = client.SetModeCmd(STOP, false);
-            const int jogStop = client.SetModeCmd(MSTOP, false);
-            int stable = 0;
-            const bool settled = waitFor(client, [&] {
-                stable = atRest(client) ? stable + 1 : 0;
-                return stable >= 3;
-            });
-            observeEnd = false;
-            sentRunning = false;
-            outcome = settled ? "stopped" : "ended_unverified";
-            if (returningHome || std::strcmp(homeReturnResult, "arrived") != 0) homeReturnResult = "stopped";
-            std::cout << "estop_rc=" << programStop << ',' << jogStop
-                      << " estop_confirmed=" << (settled ? "stopped" : "unconfirmed")
-                      << " alarm=" << client.getMessageData().m_MessageID << '\n';
-            if (panel) std::cout << "command_done=estop\n";
+        } else if (!simulated && command == "capture") {
+            // capture 会清掉柜内程序再上传作业，只允许在本地仿真做；实机的程序装载在示教器完成。
+            std::cout << "Refused: program upload runs in the local simulator only; load the program on the pendant.\n";
         } else {
-            const bool ok = remoteCommand(client, job, command);
-            if (ok && (command == "unload" || command.rfind("loadproj ", 0) == 0)) {
-                outcome = "none";
-                observeEnd = completionArmed = false;
-            }
+            const bool ok = virtualCommand(client, job, command);
             if (ok && command == "capture") {
                 outcome = "none";
                 observeEnd = false;
             }
-            if (ok && command.rfind("sendrun ", 0) == 0) outcome = "none";
             std::cout << "virtual_command_result=" << (ok ? "ok" : command.rfind("returnhome ", 0) == 0 && std::strcmp(homeReturnResult, "stopped") == 0 ? "cancelled" : "refused") << '\n';
         }
         report();

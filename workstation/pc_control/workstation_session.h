@@ -10,15 +10,14 @@
 
 class Session : public QObject {
 public:
-    Session(QString workspace, QString client, QString studioRoot, QString simulationSeed);
+    Session(QString workspace, QString client);
     ~Session() override;
 
     void prepare(const Job& job);
-    void connectReal(QString ip);
+    void connectReal(QString ip, QString serial = {});
     void disconnect();
     bool request(QString command);
     void stop();
-    bool emergencyStop();
 
     bool connected() const;
     bool fresh() const;
@@ -35,7 +34,6 @@ public:
     bool simulated = false;
     bool control = false;
     bool waitingStop = false;
-    bool waitingEstop = false;
     bool lost = false;
     QString pending;
     QString model;
@@ -55,7 +53,6 @@ private:
 
     QString workspace;
     QString client;
-    QString studioRoot, simulationSeed;
     QProcess kernel;
     QProcess motion;
     QProcess bootstrap;
