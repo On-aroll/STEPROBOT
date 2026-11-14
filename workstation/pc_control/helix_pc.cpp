@@ -264,7 +264,7 @@ static const char* startBlocker(RobotComClient& client, bool simulated, const Jo
     AXISPOS home{};
     SDynamicPercent dynamic{};
     if (client.VariableBoolReadCmd(job.project, job.program, "homeSaved", saved) != 0 || !saved)
-        return "no saved home; use the pendant capture_home procedure";
+        return "no saved home; move to the start pose and press record home on the workstation";
     if (client.VariableAxisposReadCmd(job.project, job.program, "pHome", home) != 0)
         return "could not read pHome";
     if (&job == &Helix && (client.VariableDynamicReadCmd(job.project, job.program, "dynPath", dynamic) != 0 ||
@@ -775,7 +775,8 @@ int main(int argc, char** argv) {
         std::cout << "helix_pc virtual VERIFIED_KERNEL_PID\n"
                      "helix_pc real CONTROLLER_IPV4\n"
                      "Connecting to SR175-3200 grants full start/stop, manual/auto, jog and home control.\n"
-                     "Commands: status, start, stop, quit; manual/auto, jog, speed, planhome/returnhome/cancelhome\n"
+                     "Commands: status, start, stop, quit; manual/auto, jog, speed, planhome/returnhome/cancelhome,\n"
+                     "loadprogram, recordhome A1..A6 (real robot only)\n"
                      "need tmp/pendant_ui_runs/RobotParameter.xml. No automatic start or resume.\n";
         return 0;
     }
@@ -908,8 +909,44 @@ int main(int argc, char** argv) {
                 std::cout << "Refused: expected program is not loaded; use the local pendant.\n";
             }
         } else if (!simulated && command == "capture") {
-            // capture 会清掉柜内程序再上传作业，只允许在本地仿真做；实机的程序切换走 start 时的自动加载。
+            // capture 会清掉柜内程序再上传作业，只允许在本地仿真做；实机的程序切换走 loadprogram 或 start 时的自动加载。
             std::cout << "Refused: program upload runs in the local simulator only; start auto-loads the stored program.\n";
+        } else if (!simulated && command == "loadprogram") {
+            if (matchingProgram(client, job)) {
+                std::cout << "load_program=already\n";
+            } else if (client.getProgramState() != eStop || !atRest(client)) {
+                std::cout << "Refused: cabinet program must be stopped before switching; stop it on the pendant first.\n";
+            } else {
+                std::cout << "auto_load=loading project=" << job.project << " program=" << job.program << '\n';
+                if (ensureProgramLoaded(client, job)) std::cout << "load_program=ok\n";
+                else std::cout << "Refused: cabinet does not contain the expected project; store it once via USB or STEPStudio, then retry.\n";
+            }
+        } else if (!simulated && command.rfind("recordhome ", 0) == 0) {
+            // 实机起点闭环：把界面记录的起点写进柜内程序变量（先 pHome 后 homeSaved，
+            // 失败时 homeSaved 保持 FALSE，柜内不会出现"声称有起点但没写"的中间态）。
+            std::istringstream input(command.substr(11));
+            JointPose target{};
+            std::string trailing;
+            bool parsed = true;
+            for (double& value : target) if (!(input >> value)) parsed = false;
+            if (input >> trailing) parsed = false;
+            bool finite = parsed;
+            for (double value : target) finite = finite && std::isfinite(value);
+            if (!finite) {
+                std::cout << "Refused: recordhome requires six finite joint values.\n";
+            } else if (!matchingProgram(client, job)) {
+                std::cout << "Refused: expected program is not loaded; press load program first.\n";
+            } else if (client.getProgramState() != eStop || !atRest(client)) {
+                std::cout << "Refused: robot must be fully stopped before recording the program home.\n";
+            } else {
+                AXISPOS home{};
+                for (int i = 0; i < 6; ++i) home.m_Joint[i] = target[i];
+                const int posRc = client.VariableAxisposModifyCmd(job.project, job.program, "pHome", home);
+                const int flagRc = posRc == 0 ? client.VariableBoolModifyCmd(job.project, job.program, "homeSaved", true) : -1;
+                if (posRc == 0 && flagRc == 0) std::cout << "program_home_recorded=1\n";
+                else std::cout << "Refused: writing program home failed rc=" << (posRc != 0 ? posRc : flagRc)
+                    << "; ensure the expected program is loaded and stopped.\n";
+            }
         } else {
             const bool ok = virtualCommand(client, job, command);
             if (ok && command == "capture") {

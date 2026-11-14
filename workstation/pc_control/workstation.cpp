@@ -45,8 +45,18 @@ QString duration(double seconds) {
 QString refuseHint(const QString& raw) {
     if (raw.contains("does not contain the expected project"))
         return "柜内没有作业的工程文件：请先用 U 盘或 STEPStudio 把工程存入柜内（一次即可），之后启动时本软件会自动加载。";
+    if (raw.contains("expected program is not loaded; press load program first"))
+        return "柜内没有载入作业程序：先点「加载作业程序」切换柜内程序，再记录起点或启动。";
+    if (raw.contains("must be stopped before switching"))
+        return "柜内程序未停止：请先在示教器上停止当前程序，再点「加载作业程序」。";
+    if (raw.contains("robot must be fully stopped before recording"))
+        return "机器人未完全停止：等它完全停下后再点「记录上位机起点」。";
+    if (raw.contains("writing program home failed"))
+        return "起点写入柜内程序失败：确认柜内已载入作业程序且处于停止状态，再重新点「记录上位机起点」。";
+    if (raw.contains("no saved home; move to the start pose"))
+        return "柜内程序没有记录起点：手动把机器人挪到打印起点，点「记录上位机起点」写入柜内程序，再点开始。";
     if (raw.contains("expected project and program") || raw.contains("not loaded; use the local pendant"))
-        return "柜内没有载入作业对应的工程与程序：请先在示教器上载入后再启动。";
+        return "柜内没有载入作业对应的工程与程序：点「开始」或「加载作业程序」可自动切换（工程须已存入柜内）。";
     if (raw.contains("AUT, continuous mode"))
         return "柜内需处于自动模式、连续运行方式且伺服已使能：请到示教器切换后重试。";
     if (raw.contains("stopped at its entry") || raw.contains("reload"))
@@ -894,6 +904,10 @@ private:
         run->addLayout(mode);
         connect(modeManual, &QPushButton::clicked, this, [this] { session.request("manual"); });
         connect(modeAuto, &QPushButton::clicked, this, [this] { session.request("auto"); });
+        cabinetLoadButton = new QPushButton("加载作业程序");
+        cabinetLoadButton->setToolTip("实机专用：把柜内当前载入的程序切换为本作业的程序。\n要求柜内已存入作业工程（U 盘或 STEPStudio 导入一次），且柜内程序处于停止状态。\n柜内没有该工程时会提示导入方法。");
+        run->addWidget(cabinetLoadButton);
+        connect(cabinetLoadButton, &QPushButton::clicked, this, [this] { session.request("loadprogram"); });
         stateLabel = new QLabel;
         stateLabel->setObjectName("statusBanner");
         stateLabel->setWordWrap(true);
@@ -1344,6 +1358,16 @@ private:
         homePlanPath.clear();
         plot->plannedHome.clear();
         plot->update();
+        // 实机额外把起点写进柜内程序变量（homeSaved/pHome），启动自检的起点检查由它放行；
+        // 虚拟模式的起点变量由 capture 上传流程写入，不需要这里发命令。
+        if (!session.simulated) {
+            QString command = "recordhome";
+            for (double value : saved->axes) command += QString(" %1").arg(value, 0, 'f', 6);
+            if (session.control && session.request(command))
+                log("正在把起点写入柜内程序，结果见下一条日志。");
+            else
+                log("提示：控制通道忙或未授权，起点只保存在上位机，未写入柜内程序；稍后重新点一次「记录上位机起点」即可补写。");
+        }
         log(QString("已将当前 %1 六轴与 TCP 姿态保存为上位机起点，不修改工程文件。").arg(session.model));
         refresh();
     }
@@ -1440,23 +1464,28 @@ private:
     bool canStart() const {
         if (!session.simulated && !job.reviewed) return false;
         const auto override = session.value("override").toDouble();
-        return !experiment.active() && ready() && loaded() && !homeDirty && (!session.simulated || session.value("outcome") == "none") && session.value("error") != "1" &&
+        // 实机程序不一致时仍放行启动：点开始由控制端自动卸载旧程序并加载作业程序，
+        // 安全前置（自动/连续/使能/倍率/首行/起点匹配）全部在控制端启动自检完成，这里不重复拦截。
+        const bool cabinetMismatch = !session.simulated && !job.program.isEmpty() && !loaded();
+        return !experiment.active() && ready() && (loaded() || cabinetMismatch) && !homeDirty &&
+            (!session.simulated || session.value("outcome") == "none") && session.value("error") != "1" &&
             session.value("continuous") == "1" && session.value("mode") == "2" && session.value("enabled") == "1" &&
-            session.value("state") == "2" && (session.value("line") == "1" || session.value("line") == "2") &&
+            (cabinetMismatch || (session.value("state") == "2" && (session.value("line") == "1" || session.value("line") == "2"))) &&
             (session.simulated || override > 0);
     }
 
     // 启动按钮实机连接后常亮，条件不满足时点击给出第一条具体原因，不再静默不动。
     QString startBlockReason() const {
+        const bool cabinetMismatch = !session.simulated && !job.program.isEmpty() && !loaded();
         if (!ready()) return "连接未就绪或上一条操作还在等待回读，请稍候再试。";
         if (experiment.active()) return "实验记录进行中：请先停止当前作业再重新开始。";
-        if (!loaded()) return "柜内没有载入作业对应的工程与程序：请先在示教器上载入后再启动。";
+        if (!loaded() && !cabinetMismatch) return "柜内没有载入作业对应的工程与程序：请先在示教器上载入后再启动。";
         if (homeDirty) return "上位机起点与当前记录不一致：请重新规划回程或重设起点。";
         if (session.value("error") == "1") return "控制器正在报错：请先在柜内查看并清除报警。";
         if (session.value("mode") != "2") return "需处于自动模式：请点上方「自动」按钮切换。";
         if (session.value("continuous") != "1") return "柜内需处于连续运行方式：请到示教器切换。";
         if (session.value("enabled") != "1") return "伺服未使能：请到示教器使能后再启动。";
-        if (session.value("state") != "2" || (session.value("line") != "1" && session.value("line") != "2"))
+        if (!cabinetMismatch && (session.value("state") != "2" || (session.value("line") != "1" && session.value("line") != "2")))
             return "程序须停在首行才能启动：请在示教器重新载入程序，使其回到首行。";
         if (!session.simulated && !(session.value("override").toDouble() > 0)) return "倍率需大于 0：请在示教器上调整倍率后重试。";
         return QString();
@@ -1561,6 +1590,12 @@ private:
             display = "柜内程序与作业不一致，正在自动卸载旧程序并加载作业程序…";
         } else if (text.startsWith("auto_load=loaded")) {
             display = "作业程序已自动加载到柜内，继续启动自检。";
+        } else if (text == "load_program=already") {
+            display = "柜内已是作业程序，无需加载。";
+        } else if (text == "load_program=ok") {
+            display = "作业程序已加载到柜内。";
+        } else if (text == "program_home_recorded=1") {
+            display = "起点已写入柜内程序（homeSaved/pHome），启动自检的起点检查将通过。";
         } else if (text == "virtual_command_result=refused" || text.startsWith("result=unconfirmed") ||
             text.startsWith("jog_frame_unconfirmed") || text.startsWith("base_reference_unconfirmed")) {
             lastOperationError = "操作未确认，请查看记录中的原因";
@@ -1809,6 +1844,9 @@ private:
              (fresh && loaded() && (state == "0" || state == "1" || state == "3"))));
         modeManual->setEnabled(operable && (mode != "0" && mode != "1"));
         modeAuto->setEnabled(operable && (mode != "2" || session.value("enabled") != "1"));
+        cabinetLoadButton->setVisible(session.connected() && !session.simulated);
+        cabinetLoadButton->setEnabled(fresh && session.control && !returning &&
+            session.pending.isEmpty() && !session.waitingStop);
         const bool canSaveOrigin = fresh && session.value("motion_rest") == "1" && session.value("error") != "1" &&
             session.pending.isEmpty() && !session.waitingStop && !returning;
         const bool matchingHome = workstationOrigin && !homeDeviceKey.isEmpty() &&
@@ -2063,7 +2101,7 @@ private:
     QLineEdit* userRefName = nullptr;
     QDoubleSpinBox *linearJogSpeed = nullptr, *angularJogSpeed = nullptr;
     QLabel* manualFeedback = nullptr;
-    QPushButton *recordHomeButton = nullptr, *returnHomeButton = nullptr;
+    QPushButton *recordHomeButton = nullptr, *returnHomeButton = nullptr, *cabinetLoadButton = nullptr;
     QDoubleSpinBox* returnHomeSpeed = nullptr;
     QLabel* homeInfo = nullptr;
     QLineEdit* ip = nullptr;
