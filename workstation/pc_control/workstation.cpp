@@ -43,6 +43,8 @@ QString duration(double seconds) {
 
 // 控制端拒绝命令时输出英文 Refused 行，这里按关键字翻译成人话，让操作者不用猜。
 QString refuseHint(const QString& raw) {
+    if (raw.contains("does not contain the expected project"))
+        return "柜内没有作业的工程文件：请先用 U 盘或 STEPStudio 把工程存入柜内（一次即可），之后启动时本软件会自动加载。";
     if (raw.contains("expected project and program") || raw.contains("not loaded; use the local pendant"))
         return "柜内没有载入作业对应的工程与程序：请先在示教器上载入后再启动。";
     if (raw.contains("AUT, continuous mode"))
@@ -1552,15 +1554,20 @@ private:
     }
 
     void log(const QString& text) {
+        QString display = text;
         if (text.startsWith("Refused:")) {
             lastOperationError = refuseHint(text.mid(8));
+        } else if (text.startsWith("auto_load=loading")) {
+            display = "柜内程序与作业不一致，正在自动卸载旧程序并加载作业程序…";
+        } else if (text.startsWith("auto_load=loaded")) {
+            display = "作业程序已自动加载到柜内，继续启动自检。";
         } else if (text == "virtual_command_result=refused" || text.startsWith("result=unconfirmed") ||
             text.startsWith("jog_frame_unconfirmed") || text.startsWith("base_reference_unconfirmed")) {
             lastOperationError = "操作未确认，请查看记录中的原因";
         } else if (text == "virtual_command_result=ok" || text.startsWith("start_confirmed=") || text.startsWith("stop_confirmed=")) {
             lastOperationError.clear();
         }
-        const auto row = QDateTime::currentDateTime().toString("HH:mm:ss  ") + text;
+        const auto row = QDateTime::currentDateTime().toString("HH:mm:ss  ") + display;
         logs->appendPlainText(row);
         if (!session.logFolder.isEmpty()) {
             QFile output(QDir(session.logFolder).filePath("panel.log"));
@@ -1952,9 +1959,9 @@ private:
             const bool programMatch = session.value("program") == job.sourceProgram;
             if (projectMatch && programMatch) checkText = "程序核对 · 一致（" + session.value("project") + " / " + session.value("program") + "）";
             else {
-                checkText = "程序核对 · 不一致！柜内是 " + session.value("project") + " / " + session.value("program") +
-                    "，作业要求 " + job.project + " / " + job.sourceProgram + "。直接启动会被拒绝，请先在柜内载入正确程序。";
-                checkTone = "error";
+                checkText = "程序核对 · 不一致。柜内是 " + session.value("project") + " / " + session.value("program") +
+                    "，作业要求 " + job.project + " / " + job.sourceProgram + "。点「开始」时将自动卸载柜内旧程序并加载作业程序（工程须已存入柜内）。";
+                checkTone = "warn";
             }
         }
         versionCheck->setText(checkText);
@@ -2085,6 +2092,7 @@ int main(int argc, char** argv) {
         QLabel[tone="idle"] { color:#526777; }
         QLabel[tone="busy"] { color:#175991; }
         QLabel[tone="error"] { color:#a62938; }
+        QLabel[tone="warn"] { color:#8a5a00; }
         QLabel#statusBanner { padding:7px; border-radius:4px; font-weight:600; background:#f1f5f7; }
         QLabel#statusBanner[tone="busy"] { background:#e4f1fd; }
         QLabel#statusBanner[tone="error"] { background:#fce4e7; }

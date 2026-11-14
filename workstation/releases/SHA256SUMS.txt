@@ -1,1 +1,1 @@
-8ee89b8f6b791ba66d12d02a6b9648f4f6500c8b87837706849bbc536acf14c9  StepWorkstation-2026.11.14-win64-Setup.exe
+6a21b53dcb2d72bdc40eff97334e5d748227d0f0b41ebe520d7da3e71f5acdb5  StepWorkstation-2026.11.14-win64-Setup.exe

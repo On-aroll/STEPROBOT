@@ -4,6 +4,7 @@
 #include <iphlpapi.h>
 #include <windows.h>
 #include "RobotCom.hpp"
+#include "workstation_identity.h"
 #include "workstation_motion.h"
 #include <chrono>
 #include <algorithm>
@@ -183,6 +184,31 @@ static bool matchingProgram(RobotComClient& client, const Job& job) {
     if (!job.program) return false;
     const auto project = client.getProjectName();
     return (project == job.project || project == std::string(job.project) + ".sr") && client.getProgramName() == job.program;
+}
+
+// 实机启动前柜内程序与作业不一致时：卸载柜内当前载入的程序，再加载作业目标程序。
+// 工程与程序须已存在于柜内（SDK 不提供文件上传）；SDK 文档要求卸载/加载均在程序停止、
+// 无运动状态下进行；命令返回 0 仅表示"执行中"，须轮询 getProgramName 确认结果。
+static bool ensureProgramLoaded(RobotComClient& client, const Job& job) {
+    if (client.ConnectStatus() != 0 || client.getProgramState() != eStop) return false;
+    std::string loaded = client.getProjectName();
+    if (loaded.size() > 3 && loaded.compare(loaded.size() - 3, 3, ".sr") == 0) loaded.resize(loaded.size() - 3);
+    const auto current = client.getProgramName();
+    if (!current.empty()) {
+        if (client.ProgramKillCmd(loaded, current) != 0) return false;
+        const auto deadline = std::chrono::steady_clock::now() + 3s;
+        while (std::chrono::steady_clock::now() < deadline && client.getProgramName() == current)
+            std::this_thread::sleep_for(50ms);
+        if (client.getProgramName() == current) return false;
+    }
+    std::vector<int> loadErrors;
+    if (client.ProgramLoadCmd(job.project, job.program, loadErrors) != 0) return false;
+    const auto deadline = std::chrono::steady_clock::now() + 5s;
+    while (std::chrono::steady_clock::now() < deadline) {
+        if (matchingProgram(client, job)) return true;
+        std::this_thread::sleep_for(50ms);
+    }
+    return false;
 }
 
 static void printStatus(RobotComClient& client, const char* outcome = nullptr, bool busy = false) {
@@ -790,8 +816,9 @@ int main(int argc, char** argv) {
     const std::string robotName(robot.m_Name, strnlen_s(robot.m_Name, sizeof robot.m_Name));
     const std::string cabinetName(cabinet.m_ElecBoxName, strnlen_s(cabinet.m_ElecBoxName, sizeof cabinet.m_ElecBoxName));
     const std::string serial(cabinet.m_ElecBoxSNo, strnlen_s(cabinet.m_ElecBoxSNo, sizeof cabinet.m_ElecBoxSNo));
-    // 控制权只看机型白名单：连上 SR175-3200 即可操作，不再要求柜型或序列号人工比对。
-    const bool control = robotName == "SR175-3200";
+    // 控制权只看机型白名单：实机固件回读 "SR175/3200"（斜杠），仿真用 "SR175-3200"（连字符），
+    // 两种写法都在白名单内，避免同一机型因写法差异被判只读。
+    const bool control = isSupportedStepRobot(robotName);
     if (preparing) {
         const bool ready = control && prepareVirtual(client, job);
         std::cout << "virtual_prepared=" << (ready ? 1 : 0) << '\n';
@@ -847,7 +874,14 @@ int main(int argc, char** argv) {
             completionArmed = false;
             const char* blocker = nullptr;
             if (!panel || panelStartAllowed()) {
-                blocker = startBlocker(client, simulated, job, panel && simulated ? &completionArmed : nullptr);
+                if (!simulated && job.program && !matchingProgram(client, job)) {
+                    std::cout << "auto_load=loading project=" << job.project << " program=" << job.program << '\n';
+                    if (!ensureProgramLoaded(client, job))
+                        blocker = "cabinet does not contain the expected project; store it once via USB or STEPStudio, then retry";
+                    else
+                        std::cout << "auto_load=loaded\n";
+                }
+                if (!blocker) blocker = startBlocker(client, simulated, job, panel && simulated ? &completionArmed : nullptr);
             }
             if (panel && !panelStartAllowed()) {
                 std::cout << "start_cancelled=stop_or_panel_closed\n";
@@ -874,8 +908,8 @@ int main(int argc, char** argv) {
                 std::cout << "Refused: expected program is not loaded; use the local pendant.\n";
             }
         } else if (!simulated && command == "capture") {
-            // capture 会清掉柜内程序再上传作业，只允许在本地仿真做；实机的程序装载在示教器完成。
-            std::cout << "Refused: program upload runs in the local simulator only; load the program on the pendant.\n";
+            // capture 会清掉柜内程序再上传作业，只允许在本地仿真做；实机的程序切换走 start 时的自动加载。
+            std::cout << "Refused: program upload runs in the local simulator only; start auto-loads the stored program.\n";
         } else {
             const bool ok = virtualCommand(client, job, command);
             if (ok && command == "capture") {
