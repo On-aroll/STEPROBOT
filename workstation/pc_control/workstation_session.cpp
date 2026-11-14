@@ -205,6 +205,11 @@ void Session::attach(QString mode, QStringList parameters) {
     outstanding = true;
     parameters.prepend(mode);
     parameters << "--panel";
+    // 把 UI 解析出的工作区根同步给控制端（helix_pc 端只认 STEPROBOT_WORKSPACE，
+    // 不传时它按老布局回退，实机安装目录下会算出与 UI 不同的根，速度档案就会读不到）。
+    QProcessEnvironment environment = QProcessEnvironment::systemEnvironment();
+    environment.insert("STEPROBOT_WORKSPACE", workspace);
+    worker.setProcessEnvironment(environment);
     worker.start(client, parameters);
     if (changed) changed();
 }

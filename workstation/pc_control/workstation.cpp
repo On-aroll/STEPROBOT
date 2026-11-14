@@ -1462,7 +1462,9 @@ private:
     bool ready() const { return session.fresh() && session.control && session.pending.isEmpty() && !session.waitingStop; }
 
     bool canStart() const {
-        if (!session.simulated && !job.reviewed) return false;
+        // 实机可执行作业：G 代码直开、已核对螺旋 v4、带 G 代码映射的原生工程；
+        // 仅查阅的 STEP ZIP（无映射且非模板）仍拦截。
+        if (!session.simulated && job.nativeInput && !job.reviewed && !job.trustedGcode) return false;
         const auto override = session.value("override").toDouble();
         // 实机程序不一致时仍放行启动：点开始由控制端自动卸载旧程序并加载作业程序，
         // 安全前置（自动/连续/使能/倍率/首行/起点匹配）全部在控制端启动自检完成，这里不重复拦截。
@@ -1479,6 +1481,8 @@ private:
         const bool cabinetMismatch = !session.simulated && !job.program.isEmpty() && !loaded();
         if (!ready()) return "连接未就绪或上一条操作还在等待回读，请稍候再试。";
         if (experiment.active()) return "实验记录进行中：请先停止当前作业再重新开始。";
+        if (!session.simulated && job.nativeInput && !job.reviewed && !job.trustedGcode)
+            return "当前打开的是仅查阅的 STEP ZIP，不能上机：请直接打开 G 代码文件（.nc/.gcode 等），或载入已核对的螺旋 v4 模板。";
         if (!loaded() && !cabinetMismatch) return "柜内没有载入作业对应的工程与程序：请先在示教器上载入后再启动。";
         if (homeDirty) return "上位机起点与当前记录不一致：请重新规划回程或重设起点。";
         if (session.value("error") == "1") return "控制器正在报错：请先在柜内查看并清除报警。";
@@ -1501,7 +1505,10 @@ private:
             if (QMessageBox::question(this, "开始前确认", "确认护目镜、围栏和示教器实体急停已检查。当前为空跑，出光未接入。") == QMessageBox::Yes) modbusStart();
             return;
         }
-        if (!session.simulated && !job.reviewed) { log("实机运行前需核对程序入口：请载入已核对的螺旋 v4 或已验证的 STEP ZIP。"); return; }
+        if (!session.simulated && job.nativeInput && !job.reviewed && !job.trustedGcode) {
+            log("实机运行前需确认作业可执行：当前打开的是仅查阅的 STEP ZIP。请直接打开 G 代码文件（.nc/.gcode 等），或载入已核对的螺旋 v4 模板 ZIP。");
+            return;
+        }
         if (!session.active() && linkType->currentIndex() == 0) { prepare(); return; }
         if (canReprepare()) { session.disconnect(); if (!session.active()) prepare(); return; }
         if (!canStart()) {

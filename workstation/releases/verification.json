@@ -1,7 +1,7 @@
 {
   "version": "2026.11.14",
   "revision": "triple-mode-fusion",
-  "package_bytes": 11033495,
+  "package_bytes": 11034249,
   "package_limit_bytes": 50000000,
   "platform": "Windows 10/11 x64",
   "build": "MSVC 2022 x64 (14.44), Qt 6.8.2, Ninja Release",
@@ -22,10 +22,10 @@
     "home_return": "passed: saved-target return, TCP caps 100/25 mm/s, mid-motion stop; peak TCP 3.83991 mm/s",
     "controller_motion_core_changed": false
   },
-  "control_agent": "helix_pc.exe rebuilt from source against vendor/sdk_cpp SR.SDK_C++_X64_Win_V2.4.1.20250801; workspace root is configurable (workspace.txt next to the exe, or install root containing STEPStudio 4.7.0) and passed to the control agent via STEPROBOT_WORKSPACE; real-robot identity match now accepts both SR175-3200 and SR175/3200 spellings (fixes permanent read-only); explicit loadprogram command plus a workstation button switch the cabinet program on demand (project file must exist in the cabinet once, uploaded via USB or STEPStudio); recordhome command writes homeSaved/pHome into the loaded cabinet program when the workstation origin is saved (SDK VariableAxisposModifyCmd/VariableBoolModifyCmd), unblocking the real-robot start preflight without the pendant capture procedure; start with a mismatched cabinet program is allowed through and auto-loads the expected program before preflight",
+  "control_agent": "helix_pc.exe rebuilt from source against vendor/sdk_cpp SR.SDK_C++_X64_Win_V2.4.1.20250801; workspace root is configurable (workspace.txt next to the exe, or install root containing STEPStudio 4.7.0) and now passed to the control agent via the STEPROBOT_WORKSPACE environment variable on every attach (real and virtual), so the UI hint path and the file the agent actually reads are the same; real-robot identity match now accepts both SR175-3200 and SR175/3200 spellings (fixes permanent read-only); explicit loadprogram command plus a workstation button switch the cabinet program on demand (project file must exist in the cabinet once, uploaded via USB or STEPStudio); recordhome command writes homeSaved/pHome into the loaded cabinet program when the workstation origin is saved (SDK VariableAxisposModifyCmd/VariableBoolModifyCmd), unblocking the real-robot start preflight without the pendant capture procedure; start with a mismatched cabinet program is allowed through and auto-loads the expected program before preflight; the real-robot reviewed-only gate is replaced by an executable-job gate: directly opened G-code jobs, the reviewed helix v4 template and native jobs with a trusted G-code mapping are all allowed, view-only STEP ZIPs are still blocked",
   "studio_and_seed": "external dependencies, configurable paths retained",
   "physical_robot_tested": false,
-  "installer_sha256": "9672b926f8b465c8304cabeed6f2b076b528f113abfcca7e51ca7ab736543071",
+  "installer_sha256": "2cdcbebb736f39896f8f37de6eaec1ba74678e2c3634eaca3bc73d33f24cd2a9",
   "omitted": [
     "STEPStudio installation",
     "licensed workstation seed and registration",
