@@ -1,0 +1,7 @@
+PROGRAM PRG_RobotJoints
+VAR
+    fbRead : FB_RobotJointRead;
+    wFlags : WORD;
+    i : UINT;
+    uiSource : UINT;
+END_VAR

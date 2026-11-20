@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "project": "pcjob_20261116_201104_7f547f98.sr",
+  "capture_number": 1,
+  "path_number": 2,
+  "return_number": 3,
+  "existing_mapping_confirmed": true,
+  "fixed_path_program": "helix_25mms",
+  "note": "Reuses existing cabinet bindings; this file does not create or modify them."
+}

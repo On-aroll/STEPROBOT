@@ -1,0 +1,81 @@
+Offset_0based,Reference_4xxxx,Direction,FC,PLC_variable,Field
+200,40201,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[0],Version=2 (V1 client must use 1 with legacy PLC)
+201,40202,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[1],Command
+202,40203,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[2],RequestSeq high
+203,40204,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[3],RequestSeq low
+204,40205,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[4],Parameter (Load/ConfirmLoad: program number 1..255)
+205,40206,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[5],Reserved=0
+206,40207,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[6],HostSession high
+207,40208,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[7],HostSession low
+208,40209,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[8],ExpectedBoot high
+209,40210,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[9],ExpectedBoot low
+210,40211,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[10],Reserved=0
+211,40212,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[11],Reserved=0
+212,40213,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[12],Reserved=0
+213,40214,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[13],Reserved=0
+214,40215,PC_to_PLC,16,GVL_RobotBridge.aHostCmd[14],Reserved=0
+215,40216,PC_to_PLC,16/06,GVL_RobotBridge.aHostCmd[15],HostHeartbeat
+300,40301,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[0],Magic=0x4D42
+301,40302,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[1],Version=2
+302,40303,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[2],Flags (bit10=LocalGdiMappingConfirmed)
+303,40304,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[3],ActionStep
+304,40305,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[4],AckSeq high
+305,40306,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[5],AckSeq low
+306,40307,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[6],AckCommand
+307,40308,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[7],AckResult
+308,40309,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[8],AckError
+309,40310,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[9],LastHostHeartbeat
+310,40311,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[10],BootCounter high
+311,40312,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[11],BootCounter low
+312,40313,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[12],PlcHeartbeat
+313,40314,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[13],SelectedProgramNumber (not robot identity)
+314,40315,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[14],DesiredSystemWord (not write acknowledgement)
+315,40316,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[15],Owner high
+316,40317,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[16],Owner low
+317,40318,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[17],RawRobotStatus
+318,40319,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[18],RobotState
+319,40320,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[19],Reserved=0
+320,40321,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[20],Robot FC04 raw offset 0
+321,40322,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[21],Robot FC04 raw offset 1
+322,40323,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[22],Robot FC04 raw offset 2
+323,40324,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[23],Robot FC04 raw offset 3
+324,40325,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[24],Robot FC04 raw offset 4
+325,40326,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[25],Robot FC04 raw offset 5
+326,40327,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[26],Robot FC04 raw offset 6
+327,40328,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[27],Robot FC04 raw offset 7
+328,40329,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[28],Robot FC04 raw offset 8
+329,40330,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[29],Robot FC04 raw offset 9
+330,40331,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[30],Robot FC04 raw offset 10
+331,40332,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[31],Robot FC04 raw offset 11
+332,40333,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[32],Robot FC04 raw offset 12
+333,40334,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[33],Robot FC04 raw offset 13
+334,40335,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[34],Robot FC04 raw offset 14
+335,40336,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[35],Robot FC04 raw offset 15
+336,40337,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[36],Robot FC04 raw offset 16
+337,40338,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[37],Robot FC04 raw offset 17
+338,40339,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[38],Robot FC04 raw offset 18
+339,40340,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[39],Robot FC04 raw offset 19
+340,40341,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[40],Robot FC04 raw offset 20
+341,40342,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[41],Robot FC04 raw offset 21
+342,40343,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[42],Robot FC04 raw offset 22
+343,40344,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[43],Robot FC04 raw offset 23
+344,40345,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[44],Robot FC04 raw offset 24
+345,40346,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[45],Robot FC04 raw offset 25
+346,40347,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[46],Robot FC04 raw offset 26
+347,40348,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[47],Robot FC04 raw offset 27
+348,40349,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[48],Robot FC04 raw offset 28
+349,40350,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[49],Robot FC04 raw offset 29
+350,40351,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[50],Robot FC04 raw offset 30
+351,40352,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[51],Robot FC04 raw offset 31
+352,40353,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[52],RejectedSeq high
+353,40354,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[53],RejectedSeq low
+354,40355,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[54],RejectReason
+355,40356,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[55],InterruptedSeq high
+356,40357,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[56],InterruptedSeq low
+357,40358,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[57],SelectionMode=1 (GDI8)
+358,40359,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[58],MaxProgramNumber=255
+359,40360,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[59],DesiredProgramWord (DI49..64; not robot readback)
+360,40361,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[60],GdiFirstDI=49
+361,40362,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[61],GdiLastDI=56
+362,40363,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[62],HeartbeatEdgeCount
+363,40364,PLC_to_PC,3,GVL_RobotBridge.aHostStatus[63],RobotFc16WriteWords=2

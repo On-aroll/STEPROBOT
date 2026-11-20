@@ -1,0 +1,9 @@
+FUNCTION F_FixedFileValid : BOOL
+VAR_INPUT
+    sName : STRING(64);
+END_VAR
+F_FixedFileValid := (sName = '_project.srd')
+    OR (sName = 'capture_home.srp') OR (sName = 'capture_home.srd')
+    OR (sName = 'helix_25mms.srp') OR (sName = 'helix_25mms.srd')
+    OR (sName = 'go_home.srp') OR (sName = 'go_home.srd');
+END_FUNCTION

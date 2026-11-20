@@ -303,6 +303,15 @@ void Session::handle(const QString& line) {
         if (note) note("回程规划失败：" + line.mid(16) + "。机器人未移动。");
         if (event) event("home_plan_failed");
         if (changed) changed();
+    } else if (line.startsWith("move_done=") || line.startsWith("move_refused=") || line.startsWith("move_aborted=")) {
+        feedback["move_state"] = line.startsWith("move_done=") ? "done"
+            : line.startsWith("move_aborted=") ? "aborted" : "refused";
+        feedback["move_seq"] = line.section("move_seq=", 1);
+        feedback["move_reason"] = feedback["move_state"] == "refused"
+            ? line.section('=', 1).section(' ', 0, 0) : QString();
+        if (note) note(feedback["move_state"] == "done" ? "运动语句执行完成。" :
+                       feedback["move_state"] == "aborted" ? "运动语句已中止。" :
+                       "运动语句被拒绝：" + feedback["move_reason"]);
     } else if (line.startsWith("robot=")) {
         const auto data = fields();
         control = data.value("access") == "start_stop";

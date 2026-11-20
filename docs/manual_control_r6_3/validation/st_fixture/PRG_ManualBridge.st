@@ -1,0 +1,513 @@
+PROGRAM PRG_ManualBridge
+VAR
+    xFirst : BOOL := TRUE;
+    xNormalService : BOOL;
+    xPositionPacket : BOOL;
+    xPositionValid : BOOL;
+    xPositionUpdated : BOOL;
+    uiPositionId : UINT;
+    uiPositionIndex : UINT;
+    uiPositionCollectId : UINT;
+    uiPositionCount : UINT;
+    uiPositionPublishedId : UINT;
+    uiPositionStable : UINT;
+    wPositionPrevious : WORD;
+    wPositionWholePrevious : WORD;
+    wPositionFractionPrevious : WORD;
+    wPositionConsumed : WORD;
+    diPositionValue : DINT;
+    udiPositionBits : UDINT;
+    udiPositionCounter : UDINT;
+    aPositionCollect : ARRAY[0..23] OF WORD;
+    aPositionPublished : ARRAY[0..23] OF WORD;
+    fbPositionAge : TON;
+    wPositionFlags : WORD;
+    aPrevious : ARRAY[0..14] OF WORD;
+    aConsumed : ARRAY[0..14] OF WORD;
+    aFrame : ARRAY[0..15] OF WORD;
+    i : INT;
+    uiStable : UINT;
+    xSame : BOOL;
+    xNew : BOOL;
+    wChecksum : WORD;
+    udiSeq : UDINT;
+    udiLastSeq : UDINT;
+    udiSequenceOwner : UDINT;
+    udiAck : UDINT;
+    udiOwner : UDINT;
+    udiBoot : UDINT;
+    wOp : WORD;
+    wAction : WORD;
+    wRequestedAction : WORD;
+    wArgument : WORD;
+    wRequestedArgument : WORD;
+    iArgument : INT;
+    wSpeed : WORD;
+    wRequestedSpeed : WORD;
+    wAckOp : WORD;
+    wResult : WORD;
+    wError : WORD;
+    wReject : WORD;
+    uiPhase : UINT;
+    xEntered : BOOL;
+    xStopping : BOOL;
+    xHostValid : BOOL;
+    xRobotConditions : BOOL;
+    wLastHostHb : WORD;
+    xHostHbEdge : BOOL;
+    fbHost : TON;
+    fbStart : TON;
+    fbBlank : TON;
+    fbParameters : TON;
+    fbCommand : TON;
+    fbStop : TON;
+    fbStopped : TON;
+    fbService : TON;
+    xServiceEdge : BOOL;
+    wLastService : WORD;
+    uiServiceEdges : UINT;
+    xServiceFormat : BOOL;
+    xServiceAlive : BOOL;
+    wServiceFlags : WORD;
+    wServiceError : WORD;
+    wOrigin : WORD;
+    wLease : WORD;
+    fbLease : TON;
+    xLeaseTick : BOOL;
+    uiTokenSeq : UINT;
+    wToken : WORD;
+    wScan : WORD;
+    wFlags : WORD;
+    xTerminalStop : BOOL;
+    fbRelease : TON;
+    fbJogStall : TON;
+    fbReleaseGrace : TON;
+    uiStageKind : UINT;
+    uiStageCount : UINT;
+    wStageId : WORD;
+    wStageAction : WORD;
+    wStageArgument : WORD;
+    wStageSpeed : WORD;
+END_VAR
+
+// Call every scan AFTER PRG_RobotBridge. No retained motion request survives startup.
+IF xFirst THEN
+    FOR i := 0 TO 14 DO
+        aPrevious[i] := GVL_ManualBridge.aCommand[i];
+        aConsumed[i] := GVL_ManualBridge.aCommand[i];
+    END_FOR;
+    wLastHostHb := GVL_ManualBridge.aCommand[15];
+    wLastService := GVL_RobotBridge.aRobotRx[4];
+    GVL_ManualBridge.xStartRequest := FALSE;
+    GVL_ManualBridge.xStopRequest := FALSE;
+    GVL_ManualBridge.xActive := FALSE;
+    xFirst := FALSE;
+END_IF;
+
+// The existing ParamProbe_Write is reused unchanged. Stop setting it manually after installation.
+// All four words are written here every scan; no second parameter writer is allowed.
+FOR i := 0 TO 3 DO GVL_ParamProbe.aParamTx[i] := WORD#0; END_FOR;
+GVL_ManualBridge.xStartRequest := FALSE;
+GVL_ManualBridge.xStopRequest := FALSE;
+xTerminalStop := GVL_RobotBridge.xRobotStopped AND NOT GVL_RobotBridge.xRobotRunning
+    AND NOT GVL_RobotBridge.xRobotPaused;
+udiOwner := SHL(WORD_TO_UDINT(GVL_ManualBridge.aCommand[8]),16)
+    OR WORD_TO_UDINT(GVL_ManualBridge.aCommand[9]);
+udiBoot := SHL(WORD_TO_UDINT(GVL_ManualBridge.aCommand[10]),16)
+    OR WORD_TO_UDINT(GVL_ManualBridge.aCommand[11]);
+xHostValid := GVL_RobotBridge.xHostRegistered AND GVL_RobotBridge.xHostAlive
+    AND (udiOwner <> UDINT#0)
+    AND (GVL_ManualBridge.aCommand[8] = GVL_RobotBridge.aHostStatus[15])
+    AND (GVL_ManualBridge.aCommand[9] = GVL_RobotBridge.aHostStatus[16])
+    AND (udiBoot = GVL_RobotBridgeRetain.udiBootCounter);
+xHostHbEdge := xHostValid AND (GVL_ManualBridge.aCommand[15] <> wLastHostHb);
+IF xHostHbEdge THEN wLastHostHb := GVL_ManualBridge.aCommand[15]; END_IF;
+fbHost(IN := GVL_ManualBridge.xActive AND NOT xHostHbEdge, PT := T#600ms);
+xRobotConditions := GVL_ManualBridge.xInstalled AND GVL_ManualBridge.xServiceBindingConfirmed
+    AND GVL_RobotBridge.xCommissioned AND GVL_RobotBridge.xGdiProgramMappingConfirmed
+    AND GVL_RobotBridge.xRemotePermit AND GVL_RobotBridge.xRobotLinkOK
+    AND GVL_RobotBridge.xRobotExternalAuto AND GVL_RobotBridge.xRobotEnabled
+    AND NOT GVL_RobotBridge.xRobotAlarm AND NOT GVL_RobotBridge.xRobotEmergency
+    AND NOT GVL_RobotBridge.xStopInterlock AND GVL_RobotBridge.xLoadOperatorConfirmed
+    AND (GVL_RobotBridge.aHostStatus[13] = UINT_TO_WORD(GVL_ManualBridge.uiServiceProgram));
+
+// Normal acknowledgement packets and guarded idle position packets have
+// distinct AO5 ranges. R6.2/older service signatures are deliberately excluded.
+xNormalService := (GVL_RobotBridge.aRobotRx[4] >= WORD#1000)
+    AND (GVL_RobotBridge.aRobotRx[4] < WORD#2000);
+xPositionPacket := (GVL_RobotBridge.aRobotRx[4] >= WORD#28033)
+    AND (GVL_RobotBridge.aRobotRx[4] <= WORD#31180)
+    AND (GVL_RobotBridge.aRobotRx[4] = GVL_RobotBridge.aRobotRx[7]);
+uiPositionId := UINT#0; uiPositionIndex := UINT#0;
+IF xPositionPacket THEN
+    uiPositionId := (WORD_TO_UINT(GVL_RobotBridge.aRobotRx[4])-UINT#28000) / UINT#32;
+    uiPositionIndex := (WORD_TO_UINT(GVL_RobotBridge.aRobotRx[4])-UINT#28000) MOD UINT#32;
+    xPositionPacket := (uiPositionId >= UINT#1) AND (uiPositionId <= UINT#99)
+        AND (uiPositionIndex >= UINT#1) AND (uiPositionIndex <= UINT#12)
+        AND (GVL_RobotBridge.aRobotRx[6] <= WORD#999);
+END_IF;
+xServiceFormat := xNormalService OR xPositionPacket;
+xServiceEdge := xServiceFormat AND (GVL_RobotBridge.aRobotRx[4] <> wLastService);
+IF xServiceEdge THEN
+    wLastService := GVL_RobotBridge.aRobotRx[4];
+    IF uiServiceEdges < UINT#2 THEN uiServiceEdges := uiServiceEdges+UINT#1; END_IF;
+END_IF;
+fbService(IN := NOT xServiceEdge, PT := T#1500ms);
+// AO5=0 is a publication guard, not a loss of the resident service.
+IF fbService.Q THEN uiServiceEdges := UINT#0; END_IF;
+xServiceAlive := (uiServiceEdges >= UINT#2) AND NOT fbService.Q;
+IF xNormalService THEN
+    wServiceFlags := UINT_TO_WORD((WORD_TO_UINT(GVL_RobotBridge.aRobotRx[4])-UINT#1000) MOD UINT#16);
+    wServiceError := UINT_TO_WORD(WORD_TO_UINT(GVL_RobotBridge.aRobotRx[7]) / UINT#1000);
+    wOrigin := UINT_TO_WORD(WORD_TO_UINT(GVL_RobotBridge.aRobotRx[7]) MOD UINT#1000);
+END_IF;
+
+// Accept each guarded payload only after the header and both data words
+// are stable for two scans. Collect all twelve components of ONE snapshot.
+xPositionUpdated := FALSE;
+IF xPositionPacket AND (GVL_RobotBridge.aRobotRx[4] = wPositionPrevious)
+    AND (GVL_RobotBridge.aRobotRx[5] = wPositionWholePrevious)
+    AND (GVL_RobotBridge.aRobotRx[6] = wPositionFractionPrevious) THEN
+    IF uiPositionStable < UINT#2 THEN uiPositionStable := uiPositionStable+UINT#1; END_IF;
+ELSE uiPositionStable := UINT#0; END_IF;
+wPositionPrevious := GVL_RobotBridge.aRobotRx[4];
+wPositionWholePrevious := GVL_RobotBridge.aRobotRx[5];
+wPositionFractionPrevious := GVL_RobotBridge.aRobotRx[6];
+IF xPositionPacket AND (uiPositionStable >= UINT#2)
+   AND (wPositionConsumed <> GVL_RobotBridge.aRobotRx[4])
+   AND xEntered AND (uiPhase = UINT#0) AND xHostValid AND xRobotConditions THEN
+    wPositionConsumed := GVL_RobotBridge.aRobotRx[4];
+    IF uiPositionIndex = UINT#1 THEN
+        uiPositionCollectId := uiPositionId; uiPositionCount := UINT#0;
+    END_IF;
+    IF (uiPositionCollectId = uiPositionId) AND (uiPositionIndex = uiPositionCount+UINT#1) THEN
+        diPositionValue := INT_TO_DINT(WORD_TO_INT(GVL_RobotBridge.aRobotRx[5]))*DINT#1000
+            + WORD_TO_DINT(GVL_RobotBridge.aRobotRx[6]);
+        IF (diPositionValue >= -DINT#10000000) AND (diPositionValue <= DINT#10000000) THEN
+            udiPositionBits := DINT_TO_UDINT(diPositionValue);
+            aPositionCollect[uiPositionCount*UINT#2] := UDINT_TO_WORD(SHR(udiPositionBits,16));
+            aPositionCollect[uiPositionCount*UINT#2+UINT#1] := UDINT_TO_WORD(udiPositionBits AND UDINT#65535);
+            uiPositionCount := uiPositionCount+UINT#1;
+            IF uiPositionCount = UINT#12 THEN
+                FOR i := 0 TO 23 DO aPositionPublished[i] := aPositionCollect[i]; END_FOR;
+                uiPositionPublishedId := uiPositionCollectId;
+                IF udiPositionCounter = UDINT#4294967295 THEN udiPositionCounter := UDINT#1;
+                ELSE udiPositionCounter := udiPositionCounter+UDINT#1; END_IF;
+                xPositionUpdated := TRUE; xPositionValid := TRUE;
+                uiPositionCount := UINT#0;
+            END_IF;
+        ELSE uiPositionCount := UINT#0; END_IF;
+    ELSE uiPositionCount := UINT#0; END_IF;
+END_IF;
+fbPositionAge(IN := NOT xPositionUpdated, PT := T#8s);
+IF fbPositionAge.Q THEN xPositionValid := FALSE; END_IF;
+IF NOT xEntered OR NOT xHostValid OR NOT xRobotConditions
+   OR (uiPhase <> UINT#0) THEN
+    xPositionValid := FALSE; uiPositionCount := UINT#0;
+END_IF;
+
+// Extended heartbeat is independent of the main registration heartbeat.
+fbLease(IN := GVL_ManualBridge.xActive AND NOT xLeaseTick, PT := T#100ms);
+xLeaseTick := fbLease.Q;
+IF xLeaseTick THEN
+    IF wLease >= WORD#30000 THEN wLease := WORD#1;
+    ELSE wLease := UINT_TO_WORD(WORD_TO_UINT(wLease)+UINT#1); END_IF;
+END_IF;
+
+// Ordinary stop on lease loss, fault, mode/permit change or unexpected program termination.
+IF GVL_ManualBridge.xActive AND NOT xStopping THEN
+    IF NOT xHostValid OR fbHost.Q THEN wError := WORD#8; xStopping := TRUE;
+    ELSIF NOT xRobotConditions THEN wError := WORD#6; xStopping := TRUE;
+    ELSIF xEntered AND (uiPhase = UINT#0) AND NOT xServiceAlive THEN
+        wError := WORD#9; xStopping := TRUE;
+    ELSIF xEntered AND NOT GVL_RobotBridge.xRobotRunning THEN
+        wError := WORD#6; xStopping := TRUE;
+    END_IF;
+    IF xStopping THEN
+        xEntered := FALSE; uiPhase := UINT#90;
+        IF wResult = WORD#1 THEN wResult := WORD#6; END_IF;
+    END_IF;
+END_IF;
+
+// Stable frame + XOR guard. Do not consume a partially written request.
+FOR i := 0 TO 15 DO aFrame[i] := GVL_ManualBridge.aCommand[i]; END_FOR;
+xSame := TRUE;
+FOR i := 0 TO 14 DO
+    IF aFrame[i] <> aPrevious[i] THEN xSame := FALSE; END_IF;
+    aPrevious[i] := aFrame[i];
+END_FOR;
+IF xSame THEN
+    IF uiStable < UINT#2 THEN uiStable := uiStable+UINT#1; END_IF;
+ELSE uiStable := UINT#0; END_IF;
+xNew := FALSE;
+IF uiStable >= UINT#2 THEN
+    FOR i := 0 TO 14 DO IF aFrame[i] <> aConsumed[i] THEN xNew := TRUE; END_IF; END_FOR;
+END_IF;
+IF xNew THEN
+    FOR i := 0 TO 14 DO aConsumed[i] := aFrame[i]; END_FOR;
+    udiSeq := SHL(WORD_TO_UDINT(aFrame[2]),16) OR WORD_TO_UDINT(aFrame[3]);
+    wOp := aFrame[1]; wRequestedAction := aFrame[5]; wRequestedArgument := aFrame[6];
+    iArgument := WORD_TO_INT(wRequestedArgument); wRequestedSpeed := aFrame[7];
+    IF xHostValid AND (udiSequenceOwner <> udiOwner) AND NOT GVL_ManualBridge.xActive THEN
+        udiLastSeq := UDINT#0; udiSequenceOwner := udiOwner;
+    END_IF;
+    wChecksum := WORD#16#A55A;
+    FOR i := 0 TO 12 DO wChecksum := wChecksum XOR aFrame[i]; END_FOR;
+    wReject := WORD#0;
+    IF (aFrame[0] <> WORD#16#4D35) OR (aFrame[4] <> WORD#2)
+       OR (aFrame[13] <> wChecksum) THEN wReject := WORD#1;
+    ELSIF NOT xHostValid THEN wReject := WORD#2;
+    ELSIF udiSeq = UDINT#0 THEN wReject := WORD#3;
+    ELSIF udiSeq <= udiLastSeq THEN wReject := WORD#3;
+    ELSIF (wOp < WORD#1) OR (wOp > WORD#9) THEN wReject := WORD#1;
+    END_IF;
+    IF wReject = WORD#0 THEN
+        udiLastSeq := udiSeq;
+        // Cancel/Exit preempts current work. A cancellation can never start movement.
+        IF (wOp = WORD#5) OR (wOp = WORD#6) THEN
+            udiAck := udiSeq; wAckOp := wOp; wError := WORD#0;
+            uiStageKind := UINT#0; uiStageCount := UINT#0; wStageId := WORD#0;
+            IF (wOp = WORD#6) AND (wStageAction >= WORD#1) AND (wStageAction <= WORD#16)
+               AND ((wSpeed AND WORD#16#8000) <> WORD#0)
+               AND NOT xStopping AND xEntered THEN
+                // Jog release: withdraw its token, wait for its bounded segment,
+                // keep the resident service and drive enable alive.
+                uiServiceEdges := UINT#0; uiPhase := UINT#70; wResult := WORD#1;
+            ELSIF (uiPhase <> UINT#0) OR (wOp = WORD#5) THEN
+                xStopping := TRUE; xEntered := FALSE;
+                GVL_ManualBridge.xActive := TRUE; uiPhase := UINT#90; wResult := WORD#1;
+            ELSE wResult := WORD#2; END_IF;
+        ELSIF uiPhase <> UINT#0 OR xStopping THEN wReject := WORD#4;
+        ELSIF NOT GVL_ManualBridge.xInstalled OR NOT GVL_ManualBridge.xServiceBindingConfirmed
+              OR aFrame[12] <> UINT_TO_WORD(GVL_ManualBridge.uiServiceProgram) THEN wReject := WORD#5;
+        ELSIF NOT xRobotConditions OR GVL_RobotBridge.xBusy THEN wReject := WORD#6;
+        ELSIF (wOp <> WORD#1) AND (NOT xEntered OR NOT xServiceAlive) THEN wReject := WORD#11;
+        ELSIF ((wOp >= WORD#2) AND (wOp <= WORD#4) OR (wOp >= WORD#7)) AND (aFrame[14] <> WORD#1) THEN wReject := WORD#8;
+        ELSE
+            IF (wOp = WORD#2) OR (wOp = WORD#9) THEN
+                IF NOT (((wRequestedAction >= WORD#1) AND (wRequestedAction <= WORD#6))
+                    OR ((wRequestedAction >= WORD#11) AND (wRequestedAction <= WORD#16)))
+                    OR (iArgument = INT#0) OR (iArgument < -INT#10000) OR (iArgument > INT#10000)
+                    OR ((wRequestedAction <= WORD#6) AND ((wRequestedSpeed < WORD#10) OR (wRequestedSpeed > WORD#10000)))
+                    OR ((wRequestedAction > WORD#6) AND ((wRequestedSpeed < WORD#1) OR (wRequestedSpeed > WORD#32767))) THEN wReject := WORD#7; END_IF;
+                IF wOp = WORD#9 THEN
+                    IF wRequestedAction <= WORD#6 THEN
+                        IF (iArgument < -INT#1000) OR (iArgument > INT#1000)
+                            OR ((wRequestedSpeed <= WORD#1500) AND ((iArgument < -INT#500) OR (iArgument > INT#500)))
+                            OR ((wRequestedSpeed <= WORD#1000) AND ((iArgument < -INT#250) OR (iArgument > INT#250)))
+                            OR ((wRequestedSpeed <= WORD#500) AND ((iArgument < -INT#100) OR (iArgument > INT#100))) THEN wReject := WORD#7; END_IF;
+                    ELSE
+                        IF (iArgument < -INT#10000) OR (iArgument > INT#10000)
+                            OR ((wRequestedSpeed <= WORD#5000) AND ((iArgument < -INT#5000) OR (iArgument > INT#5000)))
+                            OR ((wRequestedSpeed <= WORD#1000) AND ((iArgument < -INT#1000) OR (iArgument > INT#1000)))
+                            OR ((wRequestedSpeed <= WORD#250) AND ((iArgument < -INT#500) OR (iArgument > INT#500)))
+                            OR ((wRequestedSpeed <= WORD#50) AND ((iArgument < -INT#100) OR (iArgument > INT#100))) THEN wReject := WORD#7; END_IF;
+                    END_IF;
+                END_IF;
+            ELSIF wOp = WORD#3 THEN
+                IF (wRequestedAction <> WORD#20) OR (iArgument < INT#1) OR (iArgument > INT#999) THEN wReject := WORD#7; END_IF;
+            ELSIF wOp = WORD#4 THEN
+                IF (wRequestedAction <> WORD#21) OR (wRequestedArgument <> wOrigin) OR (wOrigin = WORD#0)
+                    OR ((wServiceFlags AND WORD#4) = WORD#0) THEN wReject := WORD#12;
+                ELSIF (wRequestedSpeed < WORD#10) OR (wRequestedSpeed > WORD#10000) THEN wReject := WORD#7; END_IF;
+            ELSIF wOp = WORD#7 THEN
+                IF wRequestedAction = WORD#23 THEN
+                    IF (iArgument < INT#1) OR (iArgument > INT#2)
+                       OR (wRequestedSpeed < WORD#1) OR (wRequestedSpeed > WORD#999) THEN wReject := WORD#7; END_IF;
+                ELSIF (wRequestedAction >= WORD#24) AND (wRequestedAction <= WORD#29) THEN
+                    IF (uiStageKind = UINT#0) OR (WORD_TO_UINT(wRequestedAction) <> uiStageCount+UINT#24) THEN wReject := WORD#14;
+                    ELSIF wRequestedSpeed = WORD#2000 THEN
+                        IF iArgument <> INT#0 THEN wReject := WORD#7; END_IF;
+                    ELSIF (wRequestedSpeed > WORD#999) OR (iArgument < -INT#10000) OR (iArgument > INT#10000) THEN wReject := WORD#7;
+                    ELSIF (iArgument = INT#10000) AND (wRequestedSpeed <> WORD#0) THEN wReject := WORD#7;
+                    ELSIF (uiStageKind = UINT#1) OR (wRequestedAction >= WORD#27) THEN
+                        IF (iArgument < -INT#360) OR (iArgument > INT#360)
+                           OR ((iArgument = INT#360) AND (wRequestedSpeed <> WORD#0)) THEN wReject := WORD#7; END_IF;
+                    END_IF;
+                ELSE wReject := WORD#7; END_IF;
+            ELSIF wOp = WORD#8 THEN
+                IF (wRequestedAction <> WORD#30) OR (uiStageKind = UINT#0) OR (uiStageCount <> UINT#6)
+                   OR (wRequestedArgument <> wStageId) THEN wReject := WORD#14;
+                ELSIF ((uiStageKind = UINT#1) AND ((wRequestedSpeed < WORD#10) OR (wRequestedSpeed > WORD#10000)))
+                   OR ((uiStageKind = UINT#2) AND ((wRequestedSpeed < WORD#1) OR (wRequestedSpeed > WORD#32767))) THEN wReject := WORD#7; END_IF;
+            ELSIF wOp = WORD#1 THEN
+                IF NOT xTerminalStop THEN wReject := WORD#6; END_IF;
+            END_IF;
+            IF wReject = WORD#0 THEN
+                xPositionValid := FALSE; uiPositionCount := UINT#0;
+                udiAck := udiSeq; wAckOp := wOp; wResult := WORD#1; wError := WORD#0;
+                wAction := wRequestedAction; wArgument := wRequestedArgument; wSpeed := wRequestedSpeed;
+                wStageAction := wRequestedAction; wStageArgument := wRequestedArgument; wStageSpeed := wRequestedSpeed;
+                IF wOp = WORD#9 THEN wSpeed := wSpeed OR WORD#16#8000; END_IF;
+                IF (wOp <> WORD#7) THEN uiStageKind := UINT#0; uiStageCount := UINT#0; END_IF;
+                GVL_ManualBridge.xActive := TRUE;
+                IF uiTokenSeq >= UINT#999 THEN uiTokenSeq := UINT#1;
+                ELSE uiTokenSeq := uiTokenSeq+UINT#1; END_IF;
+                IF wOp = WORD#1 THEN
+                    wAction := WORD#22; wArgument := WORD#0; wSpeed := WORD#0;
+                    xEntered := FALSE; uiServiceEdges := UINT#0; uiPhase := UINT#10;
+                ELSE uiPhase := UINT#20; END_IF;
+                wToken := UINT_TO_WORD(uiTokenSeq*UINT#32)+wAction;
+            END_IF;
+        END_IF;
+    END_IF;
+    IF wReject <> WORD#0 THEN
+        uiStageKind := UINT#0; uiStageCount := UINT#0; wStageId := WORD#0;
+        // Do not overwrite an active acknowledgement with a competing malformed request.
+        IF uiPhase = UINT#0 THEN udiAck := udiSeq; wAckOp := wOp; wResult := WORD#4; wError := wReject; END_IF;
+    END_IF;
+END_IF;
+
+fbStart(IN := uiPhase = UINT#10, PT := T#500ms);
+fbBlank(IN := uiPhase = UINT#20, PT := T#120ms);
+fbParameters(IN := uiPhase = UINT#30, PT := T#120ms);
+fbCommand(IN := (uiPhase <> UINT#0) AND (uiPhase <> UINT#90) AND (uiPhase <> UINT#60) AND (uiPhase <> UINT#70), PT := T#120s);
+fbStop(IN := uiPhase = UINT#90, PT := T#4s);
+fbStopped(IN := (uiPhase = UINT#90) AND xTerminalStop, PT := T#500ms);
+fbRelease(IN := uiPhase = UINT#70, PT := T#3s);
+// WaitIsFinished pauses service AO heartbeat during a slow bounded segment.
+// Main robot DO42, PC heartbeat, permits and the native lease still apply.
+fbJogStall(IN := (uiPhase = UINT#60) AND NOT xServiceEdge, PT := T#20s);
+fbReleaseGrace(IN := uiPhase = UINT#70, PT := T#500ms);
+CASE uiPhase OF
+10: // Resident program only starts; motion requires a later committed request.
+    GVL_ManualBridge.xStartRequest := NOT fbStart.Q;
+    IF fbStart.Q AND xServiceAlive AND GVL_RobotBridge.xRobotRunning THEN uiPhase := UINT#20; END_IF;
+20: // First publish token=0, then stable arguments, then commit token.
+    IF fbBlank.Q THEN uiPhase := UINT#30; END_IF;
+30: IF fbParameters.Q THEN uiPhase := UINT#40; END_IF;
+40:
+    IF xNormalService AND (wAckOp = WORD#9) AND (GVL_RobotBridge.aRobotRx[5] = wToken) THEN
+        uiPhase := UINT#60;
+    ELSIF xNormalService AND (GVL_RobotBridge.aRobotRx[5] = wToken) AND (GVL_RobotBridge.aRobotRx[6] = wToken) THEN
+        // Reacquire two fresh service edges after any potentially long motion.
+        // Never declare completion and then stop on an old idle watchdog sample.
+        uiServiceEdges := UINT#0; uiPhase := UINT#50;
+    END_IF;
+50:
+    IF xServiceAlive AND xNormalService THEN
+        IF wServiceError <> WORD#0 THEN
+            wResult := WORD#4; wError := WORD#10;
+            uiStageKind := UINT#0; uiStageCount := UINT#0; wStageId := WORD#0;
+        ELSE
+            wResult := WORD#2; wError := WORD#0;
+            IF wAckOp = WORD#1 THEN xEntered := TRUE; END_IF;
+            IF wAckOp = WORD#7 THEN
+                IF wStageAction = WORD#23 THEN
+                    uiStageKind := WORD_TO_UINT(wStageArgument); wStageId := wStageSpeed; uiStageCount := UINT#0;
+                ELSE uiStageCount := uiStageCount+UINT#1; END_IF;
+            END_IF;
+        END_IF;
+        uiPhase := UINT#0;
+    END_IF;
+60: // Resident bounded jog; held PC heartbeat is its continuing lease.
+    IF (wServiceError <> WORD#0) OR fbJogStall.Q
+       OR (GVL_RobotBridge.aRobotRx[6] = wToken) THEN
+        wError := WORD#9; wResult := WORD#6; uiPhase := UINT#90; xStopping := TRUE; xEntered := FALSE;
+    END_IF;
+70: // Token=0 is visible throughout release; lease stays alive.
+    IF xServiceAlive AND xNormalService AND
+       (((GVL_RobotBridge.aRobotRx[5] = wToken) AND (GVL_RobotBridge.aRobotRx[6] = wToken))
+        OR ((GVL_RobotBridge.aRobotRx[5] <> wToken) AND fbReleaseGrace.Q)) THEN
+        wResult := WORD#2; wError := WORD#0; wToken := WORD#0; wSpeed := WORD#0; uiPhase := UINT#0;
+    ELSIF fbRelease.Q THEN
+        wError := WORD#9; wResult := WORD#6; uiPhase := UINT#90; xStopping := TRUE; xEntered := FALSE;
+    END_IF;
+90:
+    GVL_ManualBridge.xStopRequest := TRUE;
+    // A stopped program may retain its execution position on some cabinet versions.
+    // Require a fresh GDI load before any subsequent START; never resume an interrupted increment.
+    GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+    IF fbStopped.Q THEN
+        uiPhase := UINT#0; xStopping := FALSE; xEntered := FALSE;
+        GVL_ManualBridge.xActive := FALSE;
+        uiStageKind := UINT#0; uiStageCount := UINT#0; wStageId := WORD#0;
+        IF wResult = WORD#1 THEN wResult := WORD#2; END_IF;
+    ELSIF fbStop.Q THEN wError := WORD#13; wResult := WORD#5; END_IF;
+END_CASE;
+IF fbCommand.Q AND (uiPhase <> UINT#0) AND (uiPhase <> UINT#90) THEN
+    wResult := WORD#5; wError := WORD#9; uiPhase := UINT#90; xStopping := TRUE; xEntered := FALSE;
+END_IF;
+IF GVL_ManualBridge.xActive AND NOT xStopping THEN
+    GVL_ParamProbe.aParamTx[3] := wLease;
+    IF (uiPhase = UINT#30) OR (uiPhase = UINT#40) OR (uiPhase = UINT#50) OR xEntered THEN
+        GVL_ParamProbe.aParamTx[1] := wArgument;
+        GVL_ParamProbe.aParamTx[2] := wSpeed;
+    END_IF;
+    IF (uiPhase = UINT#40) OR (uiPhase = UINT#50) OR (uiPhase = UINT#60) OR (xEntered AND uiPhase = UINT#0) THEN
+        GVL_ParamProbe.aParamTx[0] := wToken;
+    END_IF;
+END_IF;
+
+FOR i := 0 TO 31 DO GVL_ManualBridge.aStatus[i] := WORD#0; END_FOR;
+IF wScan = WORD#16#FFFF THEN wScan := WORD#0;
+ELSE wScan := UINT_TO_WORD(WORD_TO_UINT(wScan)+UINT#1); END_IF;
+wFlags := WORD#0;
+IF GVL_ManualBridge.xInstalled THEN wFlags := wFlags OR WORD#1; END_IF;
+IF GVL_ManualBridge.xServiceBindingConfirmed THEN wFlags := wFlags OR WORD#2; END_IF;
+IF xEntered THEN wFlags := wFlags OR WORD#4; END_IF;
+IF (uiPhase <> UINT#0) AND (uiPhase <> UINT#90) THEN wFlags := wFlags OR WORD#8; END_IF;
+IF xServiceAlive THEN wFlags := wFlags OR WORD#16; END_IF;
+IF xHostValid AND NOT fbHost.Q THEN wFlags := wFlags OR WORD#32; END_IF;
+IF (wServiceFlags AND WORD#4) <> WORD#0 THEN wFlags := wFlags OR WORD#64; END_IF;
+IF (wServiceFlags AND WORD#8) <> WORD#0 THEN wFlags := wFlags OR WORD#128; END_IF;
+IF xStopping THEN wFlags := wFlags OR WORD#256; END_IF;
+GVL_ManualBridge.aStatus[0] := WORD#16#4D35;
+GVL_ManualBridge.aStatus[1] := WORD#2;
+GVL_ManualBridge.aStatus[2] := wFlags;
+GVL_ManualBridge.aStatus[3] := UINT_TO_WORD(uiPhase);
+GVL_ManualBridge.aStatus[4] := UDINT_TO_WORD(SHR(udiAck,16));
+GVL_ManualBridge.aStatus[5] := UDINT_TO_WORD(udiAck AND UDINT#65535);
+GVL_ManualBridge.aStatus[6] := wAckOp;
+GVL_ManualBridge.aStatus[7] := wResult;
+GVL_ManualBridge.aStatus[8] := wError;
+GVL_ManualBridge.aStatus[9] := wScan;
+GVL_ManualBridge.aStatus[10] := GVL_RobotBridge.aRobotRx[4];
+GVL_ManualBridge.aStatus[11] := GVL_RobotBridge.aRobotRx[5];
+GVL_ManualBridge.aStatus[12] := GVL_RobotBridge.aRobotRx[6];
+GVL_ManualBridge.aStatus[13] := GVL_RobotBridge.aRobotRx[7];
+GVL_ManualBridge.aStatus[14] := UINT_TO_WORD(GVL_ManualBridge.uiServiceProgram);
+GVL_ManualBridge.aStatus[15] := wToken;
+GVL_ManualBridge.aStatus[16] := GVL_ParamProbe.aParamTx[0];
+GVL_ManualBridge.aStatus[17] := GVL_ParamProbe.aParamTx[1];
+GVL_ManualBridge.aStatus[18] := GVL_ParamProbe.aParamTx[2];
+GVL_ManualBridge.aStatus[19] := GVL_ParamProbe.aParamTx[3];
+GVL_ManualBridge.aStatus[20] := UDINT_TO_WORD(SHR(GVL_RobotBridgeRetain.udiBootCounter,16));
+GVL_ManualBridge.aStatus[21] := UDINT_TO_WORD(GVL_RobotBridgeRetain.udiBootCounter AND UDINT#65535);
+GVL_ManualBridge.aStatus[22] := GVL_RobotBridge.aHostStatus[15];
+GVL_ManualBridge.aStatus[23] := GVL_RobotBridge.aHostStatus[16];
+GVL_ManualBridge.aStatus[24] := wServiceError;
+GVL_ManualBridge.aStatus[25] := UINT_TO_WORD(uiServiceEdges);
+GVL_ManualBridge.aStatus[26] := wLastHostHb;
+GVL_ManualBridge.aStatus[27] := wOrigin;
+// Capability bits: 1=resident held jog, 2=staged absolute target. R6 only.
+GVL_ManualBridge.aStatus[28] := WORD#31;
+GVL_ManualBridge.aStatus[29] := WORD#16#0603;
+GVL_ManualBridge.aStatus[30] := wStageId;
+GVL_ManualBridge.aStatus[31] := UINT_TO_WORD(uiStageCount);
+// Retained address area; rebuilt each scan from non-retained snapshot state.
+// Values are millidegrees/millimetres. Old retained contents never grant validity.
+FOR i := 0 TO 39 DO GVL_ManualPosition.aStatus[i] := WORD#0; END_FOR;
+wPositionFlags := WORD#0;
+IF xPositionValid AND xEntered AND (uiPhase = UINT#0) AND xHostValid
+   AND xRobotConditions AND NOT xStopping THEN wPositionFlags := wPositionFlags OR WORD#1; END_IF;
+IF uiPositionCount > UINT#0 THEN wPositionFlags := wPositionFlags OR WORD#2; END_IF;
+IF xEntered THEN wPositionFlags := wPositionFlags OR WORD#4; END_IF;
+IF GVL_RobotBridge.xRobotLinkOK THEN wPositionFlags := wPositionFlags OR WORD#8; END_IF;
+GVL_ManualPosition.aStatus[0] := WORD#16#5053;
+GVL_ManualPosition.aStatus[1] := WORD#1;
+GVL_ManualPosition.aStatus[2] := wPositionFlags;
+GVL_ManualPosition.aStatus[3] := UINT_TO_WORD(uiPositionPublishedId);
+GVL_ManualPosition.aStatus[4] := UDINT_TO_WORD(SHR(GVL_RobotBridgeRetain.udiBootCounter,16));
+GVL_ManualPosition.aStatus[5] := UDINT_TO_WORD(GVL_RobotBridgeRetain.udiBootCounter AND UDINT#65535);
+GVL_ManualPosition.aStatus[6] := UDINT_TO_WORD(SHR(udiPositionCounter,16));
+GVL_ManualPosition.aStatus[7] := UDINT_TO_WORD(udiPositionCounter AND UDINT#65535);
+GVL_ManualPosition.aStatus[8] := UDINT_TO_WORD(TIME_TO_UDINT(fbPositionAge.ET));
+GVL_ManualPosition.aStatus[9] := wScan;
+FOR i := 0 TO 23 DO GVL_ManualPosition.aStatus[i+10] := aPositionPublished[i]; END_FOR;
+GVL_ManualPosition.aStatus[34] := UINT_TO_WORD(uiPositionCount);
+GVL_ManualPosition.aStatus[35] := wError;
+GVL_ManualPosition.aStatus[36] := WORD#16#0603;
+GVL_ManualPosition.aStatus[37] := WORD#12;
+GVL_ManualPosition.aStatus[38] := WORD#1000;
+END_PROGRAM

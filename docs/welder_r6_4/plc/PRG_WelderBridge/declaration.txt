@@ -1,0 +1,30 @@
+PROGRAM PRG_WelderBridge
+VAR
+    aFrame : ARRAY[0..31] OF WORD;
+    aParam : ARRAY[0..19] OF WORD;
+    uiI : UINT;
+    wCheck : WORD;
+    uiScan : UINT;
+    wPreviousHeartbeat : WORD;
+    xHeartbeatSeen : BOOL;
+    xHeartbeatEdge : BOOL;
+    fbWatchdog : TON;
+    xHostFresh : BOOL;
+    xBasePermit : BOOL;
+    xArcPermit : BOOL;
+    xParametersValid : BOOL;
+    xWasRunning : BOOL;
+    xJobEnded : BOOL;
+    udiOwner : UDINT;
+    udiCurrentOwner : UDINT;
+    udiRequest : UDINT;
+    udiLastRequest : UDINT;
+    udiRequestOwner : UDINT;
+    udiRequestBoot : UDINT;
+    udiBoot : UDINT;
+    wResult : WORD;
+    wError : WORD;
+    wOperation : WORD;
+    wControl : WORD;
+    wApplied : WORD;
+END_VAR

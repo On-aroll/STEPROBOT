@@ -1,0 +1,23 @@
+{
+  "release": "R6.3",
+  "project": "pcjob_manual_r63.sr",
+  "project_variables": 4,
+  "program_variables": 54,
+  "encoding": "ASCII / LF only / no BOM",
+  "all_references_declared": true,
+  "joint_speed_max_percent": 100,
+  "world_speed_encoding_max": 3276.7,
+  "world_speed_scale": 10,
+  "joint_held_segment_max_degrees": 1,
+  "world_held_segment_max": 10,
+  "jog_marker": "WORD high bit; accepts signed/unsigned AIRead representation",
+  "return": "one PTP to saved joint position",
+  "normal_signature_base": 1000,
+  "dynamic_reference": "STEP programming manual path/orientation example; joint acceleration/deceleration/jerk=100%",
+  "field_validated": false,
+  "files": {
+    "manual_service.srd": "4b1bc2992ac2b53081315d8f7fcabae97c939a734cfc137e81b3bb6d02ccb60b",
+    "manual_service.srp": "a3096325f67bb5628692b7ae46800f01c4e4afd9e9e2b991d8247ccda6e0a4fd",
+    "_project.srd": "8f2be39efd94a7c7a429af63b1336ef1bd79c4b6a80bb93c148069abeb8a5d86"
+  }
+}

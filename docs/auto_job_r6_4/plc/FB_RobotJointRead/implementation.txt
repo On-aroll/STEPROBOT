@@ -1,0 +1,111 @@
+// A persistent TCP connection performs ONLY FC04 / offset64 / count12.
+// No registration, parameters, program loading, enable or motion commands.
+xUpdated := FALSE;
+xFail := FALSE;
+xStop := NOT xEnable OR (sAddress <> sRunAddress)
+    OR (uiPort <> uiRunPort) OR (byUnit <> byRunUnit);
+IF xStop THEN xValid := FALSE; END_IF;
+pSend := ADR(aRequest);
+uiSendSize := UINT#0;
+IF uiStep = UINT#30 THEN
+    pSend := ADR(aRequest) + uiSent;
+    uiSendSize := UINT#12 - uiSent;
+END_IF;
+fbClient(xExecute := uiStep = UINT#10, diConnectID := cdiConnectID,
+    stServerAddress := stServer);
+fbIo(xSend := (uiStep = UINT#30) AND NOT xStop,
+    xReceive := (uiStep = UINT#40) AND NOT xStop,
+    diConnectID := cdiConnectID, pSend := pSend, uiSendSize := uiSendSize);
+fbClose(xExecute := (uiStep = UINT#90) AND xOwned, diConnectID := cdiConnectID);
+fbReplyTime(IN := (uiStep = UINT#30) OR (uiStep = UINT#40), PT := T#1s);
+fbCloseTime(IN := (uiStep = UINT#90) AND xOwned, PT := T#3s);
+fbPollTime(IN := uiStep = UINT#50, PT := T#100ms);
+fbRetryTime(IN := uiStep = UINT#100, PT := T#1s);
+CASE uiStep OF
+    UINT#0:
+        IF xEnable AND (uiPort > UINT#0) AND (byUnit > BYTE#0) AND (byUnit <= BYTE#247) THEN
+            sRunAddress := sAddress; uiRunPort := uiPort; byRunUnit := byUnit;
+            stServer.strIPAddr := sRunAddress; stServer.uiPort := uiRunPort;
+            xError := FALSE; wErrorID := WORD#0;
+            uiStep := UINT#10;
+        END_IF;
+    UINT#10:
+        // Do not cancel a pending native connect before its terminal result.
+        IF fbClient.xError THEN
+            xError := TRUE; wErrorID := fbClient.wErrorID; uiStep := UINT#100;
+        ELSIF fbClient.xDone THEN
+            xOwned := TRUE;
+            IF xStop THEN uiStep := UINT#90; ELSE uiStep := UINT#20; END_IF;
+        END_IF;
+    UINT#20:
+        IF uiTransaction = UINT#65535 THEN uiTransaction := UINT#1;
+        ELSE uiTransaction := uiTransaction + UINT#1; END_IF;
+        aRequest[0] := UINT_TO_BYTE(SHR(uiTransaction,8));
+        aRequest[1] := UINT_TO_BYTE(uiTransaction AND UINT#255);
+        aRequest[2] := BYTE#0; aRequest[3] := BYTE#0;
+        aRequest[4] := BYTE#0; aRequest[5] := BYTE#6;
+        aRequest[6] := byRunUnit; aRequest[7] := BYTE#4;
+        aRequest[8] := BYTE#0; aRequest[9] := BYTE#64;
+        aRequest[10] := BYTE#0; aRequest[11] := BYTE#12;
+        uiSent := UINT#0; uiReceived := UINT#0; uiStep := UINT#30;
+    UINT#30:
+        IF fbIo.xError OR fbIo.xPeerClosed OR fbReplyTime.Q THEN
+            xFail := TRUE; wErrorID := WORD#16#A101;
+        ELSE
+            uiSent := uiSent + fbIo.uiSent;
+            IF uiSent = UINT#12 THEN uiStep := UINT#40; END_IF;
+        END_IF;
+    UINT#40:
+        IF fbIo.xError OR fbIo.xPeerClosed OR fbReplyTime.Q THEN
+            xFail := TRUE; wErrorID := WORD#16#A102;
+        ELSIF fbIo.uiCount > UINT#0 THEN
+            IF uiReceived + fbIo.uiCount > UINT#33 THEN
+                xFail := TRUE; wErrorID := WORD#16#A103;
+            ELSE
+                FOR i := UINT#0 TO fbIo.uiCount - UINT#1 DO
+                    aResponse[uiReceived + i] := fbIo.aRecv[i];
+                END_FOR;
+                uiReceived := uiReceived + fbIo.uiCount;
+                // Fail promptly on an exception or a malformed MBAP header.
+                IF uiReceived >= UINT#9 THEN
+                    IF (aResponse[0] <> aRequest[0]) OR (aResponse[1] <> aRequest[1])
+                        OR (aResponse[2] <> BYTE#0) OR (aResponse[3] <> BYTE#0)
+                        OR (aResponse[4] <> BYTE#0) OR (aResponse[5] <> BYTE#27)
+                        OR (aResponse[6] <> byRunUnit) OR (aResponse[7] <> BYTE#4)
+                        OR (aResponse[8] <> BYTE#24) THEN
+                        xFail := TRUE; wErrorID := WORD#16#A104;
+                    ELSIF uiReceived = UINT#33 THEN
+                        FOR i := UINT#0 TO UINT#11 DO
+                            aWords[i] := SHL(BYTE_TO_WORD(aResponse[9 + i*UINT#2]),8)
+                                OR BYTE_TO_WORD(aResponse[10 + i*UINT#2]);
+                        END_FOR;
+                        IF udiCounter = UDINT#4294967295 THEN udiCounter := UDINT#1;
+                        ELSE udiCounter := udiCounter + UDINT#1; END_IF;
+                        xValid := TRUE; xUpdated := TRUE; xError := FALSE;
+                        wErrorID := WORD#0; uiStep := UINT#50;
+                    END_IF;
+                END_IF;
+            END_IF;
+        END_IF;
+    UINT#50:
+        IF fbPollTime.Q THEN uiStep := UINT#20; END_IF;
+    UINT#90:
+        IF NOT xOwned THEN uiStep := UINT#100;
+        ELSIF fbClose.xError OR fbCloseTime.Q THEN
+            xCleanupFault := TRUE; xError := TRUE;
+            wErrorID := WORD#16#A105; uiStep := UINT#200;
+        ELSIF fbClose.xDone THEN xOwned := FALSE; uiStep := UINT#100; END_IF;
+    UINT#100:
+        IF fbRetryTime.Q THEN uiStep := UINT#0; END_IF;
+    UINT#200:
+        // A failed close keeps ownership latched. Never reuse or leak socket244.
+        xValid := FALSE;
+END_CASE;
+IF xFail THEN xValid := FALSE; xError := TRUE; uiStep := UINT#90; END_IF;
+IF xStop AND (uiStep <> UINT#0) AND (uiStep <> UINT#10)
+    AND (uiStep <> UINT#90) AND (uiStep <> UINT#100) AND (uiStep <> UINT#200) THEN
+    xValid := FALSE; uiStep := UINT#90;
+END_IF;
+fbAge(IN := NOT xUpdated, PT := T#1500ms);
+uiAgeMs := UDINT_TO_UINT(TIME_TO_UDINT(fbAge.ET));
+IF fbAge.Q OR NOT xEnable THEN xValid := FALSE; END_IF;

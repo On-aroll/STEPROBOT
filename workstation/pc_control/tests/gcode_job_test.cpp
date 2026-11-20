@@ -46,6 +46,13 @@ int main() {
     check(valid.points[1].x == 1 && valid.points[2].x == 2, "absolute coordinates honoured");
     check(valid.files.size() == 5, "generated package has five native files");
     check(valid.steps.size() == 2, "two motion steps recorded");
+    auto crlfTemplate=base;
+    crlfTemplate.files["_project.srd"]="BOOL homeSaved := FALSE\r\nINT origin := 0\r\n";
+    crlfTemplate.files["capture_home.srp"]="homeSaved := TRUE;\r\nSaveData(homeSaved);\r\n";
+    const auto lf=compileGcodeJob("lf.nc",{"G91","G1 X1 F300","M30"},1,crlfTemplate);
+    check(lf.runnable(),"generated job accepts a CRLF template");
+    for(auto it=lf.files.cbegin();it!=lf.files.cend();++it)
+        check(!it.value().contains('\r'),"all generated SRD/SRP files preserve native LF, including copied template variables");
 
     const auto speedChanges = compileGcodeJob("speeds.nc", {"G91", "G1 X1 F60", "G1 X1 F120", "G1 X1 F60", "M30"}, 1, base);
     // 同一进给值只生成一个速度组：60/120/60 mm/s 三段仅产生 dyn1=1、dyn2=2 两条 DYNAMIC。

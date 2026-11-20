@@ -58,7 +58,7 @@
 | SDK 端口 | `30312`，固定不可改 | C# SDK 手册 P2 |
 | Socket 端口 | 机器人作 Server 时 `8889`；客户端时端口范围 1024–65535 | Socket 手册 P12 |
 | Modbus 端口 | `502`（可改） | Modbus 手册 P18 |
-| FTP | `ftp://192.168.39.220`，`root / STEP_ROBOT_SRH`，路径 `/UserPrograms/` | C# SDK 手册 P153 |
+| FTP | `ftp://192.168.39.220`，`root / [控制柜FTP密码：请按本机配置填写]`，路径 `/UserPrograms/` | C# SDK 手册 P153 |
 
 跨 `192.168.39.**` 网段无法建连（Socket 配置界面明确要求同段）。PC 防火墙常拦 502 与高位端口，需放行或临时关闭。
 
@@ -107,7 +107,7 @@ winget install Git.Git                                # 待装
 | TCP 链路验证 | 网络调试助手（NetAssist）/ Tera Term |
 | 抓包看粘包与字节序 | Wireshark（过滤 `tcp.port==30312`） |
 | 连通性 | `ping`、`Test-NetConnection 192.168.39.220 -Port 30312` |
-| FTP 上传程序 | WinSCP / FileZilla（`root/STEP_ROBOT_SRH`） |
+| FTP 上传程序 | WinSCP / FileZilla（`root/[控制柜FTP密码：请按本机配置填写]`） |
 | Modbus 旁路验证 | Modbus Poll / ModScan |
 | 版本与配置备份 | U 盘（示教器 `备份至U盘` → 自动生成 `beifenu` 文件夹） |
 

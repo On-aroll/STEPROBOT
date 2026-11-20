@@ -1,0 +1,4 @@
+[ftp]
+; Copy beside StepWorkstation.exe as workstation.local.ini and fill locally.
+; Do not commit site credentials. STEP_FTP_PASSWORD takes precedence.
+password=

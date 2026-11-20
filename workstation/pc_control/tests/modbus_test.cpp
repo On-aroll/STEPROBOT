@@ -2,6 +2,8 @@
 
 #include <QCoreApplication>
 #include <QEventLoop>
+#include <QNetworkInterface>
+#include <QNetworkProxy>
 #include <QTcpServer>
 #include <QTcpSocket>
 #include <QTimer>
@@ -39,7 +41,7 @@ bool waitFor(Pred pred, int ms) {
 // 最小 Modbus TCP 从站模拟：按手册映射的 32 个寄存器应答 FC03/04/06/16。
 class SlaveSimulator : public QObject {
 public:
-    bool start() {
+    bool start(const QHostAddress& bindAddress = QHostAddress::LocalHost) {
         connect(&server, &QTcpServer::newConnection, this, [this] {
             client = server.nextPendingConnection();
             connect(client, &QTcpSocket::readyRead, this, [this] {
@@ -47,7 +49,7 @@ public:
                 process();
             });
         });
-        return server.listen(QHostAddress::LocalHost);
+        return server.listen(bindAddress);
     }
     quint16 port() const { return server.serverPort(); }
     quint16 regs[ModbusMap::WordCount] = {};
@@ -137,6 +139,37 @@ private:
 int main(int argc, char** argv) {
     QCoreApplication app(argc, argv);
 
+    {
+        QHostAddress localAddress = QHostAddress::LocalHost;
+        for (const auto& candidate : QNetworkInterface::allAddresses()) {
+            const auto n = candidate.toIPv4Address();
+            if (candidate.protocol() == QAbstractSocket::IPv4Protocol &&
+                ((n >> 24) == 10 || (n >> 20) == 0xAC1 || (n >> 16) == 0xC0A8)) {
+                localAddress = candidate; break;
+            }
+        }
+        check(!localAddress.isLoopback(), "proxy regression uses an address assigned to this PC");
+        SlaveSimulator local;
+        check(local.start(localAddress), "proxy regression simulator listens on this PC");
+        const auto originalProxy = QNetworkProxy::applicationProxy();
+        QNetworkProxy::setApplicationProxy(QNetworkProxy(QNetworkProxy::HttpCachingProxy,"127.0.0.1",9));
+        ModbusClient direct;
+        bool polled = false;
+        QObject::connect(&direct,&ModbusClient::registersRead,[&](int fc,int at,const QVector<quint16>& w,qint64) {
+            polled = fc == 3 && at == 0 && w.size() == 32;
+        });
+        direct.connectTo(localAddress.toString(),local.port(),1);
+        check(waitFor([&] { return polled; },1000), "PLC Modbus polls directly despite unsupported application proxy");
+        check(QNetworkProxy::applicationProxy().type() == QNetworkProxy::HttpCachingProxy,
+            "PLC connection preserves the application-wide proxy policy");
+        direct.disconnectFrom();
+        QNetworkProxy::setApplicationProxy(originalProxy);
+        if (app.arguments().contains("--proxy-regression")) {
+            std::cout << "modbus_proxy_regression: failures=" << failures << " (local PC simulator only)\n";
+            return failures ? 1 : 0;
+        }
+    }
+
     SlaveSimulator sim;
     if (!sim.start()) {
         std::cerr << "FAIL: simulator listen\n";
@@ -204,6 +237,13 @@ int main(int argc, char** argv) {
     client.writeRegisters(4, {11, 22, 33});
     check(waitFor([&] { return ackSeen && ackFc == 16 && ackAddr == 4 && ackCount == 3; }, 3000), "FC16 write acknowledged");
     check(sim.regs[4] == 11 && sim.regs[5] == 22 && sim.regs[6] == 33, "simulator applied FC16 writes");
+
+    // Writes submitted in one event-loop turn must remain FIFO, never a single overwritten slot.
+    client.writeRegister(1, 0x1111);
+    client.writeRegister(2, 0x2222);
+    client.writeRegister(3, 0x3333);
+    check(waitFor([&] { return sim.regs[1] == 0x1111 && sim.regs[2] == 0x2222 && sim.regs[3] == 0x3333; }, 3000),
+          "queued writes are delivered FIFO without overwriting");
 
     // 写入后读回，验证写读一致。
     lastFc = 0;

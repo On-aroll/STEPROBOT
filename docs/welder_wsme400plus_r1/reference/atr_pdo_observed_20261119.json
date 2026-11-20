@@ -1,0 +1,330 @@
+{
+  "date": "2026-11-19",
+  "source": "Manually transcribed from four user-supplied online PLC screenshots",
+  "screenshot_files": [
+    "codex-clipboard-ad8fd51d-82f9-4b24-b5e7-e56150591584.png",
+    "codex-clipboard-52904eca-f9a2-46fb-926d-6a7539233e5a.png",
+    "codex-clipboard-6fe1090d-f382-4b66-86ef-9192ee3df640.png",
+    "codex-clipboard-5d7f5012-b28a-4900-a596-1685279c7683.png"
+  ],
+  "hardware": {
+    "plc": "AC802",
+    "box": "ATR-EtherCAT",
+    "box_label_identifiers": [
+      "S32608055",
+      "S326087650094"
+    ],
+    "welder": "WSME-400-PLUS"
+  },
+  "status": {
+    "xDone": true,
+    "xError": false,
+    "uiError": 0,
+    "xReadBusySeen": true,
+    "xReadDoneSeen": true,
+    "xReadErrorSeen": false,
+    "udiLastSdoAbortCode": 0,
+    "udiLastDataRead": 4
+  },
+  "coe_1018": {
+    "vendor": 8,
+    "product": 37458,
+    "revision": 1,
+    "serial": 1
+  },
+  "rx": {
+    "direction": "PLC to box",
+    "assignment": "0x1C12:01",
+    "pdo_index": "0x1601",
+    "pdo_count": 1,
+    "entry_count": 16,
+    "total_bits": 128,
+    "total_bytes": 16,
+    "object_bytes": 15,
+    "padding_bytes": 1,
+    "entries": [
+      {
+        "descriptor_decimal": 1880097032,
+        "descriptor_hex": "0x70100108",
+        "index": "0x7010",
+        "subindex": 1,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880097288,
+        "descriptor_hex": "0x70100208",
+        "index": "0x7010",
+        "subindex": 2,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880097544,
+        "descriptor_hex": "0x70100308",
+        "index": "0x7010",
+        "subindex": 3,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880097800,
+        "descriptor_hex": "0x70100408",
+        "index": "0x7010",
+        "subindex": 4,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880098056,
+        "descriptor_hex": "0x70100508",
+        "index": "0x7010",
+        "subindex": 5,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880098312,
+        "descriptor_hex": "0x70100608",
+        "index": "0x7010",
+        "subindex": 6,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880098568,
+        "descriptor_hex": "0x70100708",
+        "index": "0x7010",
+        "subindex": 7,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880098824,
+        "descriptor_hex": "0x70100808",
+        "index": "0x7010",
+        "subindex": 8,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880099080,
+        "descriptor_hex": "0x70100908",
+        "index": "0x7010",
+        "subindex": 9,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880099336,
+        "descriptor_hex": "0x70100A08",
+        "index": "0x7010",
+        "subindex": 10,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880099592,
+        "descriptor_hex": "0x70100B08",
+        "index": "0x7010",
+        "subindex": 11,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880099848,
+        "descriptor_hex": "0x70100C08",
+        "index": "0x7010",
+        "subindex": 12,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880100104,
+        "descriptor_hex": "0x70100D08",
+        "index": "0x7010",
+        "subindex": 13,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880100360,
+        "descriptor_hex": "0x70100E08",
+        "index": "0x7010",
+        "subindex": 14,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1880100616,
+        "descriptor_hex": "0x70100F08",
+        "index": "0x7010",
+        "subindex": 15,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 8,
+        "descriptor_hex": "0x00000008",
+        "index": "0x0000",
+        "subindex": 0,
+        "bit_length": 8,
+        "padding": true
+      }
+    ]
+  },
+  "tx": {
+    "direction": "box to PLC",
+    "assignment": "0x1C13:01",
+    "pdo_index": "0x1A00",
+    "pdo_count": 1,
+    "entry_count": 16,
+    "total_bits": 128,
+    "total_bytes": 16,
+    "object_bytes": 15,
+    "padding_bytes": 1,
+    "entries": [
+      {
+        "descriptor_decimal": 1610613000,
+        "descriptor_hex": "0x60000108",
+        "index": "0x6000",
+        "subindex": 1,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610613256,
+        "descriptor_hex": "0x60000208",
+        "index": "0x6000",
+        "subindex": 2,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610613512,
+        "descriptor_hex": "0x60000308",
+        "index": "0x6000",
+        "subindex": 3,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610613768,
+        "descriptor_hex": "0x60000408",
+        "index": "0x6000",
+        "subindex": 4,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610614024,
+        "descriptor_hex": "0x60000508",
+        "index": "0x6000",
+        "subindex": 5,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610614280,
+        "descriptor_hex": "0x60000608",
+        "index": "0x6000",
+        "subindex": 6,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610614536,
+        "descriptor_hex": "0x60000708",
+        "index": "0x6000",
+        "subindex": 7,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610614792,
+        "descriptor_hex": "0x60000808",
+        "index": "0x6000",
+        "subindex": 8,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610615048,
+        "descriptor_hex": "0x60000908",
+        "index": "0x6000",
+        "subindex": 9,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610615304,
+        "descriptor_hex": "0x60000A08",
+        "index": "0x6000",
+        "subindex": 10,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610615560,
+        "descriptor_hex": "0x60000B08",
+        "index": "0x6000",
+        "subindex": 11,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610615816,
+        "descriptor_hex": "0x60000C08",
+        "index": "0x6000",
+        "subindex": 12,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610616072,
+        "descriptor_hex": "0x60000D08",
+        "index": "0x6000",
+        "subindex": 13,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610616328,
+        "descriptor_hex": "0x60000E08",
+        "index": "0x6000",
+        "subindex": 14,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 1610616584,
+        "descriptor_hex": "0x60000F08",
+        "index": "0x6000",
+        "subindex": 15,
+        "bit_length": 8,
+        "padding": false
+      },
+      {
+        "descriptor_decimal": 8,
+        "descriptor_hex": "0x00000008",
+        "index": "0x0000",
+        "subindex": 0,
+        "bit_length": 8,
+        "padding": true
+      }
+    ]
+  },
+  "comparison": {
+    "generic_xml": "C:\\Inovance Control\\InoProShop\\CODESYS\\Repository\\Devices\\65\\9_0000925200000001\\Revision%3D16%2300000001\\LAN9252-EVB-SPIXML-103.xml",
+    "pdo_entries_match": true,
+    "generic_xml_vendor": 9,
+    "whole_esi_identity_verified": false,
+    "old_xml": "docs\\工程文件\\01_各设备的ethercat描述性文件\\LAN9252-EVB-SPIXML-103_WSM_DZ.xml",
+    "old_bytes_per_direction": 32,
+    "application_field_compatibility_verified": false,
+    "transport_length_aligned_to_legacy": false
+  },
+  "previous_timeout_cause": "Not established by the screenshots",
+  "note": "These are mapping descriptors, not actual application PDO values.",
+  "application_protocol_premise": "User reports the two welder protocols are identical; reuse existing application encoder/decoder."
+}

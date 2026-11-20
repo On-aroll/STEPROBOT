@@ -1,0 +1,16 @@
+{
+  "robot": "STEP SR175/3200",
+  "source": "SR175-3200本体演示模型.STEP",
+  "unit": "mm / degree",
+  "reference_joints_deg": [0, 0, 0, 0, 0, 0],
+  "field_calibration_verified": false,
+  "geometry_evidence": "Joint centers from coaxial CAD cylinder surfaces. Link lengths match the SR175/3200 RobotParameter.xml: 330, 662, 1335, 300, 1511, 225 mm. Positive joint convention needs field comparison.",
+  "joints": [
+    {"name":"J1","pivot":[0,0,0],"axis":[0,0,1],"offset_deg":0,"sign":1},
+    {"name":"J2","pivot":[330,0,662],"axis":[0,1,0],"offset_deg":0,"sign":1},
+    {"name":"J3","pivot":[330,0,1997],"axis":[0,1,0],"offset_deg":0,"sign":1},
+    {"name":"J4","pivot":[330,0,2297],"axis":[1,0,0],"offset_deg":0,"sign":1},
+    {"name":"J5","pivot":[1841,0,2297],"axis":[0,1,0],"offset_deg":0,"sign":1},
+    {"name":"J6","pivot":[2066,0,2297],"axis":[1,0,0],"offset_deg":0,"sign":1}
+  ]
+}

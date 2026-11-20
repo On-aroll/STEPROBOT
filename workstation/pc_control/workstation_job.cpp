@@ -129,11 +129,13 @@ void showNativeFile(Job& job, const QString& name) {
     job.sourceFile = name;
     job.sourceProgram = name.chopped(4);
     job.sourceIsGcode = false;
+    if (job.automaticPatch) job.points = job.programPaths.value(job.sourceProgram);
     job.steps.clear();
     job.start = 1;
 }
 
 QString updateNativeFile(Job& job, const QString& name, const QByteArray& bytes) {
+    if (job.automaticPatch) return "自动作业补丁仅供查阅；请重新导入 G 代码生成并上传完整版本。";
     if (!job.nativeInput || !job.files.contains(name)) return "当前工作副本中没有这个文件。";
     QStringDecoder decoder(QStringDecoder::Utf8);
     decoder(bytes);
@@ -163,6 +165,20 @@ void showMappedSource(Job& job) {
     job.sourceIsGcode = true;
     job.sourceFile.clear();
     job.start = job.mappedStart;
+    if (job.automaticPatch) job.points = job.programPaths.value(job.sourceProgram);
+}
+
+bool showProgramGcode(Job& job, const QString& program) {
+    const auto found = job.programGcodes.constFind(program);
+    if (found == job.programGcodes.cend()) return false;
+    job.mappedSource = found->source;
+    job.mappedBytes = found->bytes;
+    job.mappedSteps = found->steps;
+    job.mappedProgram = program;
+    job.mappedStart = found->start;
+    job.conversion = found->conversion;
+    showMappedSource(job);
+    return true;
 }
 
 int sourceRowForNativeLine(const Job& job, const QString& project, const QString& program, int nativeLine) {
@@ -241,8 +257,16 @@ QString associateNativeGcode(Job& job, const QString& mappingPath) {
 }
 
 bool restoreMappedPreview(Job& job, const Job& nativeTemplate) {
+    // Automatic patches already carry the exact converted snapshot and renamed line map.
+    if (job.automaticPatch) return false;
+    if (job.trustedGcode) { job.trustedGcode = false; job.points.clear(); }
     if (!job.nativeInput || job.localEdits || job.mappedSource.isEmpty() || !nativeTemplate.reviewed) return false;
-    const auto rebuilt = compileGcodeJob(job.name, job.mappedSource, job.mappedStart, nativeTemplate, job.conversion);
+    auto rebuilt = compileGcodeJob(job.name, job.mappedSource, job.mappedStart, nativeTemplate, job.conversion);
+    // PLC delivery may add the exact reviewed return pair. Any edited/additional file still fails equality below.
+    if (job.files.contains("go_home.srp") && job.files.contains("go_home.srd")) {
+        for (const auto* member : {"go_home.srp", "go_home.srd"})
+            if (nativeTemplate.files.contains(member)) rebuilt.files.insert(member, nativeTemplate.files.value(member));
+    }
     if (!rebuilt.runnable() || rebuilt.project != job.project || rebuilt.program != job.mappedProgram || rebuilt.files != job.files) return false;
     job.points = rebuilt.points;
     job.program = rebuilt.program;
@@ -254,15 +278,27 @@ bool restoreMappedPreview(Job& job, const Job& nativeTemplate) {
 }
 
 Job readGcodeJob(const QString& path, const Job& nativeTemplate, ConversionSettings settings) {
-    Job job;
-    job.name = QFileInfo(path).fileName();
     QFile file(path);
     if (!file.open(QIODevice::ReadOnly) || file.size() > 32768) {
+        Job job;
+        job.name = QFileInfo(path).fileName(); job.inputPath = path;
         job.error = "G 代码无法读取或超过 32 KiB。";
         return job;
     }
+    return readGcodeBytes(path, file.readAll(), nativeTemplate, settings);
+}
+
+Job readGcodeBytes(const QString& path, const QByteArray& raw, const Job& nativeTemplate, ConversionSettings settings, int start) {
+    Job job;
+    job.name = QFileInfo(path).fileName();
+    job.inputPath = path;
+    job.inputBytes = raw;
+    job.conversion = settings;
+    if (raw.size() > 32768) {
+        job.error = "G 代码超过 32 KiB。";
+        return job;
+    }
     QStringDecoder decoder(QStringDecoder::Utf8);
-    const QByteArray raw = file.readAll();
     QString text = stripUtf8Bom(decoder(raw));
     text.replace("\r\n", "\n").replace('\r', '\n');
     if (text.endsWith('\n')) text.chop(1);
@@ -271,7 +307,8 @@ Job readGcodeJob(const QString& path, const Job& nativeTemplate, ConversionSetti
         job.error = "文件包含无效的 UTF-8 字节。";
         return job;
     }
-    auto compiled = compileGcodeJob(job.name, job.source, 1, nativeTemplate, settings);
+    auto compiled = compileGcodeJob(job.name, job.source, start, nativeTemplate, settings);
+    compiled.inputPath = path;
     compiled.inputBytes = raw;
     return compiled;
 }
@@ -472,6 +509,11 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
     for (const auto* member : {"_project.srd", "capture_home.srd", "capture_home.srp"}) {
         job.files.insert(member, nativeTemplate.files.value(member));
     }
+    // Cabinet SRD parsing treats retained CR as part of the value. Normalize
+    // every file in a generated job, including copied template declarations.
+    for (auto it=job.files.begin();it!=job.files.end();++it)
+        if(it.key().endsWith(".srd")||it.key().endsWith(".srp"))
+            it.value().replace("\r\n","\n").replace('\r','\n');
     const auto endpoint = job.points.last();
     job.summary = QString("%1 个点 · %2 整圈 · 终点 (%3, %4, %5) mm · 等待 %6 s")
         .arg(job.points.size() - 1).arg(turns).arg(endpoint.x).arg(endpoint.y).arg(endpoint.z).arg(dwell);
@@ -479,6 +521,7 @@ Job compileGcodeJob(QString name, const QStringList& source, int start, const Jo
 }
 
 QString exportStepJob(const Job& job, const QString& zipPath) {
+    if (job.automaticPatch) return "当前是自动作业补丁；请使用导入窗口保存的 AutoJobPatch.zip，不能另存为完整工程。";
     if (!job.error.isEmpty() || job.files.isEmpty()) return "当前作业没有可导出的原生程序。";
     qint64 totalSize = 0;
     for (auto it = job.files.cbegin(); it != job.files.cend(); ++it) {
@@ -541,7 +584,9 @@ QString conversionReport(const Job& job) {
     lines << "" << "STEPStudio 操作顺序：" << "1. 在 SR175-3200 工作站中导入 ZIP；核对 Default 工具、WORLD 轴向、实际工件零点和初始姿态。"
           << "2. 在经确认的初始姿态运行 capture_home（只记录起点）。然后加载 gcode_path 仿真。"
           << "3. 检查可达性、关节限位、工具/机器人/工件碰撞、路径连续性、进给、端点和工艺顺序。"
-          << "4. 如需返回记录的设备起点，使用上位机独立的路径规划功能；本转换包不生成 go_home 返回程序。"
+          << (job.files.contains("go_home.srp") ?
+              "4. PLC交付包附带已核对模板的 go_home：关节PTP返回记录的pHome。其路径不由本次G代码决定，须单独验证回程空间。" :
+              "4. 如需返回记录的设备起点，使用上位机独立的路径规划功能；本转换包不生成 go_home 返回程序。")
           << "5. 核对同版本 ZIP 后导入上位机；保留 mapping.json 以联动 G 代码。STEPStudio 若修改程序，旧映射不能继续使用。"
           << "转换通过仅证明受支持语法已生成 SRP/SRD，不代表已完成 STEPStudio 场景或实机验证。";
     for (auto it = job.diagnostics.cbegin(); it != job.diagnostics.cend(); ++it) lines << QString("L%1: %2").arg(it.key()).arg(it.value());

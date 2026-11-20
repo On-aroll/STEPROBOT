@@ -1,0 +1,4 @@
+BOOL msHomeSaved := FALSE
+INT msOrigin := 0
+ROBOTAXISPOS msHome := {0,0,0,0,0,0}
+ROBOTCARTPOS msHomeCart := {0,0,0,0,0,0,0}

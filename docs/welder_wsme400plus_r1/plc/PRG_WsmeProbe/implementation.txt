@@ -1,0 +1,202 @@
+xStartEdge := xStart AND NOT xStartOld;
+xStartOld := xStart;
+IF xStartEdge AND NOT xBusy THEN
+    xDone := FALSE; xError := FALSE; uiError := 0;
+    wErrorIndex := 0; byErrorSubIndex := 0;
+    eLastReadError := IoDrvEthercatLib.ETC_CO_ERROR.ETC_CO_NO_ERROR;
+    udiLastSdoAbortCode := 0; udiLastDataRead := 0;
+    xReadBusySeen := FALSE; xReadDoneSeen := FALSE; xReadErrorSeen := FALSE;
+    udiVendor := 0; udiProduct := 0; udiRevision := 0; udiSerial := 0;
+    uiRxPdoCount := 0; uiTxPdoCount := 0;
+    wRxPdoIndex := 0; wTxPdoIndex := 0;
+    uiRxCount := 0; uiTxCount := 0; uiRxBits := 0; uiTxBits := 0;
+    uiRxBytes := 0; uiTxBytes := 0;
+    xRxByteAligned := FALSE; xTxByteAligned := FALSE;
+    FOR uiI := 0 TO 31 DO
+        aRxMap[uiI] := 0; aTxMap[uiI] := 0;
+        aRxIndex[uiI] := 0; aTxIndex[uiI] := 0;
+        aRxSubIndex[uiI] := 0; aTxSubIndex[uiI] := 0;
+        aRxBitLength[uiI] := 0; aTxBitLength[uiI] := 0;
+        aRxBitOffset[uiI] := 0; aTxBitOffset[uiI] := 0;
+    END_FOR;
+    IF (usiMaster = 0) OR (uiSlaveAddress = 0) THEN
+        uiError := 1; xError := TRUE; uiStep := 0;
+    ELSE
+        usiMasterRun := usiMaster; uiSlaveRun := uiSlaveAddress;
+        wReadIndex := WORD#16#1018; byReadSubIndex := 1; uiExpectedLength := 4;
+        uiPhase := 0; uiEntry := 0; uiStep := 5; xBusy := TRUE;
+    END_IF;
+END_IF;
+IF xBusy AND xAbort THEN uiError := 8; END_IF;
+IF xBusy AND ((usiMaster <> usiMasterRun) OR (uiSlaveAddress <> uiSlaveRun)) THEN
+    uiError := 7;
+END_IF;
+IF xBusy AND (uiError <> 0) THEN
+    wErrorIndex := wReadIndex; byErrorSubIndex := byReadSubIndex;
+    xBusy := FALSE; xDone := FALSE; xError := TRUE; uiStep := 0;
+END_IF;
+
+(* This is the ONLY device operation. Never call SdoWrite, change the slave
+   state, write EEPROM, or assign any process-output variable here. *)
+(* Never initialize the native reader with master/slave 0.
+   State 5 and state 10 provide FALSE Execute calls with valid latched inputs.
+   Idle is a normal reset; Abort is only used for cancellation/error cleanup. *)
+IF (usiMasterRun <> 0) AND (uiSlaveRun <> 0) THEN
+    fbRead(xExecute := (uiStep = 20) AND xBusy,
+        xAbort := xAbort OR ((uiError <> 0) AND NOT xBusy),
+        usiCom := usiMasterRun, byAddressMode := 0, uiDevice := uiSlaveRun,
+        wIndex := wReadIndex, bySubIndex := byReadSubIndex, udiTimeout := 2000,
+        ReadBuffer := abyReadData, szSize := 4);
+    IF xBusy THEN
+        xReadBusySeen := xReadBusySeen OR fbRead.xBusy;
+        xReadDoneSeen := xReadDoneSeen OR fbRead.xDone;
+        xReadErrorSeen := xReadErrorSeen OR fbRead.xError;
+        IF fbRead.xDone OR fbRead.xError THEN
+            udiLastSdoAbortCode := fbRead.udiSdoAbortCode;
+            udiLastDataRead := fbRead.szDataRead;
+        END_IF;
+    END_IF;
+END_IF;
+fbTimeout(IN := (uiStep = 20) AND xBusy, PT := T#5s);
+
+CASE uiStep OF
+    5:
+        (* Complete an explicit non-aborted initialization scan before preparing a request. *)
+        uiStep := 10;
+    10:
+        (* Persistent caller-owned receive buffer; never clear it while reading. *)
+        FOR uiI := 0 TO 3 DO abyReadData[uiI] := 0; END_FOR;
+        byReadSubIndex := 0; uiExpectedLength := 1;
+        CASE uiPhase OF
+            0,1,2,3:
+                wReadIndex := WORD#16#1018;
+                byReadSubIndex := UINT_TO_BYTE(uiPhase + 1); uiExpectedLength := 4;
+            4,16: wReadIndex := WORD#16#1C12;
+            5,17: wReadIndex := WORD#16#1C13;
+            6,14:
+                wReadIndex := WORD#16#1C12; byReadSubIndex := 1; uiExpectedLength := 2;
+            7,15:
+                wReadIndex := WORD#16#1C13; byReadSubIndex := 1; uiExpectedLength := 2;
+            8,12: wReadIndex := wRxPdoIndex;
+            9,13: wReadIndex := wTxPdoIndex;
+            10:
+                wReadIndex := wRxPdoIndex;
+                byReadSubIndex := UINT_TO_BYTE(uiEntry + 1); uiExpectedLength := 4;
+            11:
+                wReadIndex := wTxPdoIndex;
+                byReadSubIndex := UINT_TO_BYTE(uiEntry + 1); uiExpectedLength := 4;
+            18,19,20,21:
+                wReadIndex := WORD#16#1018;
+                byReadSubIndex := UINT_TO_BYTE(uiPhase - 17); uiExpectedLength := 4;
+            22:
+                wReadIndex := wRxPdoIndex;
+                byReadSubIndex := UINT_TO_BYTE(uiEntry + 1); uiExpectedLength := 4;
+            23:
+                wReadIndex := wTxPdoIndex;
+                byReadSubIndex := UINT_TO_BYTE(uiEntry + 1); uiExpectedLength := 4;
+        END_CASE;
+        IF ((uiPhase = 10) OR (uiPhase = 22)) AND (uiRxCount = 0) THEN
+            uiPhase := uiPhase + 1; uiEntry := 0;
+        ELSIF ((uiPhase = 11) OR (uiPhase = 23)) AND (uiTxCount = 0) THEN
+            uiPhase := uiPhase + 1;
+        ELSIF uiPhase = 24 THEN
+            (* At most 32 * 255 bits: adding 7 fits in WORD.
+               Use bit operations accepted by the field ST compiler. *)
+            uiRxBytes := WORD_TO_UINT(SHR(UINT_TO_WORD(uiRxBits + UINT#7),3));
+            uiTxBytes := WORD_TO_UINT(SHR(UINT_TO_WORD(uiTxBits + UINT#7),3));
+            xRxByteAligned := (UINT_TO_WORD(uiRxBits) AND WORD#7) = WORD#0;
+            xTxByteAligned := (UINT_TO_WORD(uiTxBits) AND WORD#7) = WORD#0;
+            xBusy := FALSE; xDone := TRUE; uiStep := 0;
+        ELSE uiStep := 20;
+        END_IF;
+    20:
+        IF fbRead.xError THEN
+            uiError := 2; eLastReadError := fbRead.eError;
+        ELSIF fbRead.xDone THEN
+            IF fbRead.szDataRead <> uiExpectedLength THEN
+                uiError := 3;
+            ELSE
+                (* HC reader fills our ARRAY[0..3], not the old FB's abyData.
+                   Decode only the actual 1/2/4 response bytes, little endian. *)
+                udiValue := BYTE_TO_UDINT(abyReadData[0]);
+                IF uiExpectedLength >= 2 THEN
+                    udiValue := udiValue OR SHL(BYTE_TO_UDINT(abyReadData[1]),8);
+                END_IF;
+                IF uiExpectedLength = 4 THEN
+                    udiValue := udiValue OR SHL(BYTE_TO_UDINT(abyReadData[2]),16)
+                        OR SHL(BYTE_TO_UDINT(abyReadData[3]),24);
+                END_IF;
+                CASE uiPhase OF
+                    0: udiVendor := udiValue;
+                    1: udiProduct := udiValue;
+                    2: udiRevision := udiValue;
+                    3: udiSerial := udiValue;
+                    4:
+                        uiRxPdoCount := UDINT_TO_UINT(udiValue);
+                        IF udiValue <> 1 THEN uiError := 5; END_IF;
+                    5:
+                        uiTxPdoCount := UDINT_TO_UINT(udiValue);
+                        IF udiValue <> 1 THEN uiError := 5; END_IF;
+                    6:
+                        wRxPdoIndex := UDINT_TO_WORD(udiValue);
+                        IF udiValue = 0 THEN uiError := 6; END_IF;
+                    7:
+                        wTxPdoIndex := UDINT_TO_WORD(udiValue);
+                        IF udiValue = 0 THEN uiError := 6; END_IF;
+                    8:
+                        uiRxCount := UDINT_TO_UINT(udiValue);
+                        IF udiValue > 32 THEN uiError := 4; END_IF;
+                    9:
+                        uiTxCount := UDINT_TO_UINT(udiValue);
+                        IF udiValue > 32 THEN uiError := 4; END_IF;
+                    10:
+                        byBits := UDINT_TO_BYTE(udiValue AND UDINT#255);
+                        IF byBits = 0 THEN uiError := 6;
+                        ELSE
+                            aRxMap[uiEntry] := udiValue;
+                            aRxIndex[uiEntry] := UDINT_TO_WORD(SHR(udiValue,16));
+                            aRxSubIndex[uiEntry] := UDINT_TO_BYTE(SHR(udiValue,8) AND UDINT#255);
+                            aRxBitLength[uiEntry] := byBits;
+                            aRxBitOffset[uiEntry] := uiRxBits;
+                            uiRxBits := uiRxBits + BYTE_TO_UINT(byBits);
+                        END_IF;
+                    11:
+                        byBits := UDINT_TO_BYTE(udiValue AND UDINT#255);
+                        IF byBits = 0 THEN uiError := 6;
+                        ELSE
+                            aTxMap[uiEntry] := udiValue;
+                            aTxIndex[uiEntry] := UDINT_TO_WORD(SHR(udiValue,16));
+                            aTxSubIndex[uiEntry] := UDINT_TO_BYTE(SHR(udiValue,8) AND UDINT#255);
+                            aTxBitLength[uiEntry] := byBits;
+                            aTxBitOffset[uiEntry] := uiTxBits;
+                            uiTxBits := uiTxBits + BYTE_TO_UINT(byBits);
+                        END_IF;
+                    12: IF udiValue <> UINT_TO_UDINT(uiRxCount) THEN uiError := 9; END_IF;
+                    13: IF udiValue <> UINT_TO_UDINT(uiTxCount) THEN uiError := 9; END_IF;
+                    14: IF udiValue <> WORD_TO_UDINT(wRxPdoIndex) THEN uiError := 9; END_IF;
+                    15: IF udiValue <> WORD_TO_UDINT(wTxPdoIndex) THEN uiError := 9; END_IF;
+                    16,17: IF udiValue <> 1 THEN uiError := 9; END_IF;
+                    18: IF udiValue <> udiVendor THEN uiError := 9; END_IF;
+                    19: IF udiValue <> udiProduct THEN uiError := 9; END_IF;
+                    20: IF udiValue <> udiRevision THEN uiError := 9; END_IF;
+                    21: IF udiValue <> udiSerial THEN uiError := 9; END_IF;
+                    22: IF udiValue <> aRxMap[uiEntry] THEN uiError := 9; END_IF;
+                    23: IF udiValue <> aTxMap[uiEntry] THEN uiError := 9; END_IF;
+                END_CASE;
+                IF uiError = 0 THEN
+                    IF ((uiPhase = 10) OR (uiPhase = 22)) AND (uiEntry + 1 < uiRxCount) THEN
+                        uiEntry := uiEntry + 1; uiStep := 10;
+                    ELSIF ((uiPhase = 11) OR (uiPhase = 23)) AND (uiEntry + 1 < uiTxCount) THEN
+                        uiEntry := uiEntry + 1; uiStep := 10;
+                    ELSE
+                        uiPhase := uiPhase + 1; uiEntry := 0; uiStep := 10;
+                    END_IF;
+                END_IF;
+            END_IF;
+        ELSIF fbTimeout.Q THEN uiError := 10;
+        END_IF;
+END_CASE;
+IF xBusy AND (uiError <> 0) THEN
+    wErrorIndex := wReadIndex; byErrorSubIndex := byReadSubIndex;
+    xBusy := FALSE; xDone := FALSE; xError := TRUE; uiStep := 0;
+END_IF;

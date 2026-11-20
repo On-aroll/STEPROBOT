@@ -1,0 +1,311 @@
+(* Reused from lower.project CommPoll: unchanged PDO byte encoding and feedback units. *)
+PROGRAM PRG_WelderIo
+VAR
+    nTempU16 : UINT;
+    nTempI16 : INT;
+    byTemp : BYTE;
+END_VAR
+(* ================================================================ *)
+(* 焊机输出 (协议: 焊机的输入数据区, PLC写→焊机读)                    *)
+(* GVL_Welders.g_byWeldOut[0..31] → EtherCAT输出 → 焊机                        *)
+(* ================================================================ *)
+
+(* ===== 协议 Byte 0: 控制位 ===== *)
+(* bit0(1):  开始焊接 1=起弧 0=停弧                                  *)
+(* bit1(2):  机器人准备好 高有效                                      *)
+(* bit2(3):  检气 高有效                                              *)
+(* bit3-4:   焊机操作模式 00=两步 01=四步 10=反复                     *)
+(* bit5-7:   焊机工作模式 000=直流恒流 001=直流脉冲 010=交流恒流       *)
+(*           011=交流脉冲 100=直流手弧焊                               *)
+byTemp := 0;
+IF GVL_Welders.g_wWeldOn THEN byTemp := byTemp OR 16#01; END_IF;
+IF GVL_Welders.g_wRobotReady THEN byTemp := byTemp OR 16#02; END_IF;
+IF GVL_Welders.g_wGasCheck THEN byTemp := byTemp OR 16#04; END_IF;
+nTempU16 := LIMIT(UINT#0, GVL_Welders.g_wWeldOperMode, UINT#2);
+byTemp := byTemp OR SHL(UINT_TO_BYTE(nTempU16), 3);
+nTempU16 := LIMIT(UINT#0, GVL_Welders.g_wWeldWorkMode, UINT#4);
+byTemp := byTemp OR SHL(UINT_TO_BYTE(nTempU16), 5);
+GVL_Welders.g_byWeldOut[0] := byTemp;
+
+(* ===== 协议 Byte 1: 辅助控制位 ===== *)
+(* bit0(9):  热丝电源使能 1=ON 0=OFF                                  *)
+(* bit1(10): 热丝工作模式 0=DC 1=AC                                   *)
+(* bit2(11): 备用                                                     *)
+(* bit3(12): 点动送丝 (已移除, 送丝通过轴控制) *)
+(* bit4(13): 点动抽丝 (已移除, 送丝通过轴控制) *)
+(* bit5(14): 备用                                                     *)
+(* bit6(15): 高频有无 0=高频 1=提升                                   *)
+(* bit7(16): 焊枪模式 0=水冷 1=气冷                                   *)
+byTemp := 0;
+IF GVL_Welders.g_bHotWireEnable THEN byTemp := byTemp OR 16#01; END_IF;
+IF GVL_Welders.g_bHotWireACMode THEN byTemp := byTemp OR 16#02; END_IF;
+IF GVL_Welders.g_bHighFreqDisable THEN byTemp := byTemp OR 16#40; END_IF;
+IF GVL_Welders.g_bGunCoolMode THEN byTemp := byTemp OR 16#80; END_IF;
+GVL_Welders.g_byWeldOut[1] := byTemp;
+
+(* ===== 协议 Byte 2: 热丝频率 ===== *)
+(* 范围: 20-100 对应20~100Hz (1字节) *)
+GVL_Welders.g_byWeldOut[2] := UINT_TO_BYTE(LIMIT(UINT#20, GVL_Welders.g_wHotWireFreq, UINT#100));
+
+(* ===== 协议 Byte 3: 热丝电流给定 ===== *)
+(* 范围: 0-200 对应0~200A (1字节) *)
+GVL_Welders.g_byWeldOut[3] := UINT_TO_BYTE(LIMIT(UINT#0, GVL_Welders.g_wHotWireCurrent, UINT#200));
+
+(* ===== 协议 Byte 4-5: 给定电流 (2字节小端, 低字节在前) ===== *)
+(* 范围: 40-4000 对应4.0~400.0A *)
+nTempU16 := REAL_TO_UINT(LIMIT(4.0, GVL_Welders.g_wWeldCurrent, 400.0)*10.0);
+
+GVL_Welders.g_byWeldOut[4] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 MOD 256));
+GVL_Welders.g_byWeldOut[5] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 / 256));
+
+(* ===== 协议 Byte 6: 送丝速度 (已移除, 送丝通过轴控制, 写0) ===== *)
+GVL_Welders.g_byWeldOut[6] := 0;
+
+
+(* ===== 协议 Byte 7: 起弧延迟送丝时间 (已移除, 写0) ===== *)
+GVL_Welders.g_byWeldOut[7] := 0;
+
+(* ===== 协议 Byte 8: 熄弧滞后送丝时间 (已移除, 写0) ===== *)
+GVL_Welders.g_byWeldOut[8] := 0;
+
+(* ===== 协议 Byte 9: 熄弧回抽丝长度 (已移除, 写0) ===== *)
+GVL_Welders.g_byWeldOut[9] := 0;
+
+(* ===== 协议 Byte 10: 点动送丝速度 (已移除, 送丝通过轴控制, 写0) ===== *)
+GVL_Welders.g_byWeldOut[10] := 0;
+
+(* ===== 协议 Byte 11: 通讯异常标志 (控制器填充) ===== *)
+GVL_Welders.g_byWeldOut[11] := GVL_Welders.g_wCommErrorFlag;
+
+(* ===== 协议 Byte 12: 慢送丝速度 (已移除, 送丝通过轴控制, 写0) ===== *)
+GVL_Welders.g_byWeldOut[12] := 0;
+
+(* ===== 协议 Byte 13-14: 前气时间 (2字节小端, 低字节在前) ===== *)
+(* 范围: 1-999 对应0.01~9.99s *)
+nTempU16 := REAL_TO_UINT(LIMIT(0.01, GVL_Welders.g_wFrontGasTime, 9.99)*100.0);
+GVL_Welders.g_byWeldOut[13] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 MOD 256));
+GVL_Welders.g_byWeldOut[14] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 / 256));
+
+(* ===== 协议 Byte 15-16: 延气时间 (2字节小端, 低字节在前) ===== *)
+(* 范围: 1-600 对应0.1~60.0s *)
+nTempU16 := REAL_TO_UINT(LIMIT(0.1, GVL_Welders.g_wTailGasTime, 60.0)*10.0);
+GVL_Welders.g_byWeldOut[15] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 MOD 256));
+GVL_Welders.g_byWeldOut[16] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 / 256));
+
+(* ===== 协议 Byte 17: 爬升时间 ===== *)
+(* 范围: 1-100 对应0.1~10.0s (1字节) *)
+GVL_Welders.g_byWeldOut[17] := UINT_TO_BYTE(REAL_TO_UINT(LIMIT(0.1, GVL_Welders.g_wRampUpTime, 10.0)*10.0));
+
+(* ===== 协议 Byte 18: 衰减时间 ===== *)
+(* 范围: 1-150 对应0.1~15.0s (1字节) *)
+GVL_Welders.g_byWeldOut[18] := UINT_TO_BYTE(REAL_TO_UINT(LIMIT(0.1, GVL_Welders.g_wRampDownTime, 15.0)*10.0));
+
+(* ===== 协议 Byte 19: 脉冲频率 ===== *)
+(* 范围: 2-200 对应0.2~20.0Hz (1字节) *)
+GVL_Welders.g_byWeldOut[19] := UINT_TO_BYTE(REAL_TO_UINT(LIMIT(0.2, GVL_Welders.g_wPulseFreq, 20.0)*10.0));
+
+(* ===== 协议 Byte 20-22: 占空比 + 峰值电流 (交叉编排) ===== *)
+(* 占空比: Byte20=低字节, Byte22 bit4-7=高字节低4位 (范围1-999, 12位) *)
+(* 峰值电流: Byte21=低字节, Byte22 bit0-3=高字节低4位 (范围50-4000, 12位) *)
+(* 占空比 = [Byte22 bit7:4][Byte20] *)
+(* 峰值电流 = [Byte22 bit3:0][Byte21] *)
+nTempU16 := REAL_TO_UINT(LIMIT(0.1, GVL_Welders.g_wDutyCycle, 99.9)*10.0);
+GVL_Welders.g_byWeldOut[20] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 MOD 256));
+GVL_Welders.g_byWeldOut[21] := UINT_TO_BYTE(UINT_TO_USINT(REAL_TO_UINT(LIMIT(5.0, GVL_Welders.g_wPeakCurrent, 400.0)*10.0) MOD 256));
+byTemp := 0;
+byTemp := byTemp OR SHL(UINT_TO_BYTE(UINT_TO_USINT(nTempU16 / 256)) AND 16#0F, 4);
+byTemp := byTemp OR (UINT_TO_BYTE(UINT_TO_USINT(REAL_TO_UINT(LIMIT(5.0, GVL_Welders.g_wPeakCurrent, 400.0)*10.0) / 256)) AND 16#0F);
+GVL_Welders.g_byWeldOut[22] := byTemp;
+
+(* ===== 协议 Byte 23-24: 基值电流 (2字节小端, 低字节在前) ===== *)
+(* 范围: 50-4000 对应5.0~400.0A *)
+nTempU16 := REAL_TO_UINT(LIMIT(5.0, GVL_Welders.g_wBaseCurrent, 400.0)*10.0);
+GVL_Welders.g_byWeldOut[23] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 MOD 256));
+GVL_Welders.g_byWeldOut[24] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 / 256));
+
+(* ===== 协议 Byte 25-26: 起弧电流 (2字节小端, 低字节在前) ===== *)
+(* 范围: 50-4000 对应5.0~400.0A *)
+nTempU16 := REAL_TO_UINT(LIMIT(5.0, GVL_Welders.g_wArcStartCurrent, 400.0)*10.0);
+GVL_Welders.g_byWeldOut[25] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 MOD 256));
+GVL_Welders.g_byWeldOut[26] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 / 256));
+
+(* ===== 协议 Byte 27-28: 收弧电流 (2字节小端, 低字节在前) ===== *)
+(* 范围: 50-4000 对应5.0~400.0A *)
+nTempU16 := REAL_TO_UINT(LIMIT(5.0, GVL_Welders.g_wArcEndCurrent, 400.0)*10.0);
+GVL_Welders.g_byWeldOut[27] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 MOD 256));
+GVL_Welders.g_byWeldOut[28] := UINT_TO_BYTE(UINT_TO_USINT(nTempU16 / 256));
+
+(* ===== 协议 Byte 29: 交流频率 ===== *)
+(* 范围: 40-250 对应40-250Hz (1字节) *)
+GVL_Welders.g_byWeldOut[29] := UINT_TO_BYTE(LIMIT(UINT#40, GVL_Welders.g_wACFreq, UINT#250));
+
+(* ===== 协议 Byte 30: 清理比例 ===== *)
+(* 范围: 90-180 对应40~-50 (1字节) *)
+nTempI16 := 130 - UINT_TO_INT(LIMIT(UINT#90, GVL_Welders.g_wCleanRatio, UINT#180));
+GVL_Welders.g_byWeldOut[30] := INT_TO_BYTE(nTempI16);
+
+(* ===== 协议 Byte 31: 交流偏置 ===== *)
+(* 范围: 90-180 对应40~-50 (1字节) *)
+nTempI16 := 130 - UINT_TO_INT(LIMIT(UINT#90, GVL_Welders.g_wACBias, UINT#180));
+GVL_Welders.g_byWeldOut[31] := INT_TO_BYTE(nTempI16);
+
+(* ================================================================ *)
+(* 焊机输入 (协议: 焊机输出数据区, 焊机写→PLC读)                      *)
+(* GVL_Welders.g_byWeldIn[0..31] ← EtherCAT输入 ← 焊机                          *)
+(* ================================================================ *)
+
+(* ===== 协议输入 Byte 0: 状态位 ===== *)
+(* bit0: 引弧成功 高有效                                              *)
+(* bit1: 焊机准备好 高有效                                            *)
+(* bit2: 预留                                                         *)
+(* bit3: 电流有无 高有效                                              *)
+(* EtherCAT 输入映射别名 → 协议数组。保持原有 Byte 0..31 定义。 *)
+GVL_Welders.g_byWeldIn[0] := GVL_Welders.g_byWeldInMap01;
+GVL_Welders.g_byWeldIn[1] := GVL_Welders.g_byWeldInMap02;
+GVL_Welders.g_byWeldIn[2] := GVL_Welders.g_byWeldInMap03;
+GVL_Welders.g_byWeldIn[3] := GVL_Welders.g_byWeldInMap04;
+GVL_Welders.g_byWeldIn[4] := GVL_Welders.g_byWeldInMap05;
+GVL_Welders.g_byWeldIn[5] := GVL_Welders.g_byWeldInMap06;
+GVL_Welders.g_byWeldIn[6] := GVL_Welders.g_byWeldInMap07;
+GVL_Welders.g_byWeldIn[7] := GVL_Welders.g_byWeldInMap08;
+GVL_Welders.g_byWeldIn[8] := GVL_Welders.g_byWeldInMap09;
+GVL_Welders.g_byWeldIn[9] := GVL_Welders.g_byWeldInMap10;
+GVL_Welders.g_byWeldIn[10] := GVL_Welders.g_byWeldInMap11;
+GVL_Welders.g_byWeldIn[11] := GVL_Welders.g_byWeldInMap12;
+GVL_Welders.g_byWeldIn[12] := GVL_Welders.g_byWeldInMap13;
+GVL_Welders.g_byWeldIn[13] := GVL_Welders.g_byWeldInMap14;
+GVL_Welders.g_byWeldIn[14] := GVL_Welders.g_byWeldInMap15;
+GVL_Welders.g_byWeldIn[15] := GVL_Welders.g_byWeldInMap16;
+GVL_Welders.g_byWeldIn[16] := GVL_Welders.g_byWeldInMap17;
+GVL_Welders.g_byWeldIn[17] := GVL_Welders.g_byWeldInMap18;
+GVL_Welders.g_byWeldIn[18] := GVL_Welders.g_byWeldInMap19;
+GVL_Welders.g_byWeldIn[19] := GVL_Welders.g_byWeldInMap20;
+GVL_Welders.g_byWeldIn[20] := GVL_Welders.g_byWeldInMap21;
+GVL_Welders.g_byWeldIn[21] := GVL_Welders.g_byWeldInMap22;
+GVL_Welders.g_byWeldIn[22] := GVL_Welders.g_byWeldInMap23;
+GVL_Welders.g_byWeldIn[23] := GVL_Welders.g_byWeldInMap24;
+GVL_Welders.g_byWeldIn[24] := GVL_Welders.g_byWeldInMap25;
+GVL_Welders.g_byWeldIn[25] := GVL_Welders.g_byWeldInMap26;
+GVL_Welders.g_byWeldIn[26] := GVL_Welders.g_byWeldInMap27;
+GVL_Welders.g_byWeldIn[27] := GVL_Welders.g_byWeldInMap28;
+GVL_Welders.g_byWeldIn[28] := GVL_Welders.g_byWeldInMap29;
+GVL_Welders.g_byWeldIn[29] := GVL_Welders.g_byWeldInMap30;
+GVL_Welders.g_byWeldIn[30] := GVL_Welders.g_byWeldInMap31;
+GVL_Welders.g_byWeldIn[31] := GVL_Welders.g_byWeldInMap32;
+
+GVL_Welders.g_bWeldArcOK      := (GVL_Welders.g_byWeldIn[0] AND 16#01) <> 0;
+GVL_Welders.g_bWeldReady      := (GVL_Welders.g_byWeldIn[0] AND 16#02) <> 0;
+GVL_Welders.g_bWeldHasCurrent     := (GVL_Welders.g_byWeldIn[0] AND 16#08) <> 0;
+
+(* ===== 协议输入 Byte 1: 报警位 ===== *)
+(* bit0: 预留                                                         *)
+(* bit1: 焊枪开关异常 高有效                                          *)
+(* bit2: 焊机热保护 高有效                                            *)
+(* bit3: 缺水保护 高有效                                              *)
+(* bit4: 热丝电源热保护 高有效                                        *)
+(* bit5: 热丝电源通讯保护 高有效 (控制器填充)                          *)
+GVL_Welders.g_bGunSwitchFault    := (GVL_Welders.g_byWeldIn[1] AND 16#02) <> 0;
+GVL_Welders.g_bWeldThermalProtect := (GVL_Welders.g_byWeldIn[1] AND 16#04) <> 0;
+GVL_Welders.g_bWaterProtect   := (GVL_Welders.g_byWeldIn[1] AND 16#08) <> 0;
+GVL_Welders.g_bWirePSThermal  := (GVL_Welders.g_byWeldIn[1] AND 16#10) <> 0;
+GVL_Welders.g_bWirePSCommFault:= (GVL_Welders.g_byWeldIn[1] AND 16#20) <> 0;
+
+(* ===== 报警组合 ===== *)
+GVL_Welders.g_bWeldFault := GVL_Welders.g_bWeldThermalProtect
+              OR GVL_Welders.g_bGunSwitchFault
+              OR GVL_Welders.g_bWaterProtect
+              OR GVL_Welders.g_bWirePSThermal
+              OR GVL_Welders.g_bWirePSCommFault;
+
+IF GVL_Welders.g_bWeldFault THEN
+    GVL_Welders.g_rWeldFaultCode := BYTE_TO_UINT(GVL_Welders.g_byWeldIn[1]);
+ELSE
+    GVL_Welders.g_rWeldFaultCode := 0;
+END_IF;
+
+IF NOT GVL_Welders.g_bWeldReady OR GVL_Welders.g_bWeldFault THEN
+    GVL_Welders.g_wWeldOn := FALSE;
+    GVL_Welders.g_wWeldCtrlWord := GVL_Welders.g_wWeldCtrlWord AND 16#FFFE;
+    GVL_Welders.g_byWeldOut[0] := GVL_Welders.g_byWeldOut[0] AND 16#FE;
+END_IF;
+
+(* ===== EtherCAT 输出映射别名同步 ===== *)
+(* 放在未就绪/故障联锁之后，确保停弧命令在本周期立即写入PDO。 *)
+GVL_Welders.g_byWeldOutMap01 := GVL_Welders.g_byWeldOut[0];
+GVL_Welders.g_byWeldOutMap02 := GVL_Welders.g_byWeldOut[1];
+GVL_Welders.g_byWeldOutMap03 := GVL_Welders.g_byWeldOut[2];
+GVL_Welders.g_byWeldOutMap04 := GVL_Welders.g_byWeldOut[3];
+GVL_Welders.g_byWeldOutMap05 := GVL_Welders.g_byWeldOut[4];
+GVL_Welders.g_byWeldOutMap06 := GVL_Welders.g_byWeldOut[5];
+GVL_Welders.g_byWeldOutMap07 := GVL_Welders.g_byWeldOut[6];
+GVL_Welders.g_byWeldOutMap08 := GVL_Welders.g_byWeldOut[7];
+GVL_Welders.g_byWeldOutMap09 := GVL_Welders.g_byWeldOut[8];
+GVL_Welders.g_byWeldOutMap10 := GVL_Welders.g_byWeldOut[9];
+GVL_Welders.g_byWeldOutMap11 := GVL_Welders.g_byWeldOut[10];
+GVL_Welders.g_byWeldOutMap12 := GVL_Welders.g_byWeldOut[11];
+GVL_Welders.g_byWeldOutMap13 := GVL_Welders.g_byWeldOut[12];
+GVL_Welders.g_byWeldOutMap14 := GVL_Welders.g_byWeldOut[13];
+GVL_Welders.g_byWeldOutMap15 := GVL_Welders.g_byWeldOut[14];
+GVL_Welders.g_byWeldOutMap16 := GVL_Welders.g_byWeldOut[15];
+GVL_Welders.g_byWeldOutMap17 := GVL_Welders.g_byWeldOut[16];
+GVL_Welders.g_byWeldOutMap18 := GVL_Welders.g_byWeldOut[17];
+GVL_Welders.g_byWeldOutMap19 := GVL_Welders.g_byWeldOut[18];
+GVL_Welders.g_byWeldOutMap20 := GVL_Welders.g_byWeldOut[19];
+GVL_Welders.g_byWeldOutMap21 := GVL_Welders.g_byWeldOut[20];
+GVL_Welders.g_byWeldOutMap22 := GVL_Welders.g_byWeldOut[21];
+GVL_Welders.g_byWeldOutMap23 := GVL_Welders.g_byWeldOut[22];
+GVL_Welders.g_byWeldOutMap24 := GVL_Welders.g_byWeldOut[23];
+GVL_Welders.g_byWeldOutMap25 := GVL_Welders.g_byWeldOut[24];
+GVL_Welders.g_byWeldOutMap26 := GVL_Welders.g_byWeldOut[25];
+GVL_Welders.g_byWeldOutMap27 := GVL_Welders.g_byWeldOut[26];
+GVL_Welders.g_byWeldOutMap28 := GVL_Welders.g_byWeldOut[27];
+GVL_Welders.g_byWeldOutMap29 := GVL_Welders.g_byWeldOut[28];
+GVL_Welders.g_byWeldOutMap30 := GVL_Welders.g_byWeldOut[29];
+GVL_Welders.g_byWeldOutMap31 := GVL_Welders.g_byWeldOut[30];
+GVL_Welders.g_byWeldOutMap32 := GVL_Welders.g_byWeldOut[31];
+
+(* ===== 协议输入 Byte 4-5: 实际焊接电压 (2字节小端, 0.1V分辨率) ===== *)
+(* 范围: 0-1000 对应0~100.0V *)
+nTempU16 := BYTE_TO_UINT(GVL_Welders.g_byWeldIn[4]) + BYTE_TO_UINT(GVL_Welders.g_byWeldIn[5]) * 256;
+GVL_Welders.g_rWeldVoltageAct := UINT_TO_REAL(nTempU16) * 0.1;
+
+(* ===== 协议输入 Byte 6-7: 实际焊接电流 (2字节小端, 0.1A分辨率) ===== *)
+(* 范围: 0~400 对应0~400A *)
+nTempU16 := BYTE_TO_UINT(GVL_Welders.g_byWeldIn[6]) + BYTE_TO_UINT(GVL_Welders.g_byWeldIn[7]) * 256;
+GVL_Welders.g_rWeldCurrentAct := UINT_TO_REAL(nTempU16) * 0.1;
+
+(* ===== 协议输入 Byte 8-9: 实际热丝焊接电流 (2字节小端, 10A分辨率) ===== *)
+(* 范围: 0~20 对应0~200A *)
+nTempU16 := BYTE_TO_UINT(GVL_Welders.g_byWeldIn[8]) + BYTE_TO_UINT(GVL_Welders.g_byWeldIn[9]) * 256;
+GVL_Welders.g_rHotWireCurrentAct := UINT_TO_REAL(nTempU16) * 10.0;
+
+(* ===== 协议输入 Byte 10-11: 送丝速度反馈 (已移除, 送丝通过轴控制) ===== *)
+
+(* ===== 组装输入状态字 (PC通过D500读取) ===== *)
+GVL_Welders.g_wWeldInStatus := 0;
+IF GVL_Welders.g_bWeldArcOK      THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0001; END_IF;
+IF GVL_Welders.g_bWeldReady      THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0002; END_IF;
+IF GVL_Welders.g_bGunSwitchFault THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0004; END_IF;
+IF GVL_Welders.g_bWeldThermalProtect THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0008; END_IF;
+IF GVL_Welders.g_bWaterProtect   THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0010; END_IF;
+IF GVL_Welders.g_bWirePSThermal  THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0020; END_IF;
+IF GVL_Welders.g_bWirePSCommFault THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0040; END_IF;
+IF GVL_Welders.g_bWeldFault      THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0080; END_IF;
+IF GVL_Welders.g_bWeldHasCurrent     THEN GVL_Welders.g_wWeldInStatus := GVL_Welders.g_wWeldInStatus OR 16#0100; END_IF;
+
+(* ================================================================ *)
+(* D308 独立BOOL → 打包字 (PLC内部 → PC读D308)                         *)
+(* CommPoll每周期从独立BOOL组装到g_wWeldStatusWord供PC读取             *)
+(* ================================================================ *)
+GVL_Welders.g_wWeldStatusWord := 0;
+IF GVL_Welders.g_bWeldArcOK      THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0001; END_IF;
+IF GVL_Welders.g_bWeldReady      THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0002; END_IF;
+IF GVL_Welders.g_bWeldHasCurrent     THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0004; END_IF;
+IF GVL_Welders.g_bGunSwitchFault THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0008; END_IF;
+IF GVL_Welders.g_bWeldThermalProtect THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0010; END_IF;
+IF GVL_Welders.g_bWaterProtect   THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0020; END_IF;
+IF GVL_Welders.g_bWirePSThermal  THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0040; END_IF;
+IF GVL_Welders.g_bWirePSCommFault THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0080; END_IF;
+IF GVL_Welders.g_bWeldFault      THEN GVL_Welders.g_wWeldStatusWord := GVL_Welders.g_wWeldStatusWord OR 16#0100; END_IF;
+
+END_PROGRAM

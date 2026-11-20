@@ -1,0 +1,259 @@
+{
+  "description": "Selected field receipts before the latest repeated-upload recovery fix. Addresses, credentials, local paths and session identifiers omitted. Timings use different jobs and are not a controlled comparison. COMPLETE means file verification, not robot execution.",
+  "timezone": "Asia/Shanghai",
+  "records": [
+    {
+      "completed_at": "2026-11-20T15:28:12.815",
+      "status": "COMPLETE",
+      "transport": "plc_ftp",
+      "total_ms": 4703,
+      "program_number": 11,
+      "robot_loaded": false,
+      "robot_started": false,
+      "source_receipt_sha256": "117ddb9c67d4c2afd91ff0be1c46f5044276287b1d1a6ffe2c12b442e72b47bc",
+      "final_status": {
+        "state": 400,
+        "error": 0,
+        "auto_ready": 1,
+        "auto_configured": 1,
+        "auto_idle": 1,
+        "auto_busy": 0,
+        "manual_number": 10,
+        "auto_number": 11,
+        "expected": 4,
+        "verified": 4,
+        "flags": 15,
+        "ftp_batch_bytes": 8192,
+        "control_close_error": 0,
+        "data_close_error": 0
+      },
+      "files": [
+        {
+          "name": "auto_01.srd",
+          "bytes": 19205,
+          "local_sha256": "7d43b05f45d295e9f460bffee3f995a269cfe47cf09efa491a235648df08d569",
+          "total_ms": 1840,
+          "transfer_to_plc_ms": 1602,
+          "direct_ftp_upload_ms": null,
+          "plc_ftp_verify_ms": 224
+        },
+        {
+          "name": "auto_01.srp",
+          "bytes": 25070,
+          "local_sha256": "0eb2174a190bbeab02614eb0c7889f90131491b25bcec040d8874fe823d8f07f",
+          "total_ms": 2337,
+          "transfer_to_plc_ms": 2083,
+          "direct_ftp_upload_ms": null,
+          "plc_ftp_verify_ms": 239
+        },
+        {
+          "name": "auto_main.srd",
+          "bytes": 111,
+          "local_sha256": "822c6e15259165858dcb058cd0a12ffc07657f32d8b3c95999230e191fd408c1",
+          "total_ms": 239,
+          "transfer_to_plc_ms": 16,
+          "direct_ftp_upload_ms": null,
+          "plc_ftp_verify_ms": 207
+        },
+        {
+          "name": "auto_main.srp",
+          "bytes": 550,
+          "local_sha256": "658bb350254530e580e7749ad7ba1844e0af3d371ebf79baa9bb5c9702f55f9f",
+          "total_ms": 268,
+          "transfer_to_plc_ms": 47,
+          "direct_ftp_upload_ms": null,
+          "plc_ftp_verify_ms": 206
+        }
+      ],
+      "total_file_bytes": 44936
+    },
+    {
+      "completed_at": "2026-11-20T16:45:14.875",
+      "status": "COMPLETE",
+      "transport": "pc_direct_ftp_plc_verify",
+      "total_ms": 871,
+      "program_number": 11,
+      "robot_loaded": false,
+      "robot_started": false,
+      "source_receipt_sha256": "286e6d41fc4f155198876587a793a67d376998f5d02b7b1a08f59784ec2cb00d",
+      "final_status": {
+        "state": 400,
+        "error": 0,
+        "auto_ready": 1,
+        "auto_configured": 1,
+        "auto_idle": 1,
+        "auto_busy": 0,
+        "manual_number": 10,
+        "auto_number": 11,
+        "expected": 4,
+        "verified": 4,
+        "flags": 15,
+        "ftp_batch_bytes": 8192,
+        "control_close_error": 0,
+        "data_close_error": 0
+      },
+      "files": [
+        {
+          "name": "auto_01.srd",
+          "bytes": 55990,
+          "local_sha256": "2306bc7565dad88dce806279bb0cea7d5b0b24ff87bd1d3e15e7c7f59fe2a6ad",
+          "total_ms": 232,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 24,
+          "plc_ftp_verify_ms": 191
+        },
+        {
+          "name": "auto_01.srp",
+          "bytes": 75459,
+          "local_sha256": "eeca9836fd6911ac53c1639dd28cda13c229d37affb105096bc9955fde098ec8",
+          "total_ms": 244,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 13,
+          "plc_ftp_verify_ms": 217
+        },
+        {
+          "name": "auto_main.srd",
+          "bytes": 110,
+          "local_sha256": "4dd64453809713833c627262a19ab64ca7b2fdfc06caf7714d17725630ab9eb0",
+          "total_ms": 179,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 5,
+          "plc_ftp_verify_ms": 161
+        },
+        {
+          "name": "auto_main.srp",
+          "bytes": 546,
+          "local_sha256": "83569bf4861201868c2f8651ac6b5a9a50f3f2a43c2df1a292cf3cca3d970d8c",
+          "total_ms": 197,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 19,
+          "plc_ftp_verify_ms": 164
+        }
+      ],
+      "total_file_bytes": 132105
+    },
+    {
+      "completed_at": "2026-11-20T16:46:00.767",
+      "status": "INCOMPLETE",
+      "transport": "pc_direct_ftp_plc_verify",
+      "total_ms": 27,
+      "program_number": 11,
+      "robot_loaded": false,
+      "robot_started": false,
+      "error": "控制柜FTP拒绝操作，回复码530",
+      "source_receipt_sha256": "d166c5383f266a0839b827ab2ede5c8e378bf5df85af04437b2e1bb3f4e2f2ee",
+      "final_status": {
+        "state": 100,
+        "error": 0,
+        "auto_ready": 0,
+        "auto_configured": 1,
+        "auto_idle": 1,
+        "auto_busy": 1,
+        "manual_number": 10,
+        "auto_number": 11,
+        "expected": 4,
+        "verified": 0,
+        "flags": 3,
+        "ftp_batch_bytes": 8192,
+        "control_close_error": 0,
+        "data_close_error": 0
+      },
+      "files": [],
+      "total_file_bytes": 0
+    },
+    {
+      "completed_at": "2026-11-20T16:46:32.965",
+      "status": "INCOMPLETE",
+      "transport": "pc_direct_ftp_plc_verify",
+      "total_ms": 1,
+      "program_number": 11,
+      "robot_loaded": false,
+      "robot_started": false,
+      "error": "PLC须为空闲/完成状态、本地文件许可已开且连接已关闭；请核对PLC状态",
+      "source_receipt_sha256": "d3c78115031c318b6afd6e1f9d907cb040b220e5c5e5c3b28e454075c7233a2d",
+      "final_status": {
+        "state": 900,
+        "error": 57361,
+        "auto_ready": 0,
+        "auto_configured": 1,
+        "auto_idle": 1,
+        "auto_busy": 0,
+        "manual_number": 10,
+        "auto_number": 11,
+        "expected": 4,
+        "verified": 0,
+        "flags": 3,
+        "ftp_batch_bytes": 8192,
+        "control_close_error": 0,
+        "data_close_error": 0
+      },
+      "files": [],
+      "total_file_bytes": 0
+    },
+    {
+      "completed_at": "2026-11-20T16:48:05.697",
+      "status": "COMPLETE",
+      "transport": "pc_direct_ftp_plc_verify",
+      "total_ms": 860,
+      "program_number": 11,
+      "robot_loaded": false,
+      "robot_started": false,
+      "source_receipt_sha256": "7d5bd8263be6d594bd86f80a15dd4c4745926f1decd636b693076b66e7c70ffa",
+      "final_status": {
+        "state": 400,
+        "error": 0,
+        "auto_ready": 1,
+        "auto_configured": 1,
+        "auto_idle": 1,
+        "auto_busy": 0,
+        "manual_number": 10,
+        "auto_number": 11,
+        "expected": 4,
+        "verified": 4,
+        "flags": 15,
+        "ftp_batch_bytes": 8192,
+        "control_close_error": 0,
+        "data_close_error": 0
+      },
+      "files": [
+        {
+          "name": "auto_01.srd",
+          "bytes": 55990,
+          "local_sha256": "06564487c0f8f8b5d429eadf908f55f33b1e2d0c608b67a25bcfc0ea9c953e5a",
+          "total_ms": 248,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 33,
+          "plc_ftp_verify_ms": 196
+        },
+        {
+          "name": "auto_01.srp",
+          "bytes": 75459,
+          "local_sha256": "da35315d45fb722b6a2ea67deaa70b3a31a482704e82715b27a256455eebe4c8",
+          "total_ms": 231,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 13,
+          "plc_ftp_verify_ms": 203
+        },
+        {
+          "name": "auto_main.srd",
+          "bytes": 110,
+          "local_sha256": "534fd857bac1fa56c1aeb7b2c1a86d4f0740564c268be76b85e8025937aea3d2",
+          "total_ms": 181,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 6,
+          "plc_ftp_verify_ms": 162
+        },
+        {
+          "name": "auto_main.srp",
+          "bytes": 546,
+          "local_sha256": "8eb9494fc8774ee25fffef8b970d5706b89952a0a3a06b913a4aa56609763e10",
+          "total_ms": 182,
+          "transfer_to_plc_ms": null,
+          "direct_ftp_upload_ms": 7,
+          "plc_ftp_verify_ms": 161
+        }
+      ],
+      "total_file_bytes": 132105
+    }
+  ]
+}

@@ -1,0 +1,418 @@
+// ----- Startup: ignore retained/stale command frames -----
+IF xFirstScan THEN
+    IF GVL_RobotBridgeRetain.udiBootCounter = UDINT#4294967295 THEN
+        GVL_RobotBridgeRetain.udiBootCounter := UDINT#1;
+    ELSE
+        GVL_RobotBridgeRetain.udiBootCounter :=
+            GVL_RobotBridgeRetain.udiBootCounter + UDINT#1;
+    END_IF;
+    FOR i := 0 TO 14 DO
+        aPrevious[i] := GVL_RobotBridge.aHostCmd[i];
+        aConsumed[i] := GVL_RobotBridge.aHostCmd[i];
+    END_FOR;
+    xLastHb := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0200) <> WORD#0;
+    wLastHostHb := GVL_RobotBridge.aHostCmd[15];
+    xFirstScan := FALSE;
+END_IF;
+
+GVL_RobotBridge.uiFixedJobGuardVersion := UINT#140;
+
+// ----- STEP status: DO33..48 in the first input register -----
+GVL_RobotBridge.xRobotRunning := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0001) <> WORD#0;
+GVL_RobotBridge.xRobotAlarm := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0002) <> WORD#0;
+GVL_RobotBridge.xRobotEnabled := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0004) <> WORD#0;
+GVL_RobotBridge.xRobotPaused := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0008) <> WORD#0;
+GVL_RobotBridge.xRobotStopped := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0010) <> WORD#0;
+GVL_RobotBridge.xRobotExternalAuto := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0080) <> WORD#0;
+GVL_RobotBridge.xRobotEmergency := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0100) <> WORD#0;
+IF NOT GVL_RobotBridge.xRobotExternalAuto OR GVL_RobotBridge.xRobotAlarm
+   OR GVL_RobotBridge.xRobotEmergency OR GVL_FileBridge.xFixedUpdateBusy THEN
+    GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+END_IF;
+IF GVL_FileBridge.xFixedUpdateBusy THEN xLoadSent := FALSE; END_IF;
+xTerminalStop := GVL_RobotBridge.xRobotStopped
+    AND NOT GVL_RobotBridge.xRobotRunning AND NOT GVL_RobotBridge.xRobotPaused;
+xHb := (GVL_RobotBridge.aRobotRx[0] AND WORD#16#0200) <> WORD#0;
+xHbEdge := xHb <> xLastHb;
+xLastHb := xHb;
+fbRobotTimeout(IN := NOT xHbEdge, PT := T#4s);
+IF fbRobotTimeout.Q OR GVL_RobotBridge.xNativeModbusError THEN
+    uiHbEdges := UINT#0;
+ELSIF xHbEdge AND (uiHbEdges < UINT#2) THEN
+    uiHbEdges := uiHbEdges + UINT#1;
+END_IF;
+IF xHbEdge THEN
+    IF wHbCount = WORD#16#FFFF THEN wHbCount := WORD#0;
+    ELSE wHbCount := UINT_TO_WORD(WORD_TO_UINT(wHbCount) + UINT#1); END_IF;
+END_IF;
+GVL_RobotBridge.xRobotLinkOK := (uiHbEdges >= UINT#2)
+    AND NOT fbRobotTimeout.Q AND NOT GVL_RobotBridge.xNativeModbusError;
+
+// ----- Only the registered owner can refresh its heartbeat -----
+udiRequestHost := SHL(WORD_TO_UDINT(GVL_RobotBridge.aHostCmd[6]), 16)
+    OR WORD_TO_UDINT(GVL_RobotBridge.aHostCmd[7]);
+udiExpectedBoot := SHL(WORD_TO_UDINT(GVL_RobotBridge.aHostCmd[8]), 16)
+    OR WORD_TO_UDINT(GVL_RobotBridge.aHostCmd[9]);
+xHostHbEdge := GVL_RobotBridge.xHostRegistered
+    AND (GVL_RobotBridge.aHostCmd[0] = WORD#2)
+    AND (udiRequestHost = udiOwner)
+    AND (udiExpectedBoot = GVL_RobotBridgeRetain.udiBootCounter)
+    AND (GVL_RobotBridge.aHostCmd[15] <> wLastHostHb);
+IF xHostHbEdge THEN wLastHostHb := GVL_RobotBridge.aHostCmd[15]; END_IF;
+fbHostTimeout(IN := GVL_RobotBridge.xHostRegistered AND NOT xHostHbEdge, PT := T#3s);
+GVL_RobotBridge.xHostAlive := GVL_RobotBridge.xHostRegistered AND NOT fbHostTimeout.Q;
+IF fbHostTimeout.Q THEN
+    GVL_RobotBridge.xHostRegistered := FALSE;
+    GVL_RobotBridge.xHostAlive := FALSE;
+    udiOwner := UDINT#0;
+END_IF;
+
+// ----- Ordinary stop interlock; never represents a safety-rated stop -----
+wCancelReason := WORD#0;
+IF NOT GVL_RobotBridge.xCommissioned OR NOT GVL_RobotBridge.xGdiProgramMappingConfirmed THEN
+    wCancelReason := WORD#13;
+ELSIF NOT GVL_RobotBridge.xRemotePermit THEN wCancelReason := WORD#6;
+ELSIF NOT GVL_RobotBridge.xRobotLinkOK THEN wCancelReason := WORD#7;
+ELSIF NOT GVL_RobotBridge.xHostAlive THEN wCancelReason := WORD#11;
+ELSIF GVL_RobotBridge.xRobotEmergency THEN wCancelReason := WORD#12;
+ELSIF GVL_RobotBridge.xRobotAlarm
+      AND NOT ((uiStep <> UINT#0) AND ((wAckCmd = WORD#8)
+                OR (wAckCmd = WORD#7))) THEN wCancelReason := WORD#12;
+END_IF;
+IF xHasControlledRobot AND (wCancelReason <> WORD#0) THEN
+    GVL_RobotBridge.xStopInterlock := TRUE;
+    GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+    IF (uiStep <> UINT#0) AND NOT ((wAckCmd = WORD#7)
+       AND GVL_RobotBridge.xCommissioned AND GVL_RobotBridge.xRobotLinkOK
+       AND GVL_RobotBridge.xHostAlive) THEN
+        uiStep := UINT#0;
+        wAckResult := WORD#6;
+        wAckError := wCancelReason;
+        wPulse := WORD#0;
+    END_IF;
+END_IF;
+
+// ----- Stable command snapshot, heartbeat excluded -----
+FOR i := 0 TO 15 DO aFrame[i] := GVL_RobotBridge.aHostCmd[i]; END_FOR;
+xSame := TRUE;
+FOR i := 0 TO 14 DO
+    IF aFrame[i] <> aPrevious[i] THEN xSame := FALSE; END_IF;
+    aPrevious[i] := aFrame[i];
+END_FOR;
+IF xSame THEN
+    IF uiStable < UINT#2 THEN uiStable := uiStable + UINT#1; END_IF;
+ELSE uiStable := UINT#0;
+END_IF;
+xNewFrame := FALSE;
+IF uiStable >= UINT#2 THEN
+    FOR i := 0 TO 14 DO
+        IF aFrame[i] <> aConsumed[i] THEN xNewFrame := TRUE; END_IF;
+    END_FOR;
+END_IF;
+xNewAction := FALSE;
+IF xNewFrame THEN
+    FOR i := 0 TO 14 DO aConsumed[i] := aFrame[i]; END_FOR;
+    wCmd := aFrame[1];
+    wParam := aFrame[4];
+    udiRequest := SHL(WORD_TO_UDINT(aFrame[2]), 16) OR WORD_TO_UDINT(aFrame[3]);
+    udiRequestHost := SHL(WORD_TO_UDINT(aFrame[6]), 16) OR WORD_TO_UDINT(aFrame[7]);
+    udiExpectedBoot := SHL(WORD_TO_UDINT(aFrame[8]), 16) OR WORD_TO_UDINT(aFrame[9]);
+    wReject := WORD#0;
+    IF aFrame[0] <> WORD#2 THEN wReject := WORD#1;
+    ELSIF (udiRequest = UDINT#0) OR (udiRequestHost = UDINT#0) THEN wReject := WORD#8;
+    ELSIF udiExpectedBoot <> GVL_RobotBridgeRetain.udiBootCounter THEN wReject := WORD#3;
+    ELSIF (wCmd <> WORD#4) AND (wCmd <> WORD#10) AND (wCmd <> WORD#12)
+          AND (wParam <> WORD#0) THEN wReject := WORD#8;
+    ELSE
+        FOR i := 5 TO 14 DO
+            IF ((i = 5) OR (i >= 10)) AND (aFrame[i] <> WORD#0) THEN wReject := WORD#14; END_IF;
+        END_FOR;
+    END_IF;
+
+    IF (wReject = WORD#0) AND GVL_ManualBridge.xActive
+       AND (wCmd <> WORD#7) AND (wCmd <> WORD#8) THEN
+        wReject := WORD#9; // Resident manual service owns motion until stopped/left.
+    END_IF;
+    IF wReject = WORD#0 THEN
+        IF wCmd = WORD#1 THEN
+            IF (uiStep <> UINT#0) OR (GVL_RobotBridge.xHostRegistered AND (udiOwner <> udiRequestHost)) THEN
+                wReject := WORD#2;
+            ELSIF GVL_RobotBridge.xHostRegistered AND (udiRequest <= udiLastSeq) THEN
+                wReject := WORD#4;
+            ELSE
+                udiOwner := udiRequestHost;
+                udiLastSeq := udiRequest;
+                GVL_RobotBridge.xHostRegistered := TRUE;
+                GVL_RobotBridge.xHostAlive := TRUE;
+                wLastHostHb := aFrame[15];
+                udiAckSeq := udiRequest; wAckCmd := wCmd;
+                wAckResult := WORD#2; wAckError := WORD#0;
+            END_IF;
+        ELSIF NOT GVL_RobotBridge.xHostRegistered OR (udiOwner <> udiRequestHost) THEN
+            wReject := WORD#2;
+        ELSIF udiRequest <= udiLastSeq THEN wReject := WORD#4;
+        ELSE
+            udiLastSeq := udiRequest;
+            IF (uiStep <> UINT#0) AND (wCmd <> WORD#7) THEN wReject := WORD#5;
+            ELSE
+                // STOP can preempt the one active request; preserve its sequence.
+                IF uiStep <> UINT#0 THEN
+                    udiInterruptedSeq := udiAckSeq;
+                    uiStep := UINT#0;
+                    wPulse := WORD#0;
+                END_IF;
+                udiAckSeq := udiRequest; wAckCmd := wCmd;
+                wAckResult := WORD#2; wAckError := WORD#0;
+                IF (wCmd >= WORD#2) AND (wCmd <= WORD#8) THEN
+                    IF NOT GVL_RobotBridge.xCommissioned THEN wReject := WORD#13;
+                    ELSIF NOT GVL_RobotBridge.xGdiProgramMappingConfirmed
+                          AND (wCmd <> WORD#3) AND (wCmd <> WORD#7) AND (wCmd <> WORD#8) THEN
+                        wReject := WORD#13;
+                    ELSIF NOT GVL_RobotBridge.xRobotLinkOK THEN wReject := WORD#7;
+                    ELSIF (wCmd <> WORD#7) AND NOT GVL_RobotBridge.xRemotePermit THEN wReject := WORD#6;
+                    ELSIF (wCmd <> WORD#7) AND (wCmd <> WORD#8)
+                          AND GVL_RobotBridge.xStopInterlock THEN wReject := WORD#15;
+                    ELSIF NOT GVL_RobotBridge.xHostAlive THEN wReject := WORD#11;
+                    ELSIF GVL_FileBridge.xFixedUpdateBusy AND ((wCmd = WORD#2) OR (wCmd = WORD#4) OR (wCmd = WORD#5)) THEN
+                        wReject := WORD#9;
+                    END_IF;
+                    IF wReject = WORD#0 THEN
+                        wPulse := WORD#0;
+                        CASE WORD_TO_UINT(wCmd) OF
+                        2: // Enable is a toggle input: pulse ONLY when currently disabled.
+                            IF NOT xTerminalStop OR NOT GVL_RobotBridge.xRobotExternalAuto
+                               OR GVL_RobotBridge.xRobotAlarm OR GVL_RobotBridge.xRobotEmergency THEN
+                                wReject := WORD#9;
+                            ELSIF NOT GVL_RobotBridge.xRobotEnabled THEN wPulse := WORD#16#0010; END_IF;
+                        3: // Disable: same toggle input, only while stopped.
+                            IF NOT xTerminalStop THEN wReject := WORD#9;
+                            ELSIF GVL_RobotBridge.xRobotEnabled THEN wPulse := WORD#16#0010; END_IF;
+                        4: // GDI DI49..56: unsigned binary program number 1..255.
+                            IF (wParam < WORD#1) OR (wParam > WORD#255) THEN wReject := WORD#8;
+                            ELSIF (wParam = UINT_TO_WORD(GVL_FileBridge.uiFixedPath))
+                                AND (NOT GVL_FileBridge.xFixedMappingConfirmed OR NOT GVL_FileBridge.xFixedReady) THEN wReject := WORD#9;
+                            ELSIF NOT xTerminalStop OR NOT GVL_RobotBridge.xRobotExternalAuto
+                                  OR GVL_RobotBridge.xRobotAlarm OR GVL_RobotBridge.xRobotEmergency THEN
+                                wReject := WORD#9;
+                            ELSE
+                                uiSelectedProgram := WORD_TO_UINT(wParam);
+                                xLoadSent := FALSE;
+                                GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+                                wPulse := WORD#16#0020;
+                            END_IF;
+                        5: // Run/resume requires enable and an explicit confirmed loaded program.
+                            IF (uiSelectedProgram = GVL_FileBridge.uiFixedPath)
+                                AND (NOT GVL_FileBridge.xFixedMappingConfirmed OR NOT GVL_FileBridge.xFixedReady) THEN wReject := WORD#9;
+                            ELSIF NOT GVL_RobotBridge.xRobotExternalAuto OR NOT GVL_RobotBridge.xRobotEnabled
+                               OR GVL_RobotBridge.xRobotAlarm OR GVL_RobotBridge.xRobotEmergency
+                               OR NOT GVL_RobotBridge.xLoadOperatorConfirmed
+                               OR NOT (xTerminalStop OR GVL_RobotBridge.xRobotPaused) THEN wReject := WORD#9;
+                            ELSE wPulse := WORD#16#0100; END_IF;
+                        6:
+                            IF NOT GVL_RobotBridge.xRobotRunning THEN wReject := WORD#9;
+                            ELSE wPulse := WORD#16#0400; END_IF;
+                        7:
+                            wPulse := WORD#16#0800;
+                            xLoadSent := FALSE; GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+                        8: // Explicit alarm acknowledgement; usable before stop-latch rearm.
+                            IF GVL_RobotBridge.xRobotRunning OR GVL_RobotBridge.xRobotPaused
+                               OR GVL_RobotBridge.xRobotEmergency THEN wReject := WORD#9;
+                            ELSE wPulse := WORD#16#0200; END_IF;
+                        END_CASE;
+                        IF wReject = WORD#0 THEN
+                            xHasControlledRobot := TRUE;
+                            IF wPulse <> WORD#0 THEN
+                                uiStep := UINT#10; xNewAction := TRUE;
+                                xRunningSeen := FALSE;
+                                wAckResult := WORD#1;
+                            END_IF;
+                        END_IF;
+                    END_IF;
+                ELSE
+                    CASE WORD_TO_UINT(wCmd) OF
+                    9: // Logout only after stop and disable.
+                        IF NOT GVL_RobotBridge.xRobotLinkOK OR NOT xTerminalStop
+                           OR GVL_RobotBridge.xRobotEnabled THEN wReject := WORD#9;
+                        ELSE
+                            GVL_RobotBridge.xHostRegistered := FALSE;
+                            GVL_RobotBridge.xHostAlive := FALSE;
+                            udiOwner := UDINT#0; xHasControlledRobot := FALSE;
+                            GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+                        END_IF;
+                    10: // Select coordinates vs AO21..32; no motion request.
+                        IF wParam > WORD#1 THEN wReject := WORD#8;
+                        ELSIF NOT GVL_RobotBridge.xCommissioned OR NOT GVL_RobotBridge.xRemotePermit
+                              OR NOT GVL_RobotBridge.xRobotLinkOK OR NOT xTerminalStop THEN wReject := WORD#9;
+                        ELSE xCoordinates := wParam = WORD#1;
+                             wAckResult := WORD#3; // Selection sent; no separate selector feedback.
+                        END_IF;
+                    11: // Explicitly rearm the communications stop latch, never automatic.
+                        IF NOT GVL_RobotBridge.xCommissioned OR NOT GVL_RobotBridge.xGdiProgramMappingConfirmed
+                           OR NOT GVL_RobotBridge.xRemotePermit
+                           OR NOT GVL_RobotBridge.xRobotLinkOK OR NOT xTerminalStop
+                           OR GVL_RobotBridge.xRobotEmergency OR GVL_RobotBridge.xRobotAlarm THEN wReject := WORD#9;
+                        ELSE
+                            GVL_RobotBridge.xStopInterlock := FALSE;
+                            xHasControlledRobot := FALSE; xLoadSent := FALSE;
+                            GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+                        END_IF;
+                    12: // Operator has CHECKED the actually loaded program on the pendant.
+                        IF GVL_FileBridge.xFixedUpdateBusy THEN wReject := WORD#9;
+                        ELSIF NOT xLoadSent OR NOT GVL_RobotBridge.xGdiProgramMappingConfirmed
+                           OR (wParam <> UINT_TO_WORD(uiSelectedProgram))
+                           OR NOT GVL_RobotBridge.xCommissioned OR NOT GVL_RobotBridge.xRemotePermit
+                           OR NOT GVL_RobotBridge.xRobotLinkOK OR NOT xTerminalStop
+                           OR GVL_RobotBridge.xRobotAlarm OR GVL_RobotBridge.xStopInterlock THEN wReject := WORD#9;
+                        ELSE GVL_RobotBridge.xLoadOperatorConfirmed := TRUE;
+                        END_IF;
+                    ELSE wReject := WORD#8;
+                    END_CASE;
+                END_IF;
+                IF wReject <> WORD#0 THEN
+                    wAckResult := WORD#4; wAckError := wReject;
+                END_IF;
+            END_IF;
+        END_IF;
+    END_IF;
+    IF wReject <> WORD#0 THEN
+        udiRejectedSeq := udiRequest; wLastReject := wReject;
+    END_IF;
+END_IF;
+
+// ----- Pulse timing: each phase owns a separate timer -----
+fbLowBefore(IN := (uiStep = UINT#10) AND NOT xNewAction, PT := T#500ms);
+fbPulse(IN := (uiStep = UINT#20) AND NOT xNewAction, PT := T#500ms);
+fbLowAfter(IN := (uiStep = UINT#30) AND NOT xNewAction, PT := T#500ms);
+fbActionTimeout(IN := (uiStep <> UINT#0) AND NOT xNewAction, PT := T#10s);
+IF (wAckCmd = WORD#5) AND (uiStep >= UINT#20)
+   AND GVL_RobotBridge.xRobotLinkOK AND GVL_RobotBridge.xRobotRunning THEN
+    xRunningSeen := TRUE;
+END_IF;
+CASE uiStep OF
+10: IF fbLowBefore.Q THEN uiStep := UINT#20; END_IF;
+20: IF fbPulse.Q THEN uiStep := UINT#30; END_IF;
+30: IF fbLowAfter.Q THEN uiStep := UINT#40; END_IF;
+40:
+    xConfirmed := FALSE;
+    CASE WORD_TO_UINT(wAckCmd) OF
+    2: xConfirmed := GVL_RobotBridge.xRobotEnabled;
+    3: xConfirmed := NOT GVL_RobotBridge.xRobotEnabled;
+    4: // The supplied standard word has NO dedicated load-complete bit.
+        xLoadSent := TRUE; wAckResult := WORD#3; uiStep := UINT#0;
+    5: xConfirmed := xRunningSeen;
+    6: xConfirmed := GVL_RobotBridge.xRobotPaused AND NOT GVL_RobotBridge.xRobotRunning;
+    7: xConfirmed := xTerminalStop;
+    8: xConfirmed := NOT GVL_RobotBridge.xRobotAlarm;
+    END_CASE;
+    IF xConfirmed AND GVL_RobotBridge.xRobotLinkOK THEN
+        wAckResult := WORD#2; wAckError := WORD#0; uiStep := UINT#0;
+    END_IF;
+END_CASE;
+IF fbActionTimeout.Q AND (uiStep <> UINT#0) THEN
+    uiStep := UINT#0; wAckResult := WORD#5; wAckError := WORD#10;
+    GVL_RobotBridge.xStopInterlock := TRUE;
+    GVL_RobotBridge.xLoadOperatorConfirmed := FALSE;
+END_IF;
+
+// ----- Single writer: FC16 offset 0, TWO consecutive WORDs -----
+// aRobotTx[0] owns DI33..48; [1] owns DI49..64. No other writer.
+// DI33..36 remain zero: remove legacy one-hot bindings before commissioning.
+// DI49 is GDI bit0, DI56 bit7; DI57..64 remain zero.
+// Program number settles for 500 ms BEFORE the load rising edge.
+GVL_RobotBridge.wRobotTxControl := WORD#0;
+IF GVL_RobotBridge.xCommissioned THEN
+    IF xCoordinates THEN
+        GVL_RobotBridge.wRobotTxControl := GVL_RobotBridge.wRobotTxControl OR WORD#16#1000;
+    END_IF;
+    IF uiStep = UINT#20 THEN
+        GVL_RobotBridge.wRobotTxControl := GVL_RobotBridge.wRobotTxControl OR wPulse;
+    END_IF;
+    IF GVL_RobotBridge.xStopInterlock THEN
+        GVL_RobotBridge.wRobotTxControl := WORD#16#0800;
+        // Hold STOP while allowing only the explicit clear-error pulse through.
+        // Never restore enable/load/start bits while a stop latch is set.
+        IF (uiStep = UINT#20) AND (wAckCmd = WORD#8) THEN
+            GVL_RobotBridge.wRobotTxControl := GVL_RobotBridge.wRobotTxControl OR WORD#16#0200;
+        END_IF;
+        IF xCoordinates THEN
+            GVL_RobotBridge.wRobotTxControl := GVL_RobotBridge.wRobotTxControl OR WORD#16#1000;
+        END_IF;
+    END_IF;
+END_IF;
+// Manual service requests use this same single writer; never add a second FC16 control channel.
+IF GVL_RobotBridge.xCommissioned THEN
+    IF GVL_ManualBridge.xStopRequest THEN
+        GVL_RobotBridge.wRobotTxControl := GVL_RobotBridge.wRobotTxControl OR WORD#16#0800;
+    ELSIF GVL_ManualBridge.xStartRequest AND NOT GVL_RobotBridge.xStopInterlock
+          AND GVL_RobotBridge.xRemotePermit AND GVL_RobotBridge.xRobotLinkOK
+          AND GVL_RobotBridge.xHostAlive AND GVL_RobotBridge.xLoadOperatorConfirmed
+          AND GVL_RobotBridge.xRobotExternalAuto AND GVL_RobotBridge.xRobotEnabled
+          AND NOT GVL_RobotBridge.xRobotAlarm AND NOT GVL_RobotBridge.xRobotEmergency
+          AND (uiStep = UINT#0) THEN
+        GVL_RobotBridge.wRobotTxControl := GVL_RobotBridge.wRobotTxControl OR WORD#16#0100;
+    END_IF;
+END_IF;
+GVL_RobotBridge.aRobotTx[0] := GVL_RobotBridge.wRobotTxControl;
+GVL_RobotBridge.aRobotTx[1] := WORD#0;
+IF GVL_RobotBridge.xCommissioned AND GVL_RobotBridge.xGdiProgramMappingConfirmed THEN
+    GVL_RobotBridge.aRobotTx[1] := UINT_TO_WORD(uiSelectedProgram) AND WORD#16#00FF;
+END_IF;
+GVL_RobotBridge.xBusy := uiStep <> UINT#0;
+
+// ----- PC status: HR300..363, exclusively written here -----
+FOR i := 0 TO 63 DO GVL_RobotBridge.aHostStatus[i] := WORD#0; END_FOR;
+IF wPlcHb = WORD#16#FFFF THEN wPlcHb := WORD#0;
+ELSE wPlcHb := UINT_TO_WORD(WORD_TO_UINT(wPlcHb) + UINT#1); END_IF;
+wFlags := WORD#1;
+IF GVL_RobotBridge.xRobotLinkOK THEN wFlags := wFlags OR WORD#16#0002; END_IF;
+IF GVL_RobotBridge.xRemotePermit THEN wFlags := wFlags OR WORD#16#0004; END_IF;
+IF GVL_RobotBridge.xHostRegistered THEN wFlags := wFlags OR WORD#16#0008; END_IF;
+IF GVL_RobotBridge.xHostAlive THEN wFlags := wFlags OR WORD#16#0010; END_IF;
+IF GVL_RobotBridge.xBusy THEN wFlags := wFlags OR WORD#16#0020; END_IF;
+IF GVL_RobotBridge.xCommissioned THEN wFlags := wFlags OR WORD#16#0040; END_IF;
+IF xCoordinates THEN wFlags := wFlags OR WORD#16#0080; END_IF;
+IF GVL_RobotBridge.xStopInterlock THEN wFlags := wFlags OR WORD#16#0100; END_IF;
+IF GVL_RobotBridge.xLoadOperatorConfirmed THEN wFlags := wFlags OR WORD#16#0200; END_IF;
+GVL_RobotBridge.aHostStatus[0] := WORD#16#4D42;
+GVL_RobotBridge.aHostStatus[1] := WORD#2;
+IF GVL_RobotBridge.xGdiProgramMappingConfirmed THEN wFlags := wFlags OR WORD#16#0400; END_IF;
+GVL_RobotBridge.aHostStatus[2] := wFlags;
+GVL_RobotBridge.aHostStatus[3] := UINT_TO_WORD(uiStep);
+GVL_RobotBridge.aHostStatus[4] := UDINT_TO_WORD(SHR(udiAckSeq, 16));
+GVL_RobotBridge.aHostStatus[5] := UDINT_TO_WORD(udiAckSeq AND UDINT#65535);
+GVL_RobotBridge.aHostStatus[6] := wAckCmd;
+GVL_RobotBridge.aHostStatus[7] := wAckResult;
+GVL_RobotBridge.aHostStatus[8] := wAckError;
+GVL_RobotBridge.aHostStatus[9] := wLastHostHb;
+GVL_RobotBridge.aHostStatus[10] := UDINT_TO_WORD(SHR(GVL_RobotBridgeRetain.udiBootCounter, 16));
+GVL_RobotBridge.aHostStatus[11] := UDINT_TO_WORD(GVL_RobotBridgeRetain.udiBootCounter AND UDINT#65535);
+GVL_RobotBridge.aHostStatus[12] := wPlcHb;
+GVL_RobotBridge.aHostStatus[13] := UINT_TO_WORD(uiSelectedProgram);
+GVL_RobotBridge.aHostStatus[14] := GVL_RobotBridge.wRobotTxControl;
+GVL_RobotBridge.aHostStatus[15] := UDINT_TO_WORD(SHR(udiOwner, 16));
+GVL_RobotBridge.aHostStatus[16] := UDINT_TO_WORD(udiOwner AND UDINT#65535);
+GVL_RobotBridge.aHostStatus[17] := GVL_RobotBridge.aRobotRx[0];
+IF NOT GVL_RobotBridge.xRobotLinkOK THEN GVL_RobotBridge.aHostStatus[18] := WORD#0;
+ELSIF GVL_RobotBridge.xRobotEmergency THEN GVL_RobotBridge.aHostStatus[18] := WORD#5;
+ELSIF GVL_RobotBridge.xRobotAlarm THEN GVL_RobotBridge.aHostStatus[18] := WORD#4;
+ELSIF GVL_RobotBridge.xRobotPaused THEN GVL_RobotBridge.aHostStatus[18] := WORD#3;
+ELSIF GVL_RobotBridge.xRobotRunning THEN GVL_RobotBridge.aHostStatus[18] := WORD#2;
+ELSIF xTerminalStop THEN GVL_RobotBridge.aHostStatus[18] := WORD#1;
+END_IF;
+FOR i := 0 TO 31 DO
+    GVL_RobotBridge.aHostStatus[20 + i] := GVL_RobotBridge.aRobotRx[i];
+END_FOR;
+GVL_RobotBridge.aHostStatus[52] := UDINT_TO_WORD(SHR(udiRejectedSeq, 16));
+GVL_RobotBridge.aHostStatus[53] := UDINT_TO_WORD(udiRejectedSeq AND UDINT#65535);
+GVL_RobotBridge.aHostStatus[54] := wLastReject;
+GVL_RobotBridge.aHostStatus[55] := UDINT_TO_WORD(SHR(udiInterruptedSeq, 16));
+GVL_RobotBridge.aHostStatus[56] := UDINT_TO_WORD(udiInterruptedSeq AND UDINT#65535);
+GVL_RobotBridge.aHostStatus[62] := wHbCount;
+
+// V2 capability block; desired program word is NOT robot readback.
+GVL_RobotBridge.aHostStatus[57] := WORD#1; // selection mode: 1 = GDI8
+GVL_RobotBridge.aHostStatus[58] := WORD#255; // maximum program number
+GVL_RobotBridge.aHostStatus[59] := GVL_RobotBridge.aRobotTx[1];
+GVL_RobotBridge.aHostStatus[60] := WORD#49; // first GDI DI (bit0)
+GVL_RobotBridge.aHostStatus[61] := WORD#56; // last GDI DI (bit7)
+GVL_RobotBridge.aHostStatus[63] := WORD#2; // robot FC16 write word count

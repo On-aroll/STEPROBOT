@@ -1,0 +1,31 @@
+{
+  "date": "2026-11-19",
+  "source": "User screenshot of EtherCAT I/O mapping current values",
+  "screenshot": "C:/Users/6/AppData/Local/Temp/codex-clipboard-c07ac645-5629-4a15-92fb-bed7a86f2208.png",
+  "slave_node": "LAN9252_EVB_SPI",
+  "application_running": true,
+  "displayed_type": "BYTE",
+  "displayed_input_addresses": {"first": "%IB64", "last": "%IB78"},
+  "displayed_output_addresses": {"first": "%QB12", "last": "%QB26"},
+  "displayed_process_inputs": [34, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "displayed_process_outputs": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+  "legacy_protocol_interpretation": {
+    "premise": "User reports identical application protocol; definitions from existing PRG_WelderIo",
+    "byte0_hex": "0x22",
+    "ready_bit1": true,
+    "arc_ok_bit0": false,
+    "current_present_bit3": false,
+    "uninterpreted_set_bits_byte0": [5],
+    "byte1_hex": "0x08",
+    "water_protection_bit3": true
+  },
+  "limitations": {
+    "fault_diagnostics_page_not_shown": true,
+    "slave_operational_state_not_shown": true,
+    "data_freshness_independently_verified": false,
+    "full_application_field_compatibility_verified": false,
+    "panel_EOR_definition_verified": false,
+    "full_32_byte_migration_verified": false
+  },
+  "next_step": "Check actual cooling-system connection and indications while keeping current I/O baseline and welding output tasks disabled."
+}

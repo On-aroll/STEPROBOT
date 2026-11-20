@@ -1,0 +1,12 @@
+FUNCTION F_FileNameValid : BOOL
+VAR_INPUT
+    sName : STRING(64);
+    xProject : BOOL;
+END_VAR
+VAR
+    pName : POINTER TO BYTE;
+    uiI : UINT;
+    uiBaseLength : UINT;
+    xValid : BOOL;
+    xChar : BOOL;
+END_VAR

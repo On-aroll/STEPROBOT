@@ -1,0 +1,7 @@
+(* Reused from lower.project CommPoll: unchanged PDO byte encoding and feedback units. *)
+PROGRAM PRG_WelderIo
+VAR
+    nTempU16 : UINT;
+    nTempI16 : INT;
+    byTemp : BYTE;
+END_VAR

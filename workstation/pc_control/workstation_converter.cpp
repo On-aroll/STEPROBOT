@@ -112,7 +112,7 @@ QString openConversionDialog(QWidget* parent, const Job& nativeTemplate, const Q
         }
         report->setPlainText(conversionReport(compiled));
         save->setEnabled(compiled.runnable());
-        status->setText(compiled.error.isEmpty() ? "转换通过 · 7 个工程文件 · 待 STEPStudio 仿真验证" : "转换失败 · 请按源文件行号修正，未生成可执行工程");
+        status->setText(compiled.error.isEmpty() ? QString("转换通过 · %1 个原生文件 · 待 STEPStudio 仿真验证").arg(compiled.files.size()) : "转换失败 · 请按源文件行号修正，未生成可执行工程");
     });
     QObject::connect(tree, &QTreeWidget::itemDoubleClicked, &dialog, [&](QTreeWidgetItem* item, int) {
         if (!compiled.files.contains(item->text(0))) return;

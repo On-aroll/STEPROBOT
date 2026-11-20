@@ -1,0 +1,29 @@
+(* Reflected CRC32, two nibble lookups per byte; no initialization scan. *)
+udiCrc := udiSeed;
+IF uiCount > UINT#0 THEN
+    FOR uiI := UINT#0 TO uiCount - UINT#1 DO
+        udiCrc := udiCrc XOR BYTE_TO_UDINT(pData[uiI]);
+        FOR uiNibble := UINT#0 TO UINT#1 DO
+            CASE udiCrc AND UDINT#15 OF
+                0: udiTable := UDINT#16#00000000;
+                1: udiTable := UDINT#16#1DB71064;
+                2: udiTable := UDINT#16#3B6E20C8;
+                3: udiTable := UDINT#16#26D930AC;
+                4: udiTable := UDINT#16#76DC4190;
+                5: udiTable := UDINT#16#6B6B51F4;
+                6: udiTable := UDINT#16#4DB26158;
+                7: udiTable := UDINT#16#5005713C;
+                8: udiTable := UDINT#16#EDB88320;
+                9: udiTable := UDINT#16#F00F9344;
+                10: udiTable := UDINT#16#D6D6A3E8;
+                11: udiTable := UDINT#16#CB61B38C;
+                12: udiTable := UDINT#16#9B64C2B0;
+                13: udiTable := UDINT#16#86D3D2D4;
+                14: udiTable := UDINT#16#A00AE278;
+                15: udiTable := UDINT#16#BDBDF21C;
+            END_CASE;
+            udiCrc := SHR(udiCrc, 4) XOR udiTable;
+        END_FOR;
+    END_FOR;
+END_IF;
+F_FileCrc32Fast := udiCrc;

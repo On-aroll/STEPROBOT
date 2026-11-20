@@ -1,0 +1,10 @@
+{
+  "bytes": 40000,
+  "batch_bytes": 8192,
+  "new_total_scans": 54,
+  "data_send_calls": 5,
+  "data_recv_calls_including_eof": 6,
+  "old_minimum_data_scans": 120000,
+  "physical_device_connected": false,
+  "note": "Scan-count simulation only; not measured PLC execution time or field throughput."
+}

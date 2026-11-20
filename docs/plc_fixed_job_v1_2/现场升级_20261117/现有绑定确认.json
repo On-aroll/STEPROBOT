@@ -1,0 +1,13 @@
+{
+  "confirmation_date_local": "2026-11-17",
+  "timezone": "Asia/Shanghai",
+  "project": "pcjob_20261116_201104_7f547f98.sr",
+  "destination": "/UserPrograms/pcjob_20261116_201104_7f547f98.sr",
+  "confirmation_source": "User supplied the exact existing bound project name in this conversation; numbers 1/2/3 were confirmed in preceding user messages.",
+  "numbers": {"capture_home": 1, "helix_25mms": 2, "go_home": 3},
+  "binding_independently_read_from_device": false,
+  "device_connection_made_by_agent": false,
+  "plc_program_downloaded": false,
+  "field_fixed_replacement_verified": false,
+  "field_same_name_reload_verified": false
+}

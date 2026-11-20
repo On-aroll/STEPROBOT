@@ -1,6 +1,4 @@
-# 注意：本文件在仓库根（D:\Desktop\STEPROBOT），代码在 实验准备/ 之下。
-# 所以模式一律写成"任意深度匹配"（裸目录名，不带前导斜杠）——
-# 之前写成 上位机/logs/ 会被锚定到根目录而完全失效，教训记在这里。
+# 源码与技术资料入库；本机依赖、凭据、构建产物和运行数据留在本地。
 
 # ── 构建产物 ──────────────────────────────────────────────
 bin/
@@ -66,3 +64,14 @@ desktop.ini
 # 本机构建目录与依赖下载日志（可再生，不入库，2026-11-14）
 build_ninja/
 aqtinstall.log
+
+# R6.4 本机依赖、现场配置及可重建产物（2026-11-20）
+/tmp/
+/output/
+/vendor/
+workstation.local.ini
+*.local.ini
+workstation/build*/
+workstation/pc_control/build*/
+workstation/pc_control/native*/
+workstation/pc_control/assets/*.mesh

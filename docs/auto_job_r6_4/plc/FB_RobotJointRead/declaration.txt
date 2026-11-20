@@ -1,0 +1,47 @@
+FUNCTION_BLOCK FB_RobotJointRead
+VAR_INPUT
+    xEnable : BOOL;
+    sAddress : STRING(15);
+    uiPort : UINT;
+    byUnit : BYTE;
+END_VAR
+VAR_OUTPUT
+    xValid : BOOL;
+    xError : BOOL;
+    xCleanupFault : BOOL;
+    wErrorID : WORD;
+    uiStep : UINT;
+    udiCounter : UDINT;
+    uiAgeMs : UINT;
+    aWords : ARRAY[0..11] OF WORD;
+END_VAR
+VAR CONSTANT
+    // Dedicated read-only socket. Never share with FTP IDs245/246.
+    cdiConnectID : DINT := DINT#244;
+END_VAR
+VAR
+    stServer : CmpHCTCPIP.ADDRESS;
+    fbClient : CmpHCTCPIP.SktTCPClient;
+    fbClose : CmpHCTCPIP.SktClose;
+    fbIo : FB_FileSocketIo;
+    fbReplyTime : TON;
+    fbCloseTime : TON;
+    fbPollTime : TON;
+    fbRetryTime : TON;
+    fbAge : TON;
+    xOwned : BOOL;
+    xStop : BOOL;
+    xUpdated : BOOL;
+    xFail : BOOL;
+    sRunAddress : STRING(15);
+    uiRunPort : UINT;
+    byRunUnit : BYTE;
+    uiTransaction : UINT;
+    uiSent : UINT;
+    uiReceived : UINT;
+    uiSendSize : UINT;
+    pSend : POINTER TO BYTE;
+    aRequest : ARRAY[0..11] OF BYTE;
+    aResponse : ARRAY[0..32] OF BYTE;
+    i : UINT;
+END_VAR

@@ -33,8 +33,17 @@ struct ConversionSettings {
     bool omitProcessOutputs = false;
 };
 
+struct GcodeSnapshot {
+    QStringList source;
+    QByteArray bytes;
+    QVector<Step> steps;
+    ConversionSettings conversion;
+    int start = 1;
+};
+
 struct Job {
     QString name;
+    QString inputPath;
     QByteArray inputBytes;
     QString project;
     QString program;
@@ -60,9 +69,14 @@ struct Job {
     bool modified = false;
     bool localEdits = false;
     bool trustedGcode = false;
+    bool automaticPatch = false;
+    QString previewNote;
+    QMap<QString, QVector<Point>> programPaths;
+    QMap<QString, QString> programSources;
+    QMap<QString, GcodeSnapshot> programGcodes;
     ConversionSettings conversion;
 
-    bool runnable() const { return error.isEmpty() && (nativeInput ? reviewed || trustedGcode : !steps.isEmpty()); }
+    bool runnable() const { return !automaticPatch && error.isEmpty() && (nativeInput ? reviewed || trustedGcode : !steps.isEmpty()); }
 };
 
 Job readNativeJob(const QString& path);
@@ -70,10 +84,12 @@ void showNativeSource(Job& job, const QString& program);
 void showNativeFile(Job& job, const QString& name);
 QString updateNativeFile(Job& job, const QString& name, const QByteArray& bytes);
 void showMappedSource(Job& job);
+bool showProgramGcode(Job& job, const QString& program);
 QString associateNativeGcode(Job& job, const QString& mappingPath);
 bool restoreMappedPreview(Job& job, const Job& nativeTemplate);
 int sourceRowForNativeLine(const Job& job, const QString& project, const QString& program, int nativeLine);
 Job readGcodeJob(const QString& path, const Job& nativeTemplate, ConversionSettings settings = {});
+Job readGcodeBytes(const QString& path, const QByteArray& bytes, const Job& nativeTemplate, ConversionSettings settings = {}, int start = 1);
 Job compileGcodeJob(QString name, const QStringList& source, int start, const Job& nativeTemplate, ConversionSettings settings = {});
 QString exportStepJob(const Job& job, const QString& zipPath);
 QString conversionReport(const Job& job);

@@ -1,0 +1,11 @@
+FUNCTION F_FileCrc32 : UDINT
+VAR_INPUT
+    pData : POINTER TO BYTE;
+    uiCount : UINT;
+    udiSeed : UDINT;
+END_VAR
+VAR
+    udiCrc : UDINT;
+    uiI : UINT;
+    uiBit : UINT;
+END_VAR

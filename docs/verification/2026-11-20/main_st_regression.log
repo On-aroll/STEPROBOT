@@ -1,0 +1,38 @@
+test_all_255_program_numbers_are_exact_and_never_run (main_regression.STSourceTests.test_all_255_program_numbers_are_exact_and_never_run) ... ok
+test_all_32_robot_words_are_mirrored (main_regression.STSourceTests.test_all_32_robot_words_are_mirrored) ... ok
+test_already_enabled_does_not_toggle_power (main_regression.STSourceTests.test_already_enabled_does_not_toggle_power) ... ok
+test_busy_rejection_does_not_replace_inflight_ack (main_regression.STSourceTests.test_busy_rejection_does_not_replace_inflight_ack) ... ok
+test_confirm_load_and_run_feedback (main_regression.STSourceTests.test_confirm_load_and_run_feedback) ... ok
+test_enable_has_one_pulse_and_requires_feedback (main_regression.STSourceTests.test_enable_has_one_pulse_and_requires_feedback) ... ok
+test_feedback_timeout_does_not_repeat_enable_toggle (main_regression.STSourceTests.test_feedback_timeout_does_not_repeat_enable_toggle) ... ok
+test_gdi_mapping_is_local_and_required (main_regression.STSourceTests.test_gdi_mapping_is_local_and_required) ... ok
+test_gdi_mapping_loss_latches_stop_and_clears_confirmation (main_regression.STSourceTests.test_gdi_mapping_loss_latches_stop_and_clears_confirmation) ... ok
+test_invalid_parameter_and_reserved_fields_rejected (main_regression.STSourceTests.test_invalid_parameter_and_reserved_fields_rejected) ... ok
+test_leaving_external_auto_invalidates_load_confirmation (main_regression.STSourceTests.test_leaving_external_auto_invalidates_load_confirmation) ... ok
+test_pc_loss_stops_and_does_not_re_register_old_frame (main_regression.STSourceTests.test_pc_loss_stops_and_does_not_re_register_old_frame) ... ok
+test_program16_is_stable_before_single_load_edge (main_regression.STSourceTests.test_program16_is_stable_before_single_load_edge) ... ok
+test_program3_is_binary_gdi_and_load_is_unconfirmed (main_regression.STSourceTests.test_program3_is_binary_gdi_and_load_is_unconfirmed) ... ok
+test_register_and_metadata (main_regression.STSourceTests.test_register_and_metadata) ... ok
+test_robot_loss_sets_interlock_and_needs_explicit_rearm (main_regression.STSourceTests.test_robot_loss_sets_interlock_and_needs_explicit_rearm) ... ok
+test_same_sequence_changed_payload_rejected (main_regression.STSourceTests.test_same_sequence_changed_payload_rejected) ... ok
+test_stale_register_on_boot_is_ignored (main_regression.STSourceTests.test_stale_register_on_boot_is_ignored) ... ok
+test_static_heartbeat_other_status_changes_do_not_prove_link (main_regression.STSourceTests.test_static_heartbeat_other_status_changes_do_not_prove_link) ... ok
+test_stop_allowed_when_remote_permit_is_revoked (main_regression.STSourceTests.test_stop_allowed_when_remote_permit_is_revoked) ... ok
+test_stop_preempts_and_has_own_full_low_high_cycle (main_regression.STSourceTests.test_stop_preempts_and_has_own_full_low_high_cycle) ... ok
+test_uncommissioned_and_no_permit_cannot_enable (main_regression.STSourceTests.test_uncommissioned_and_no_permit_cannot_enable) ... ok
+test_v1_client_is_rejected_without_output (main_regression.STSourceTests.test_v1_client_is_rejected_without_output) ... ok
+test_wrong_owner_and_boot_cannot_control (main_regression.STSourceTests.test_wrong_owner_and_boot_cannot_control) ... ok
+test_wrong_owner_heartbeat_does_not_keep_session_alive (main_regression.STSourceTests.test_wrong_owner_heartbeat_does_not_keep_session_alive) ... ok
+test_zero_256_and_65535_do_not_change_selected_program (main_regression.STSourceTests.test_zero_256_and_65535_do_not_change_selected_program) ... ok
+test_active_service_rejects_load_enable_run_but_allows_stop (__main__.ManualOwnershipTests.test_active_service_rejects_load_enable_run_but_allows_stop) ... ok
+test_manual_requests_use_same_control_array_and_stop_wins (__main__.ManualOwnershipTests.test_manual_requests_use_same_control_array_and_stop_wins) ... ok
+test_clearing_never_allowed_during_running_paused_or_emergency (__main__.AlarmRecoveryTests.test_clearing_never_allowed_during_running_paused_or_emergency) ... ok
+test_latched_alarm_clear_has_one_pulse_keeps_stop_and_never_moves (__main__.AlarmRecoveryTests.test_latched_alarm_clear_has_one_pulse_keeps_stop_and_never_moves) ... ok
+test_later_alarm_after_clear_latches_stop_again (__main__.AlarmRecoveryTests.test_later_alarm_after_clear_latches_stop_again) ... ok
+test_persistent_alarm_times_out_once_and_blocks_rearm (__main__.AlarmRecoveryTests.test_persistent_alarm_times_out_once_and_blocks_rearm) ... ok
+test_summary_low_acknowledgement_still_emits_clear (__main__.AlarmRecoveryTests.test_summary_low_acknowledgement_still_emits_clear) ... ok
+
+----------------------------------------------------------------------
+Ran 33 tests in 21.121s
+
+OK

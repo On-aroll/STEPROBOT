@@ -2,6 +2,7 @@
 
 #include <QElapsedTimer>
 #include <QObject>
+#include <QQueue>
 #include <QTcpSocket>
 #include <QTimer>
 #include <QVector>
@@ -27,6 +28,7 @@ class ModbusClient : public QObject {
     Q_OBJECT
 public:
     explicit ModbusClient(QObject* parent = nullptr);
+    ~ModbusClient() override;
 
     void connectTo(const QString& host, quint16 port, quint8 unitId = 1);
     void disconnectFrom(const QString& reason = {});
@@ -34,6 +36,8 @@ public:
     bool isActive() const { return socket.state() != QAbstractSocket::UnconnectedState; }
 
     void setPollRange(int functionCode, int startAddress, int count);
+    void setPollInterval(int milliseconds);
+    void writePriorityRegisters(int address, const QVector<quint16>& values, int discardStart, int discardCount);
     void writeRegister(int address, quint16 value);
     void writeRegisters(int address, const QVector<quint16>& values);
 
@@ -61,9 +65,11 @@ private:
     quint16 transaction = 0;
     quint8 unit = 1;
     int inFlightFunction = 0;
-    bool writeQueued = false;
-    int writeFunction = 0, writeAddress = 0;
-    QVector<quint16> writeValues;
+    struct WriteRequest { int function; int address; QVector<quint16> values; };
+    QQueue<WriteRequest> writes;
+    bool pollDue = true;
+    int activeAddress = 0, activeCount = 0;
+    quint16 activeValue = 0;
     int pollFunction = 3, pollStart = ModbusMap::BaseAddress, pollCount = ModbusMap::WordCount;
     QElapsedTimer roundTrip;
     qint64 sentFramesCounter = 0, receivedFramesCounter = 0, errorCounter = 0, lastRoundTrip = 0;

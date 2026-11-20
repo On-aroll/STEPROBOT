@@ -1,0 +1,65 @@
+Direction_PLC_view,FC,Offset_0based,Reference,PLC_variable,Contents,Enabled_in_this_version,PC_mirror_HR
+Robot_to_PLC,4,0,30001,GVL_RobotBridge.aRobotRx[0],DO33..DO48,YES,320
+Robot_to_PLC,4,1,30002,GVL_RobotBridge.aRobotRx[1],DO49..DO64,YES,321
+Robot_to_PLC,4,2,30003,GVL_RobotBridge.aRobotRx[2],DO65..DO80,YES,322
+Robot_to_PLC,4,3,30004,GVL_RobotBridge.aRobotRx[3],DO81..DO96,YES,323
+Robot_to_PLC,4,4,30005,GVL_RobotBridge.aRobotRx[4],AO5,YES,324
+Robot_to_PLC,4,5,30006,GVL_RobotBridge.aRobotRx[5],AO6,YES,325
+Robot_to_PLC,4,6,30007,GVL_RobotBridge.aRobotRx[6],AO7,YES,326
+Robot_to_PLC,4,7,30008,GVL_RobotBridge.aRobotRx[7],AO8,YES,327
+Robot_to_PLC,4,8,30009,GVL_RobotBridge.aRobotRx[8],AO9,YES,328
+Robot_to_PLC,4,9,30010,GVL_RobotBridge.aRobotRx[9],AO10,YES,329
+Robot_to_PLC,4,10,30011,GVL_RobotBridge.aRobotRx[10],AO11,YES,330
+Robot_to_PLC,4,11,30012,GVL_RobotBridge.aRobotRx[11],AO12,YES,331
+Robot_to_PLC,4,12,30013,GVL_RobotBridge.aRobotRx[12],AO13,YES,332
+Robot_to_PLC,4,13,30014,GVL_RobotBridge.aRobotRx[13],AO14,YES,333
+Robot_to_PLC,4,14,30015,GVL_RobotBridge.aRobotRx[14],AO15,YES,334
+Robot_to_PLC,4,15,30016,GVL_RobotBridge.aRobotRx[15],AO16,YES,335
+Robot_to_PLC,4,16,30017,GVL_RobotBridge.aRobotRx[16],AO17,YES,336
+Robot_to_PLC,4,17,30018,GVL_RobotBridge.aRobotRx[17],AO18,YES,337
+Robot_to_PLC,4,18,30019,GVL_RobotBridge.aRobotRx[18],AO19,YES,338
+Robot_to_PLC,4,19,30020,GVL_RobotBridge.aRobotRx[19],AO20,YES,339
+Robot_to_PLC,4,20,30021,GVL_RobotBridge.aRobotRx[20],AO21 / XYZABC[0] low word,YES,340
+Robot_to_PLC,4,21,30022,GVL_RobotBridge.aRobotRx[21],AO22 / XYZABC[0] high word,YES,341
+Robot_to_PLC,4,22,30023,GVL_RobotBridge.aRobotRx[22],AO23 / XYZABC[1] low word,YES,342
+Robot_to_PLC,4,23,30024,GVL_RobotBridge.aRobotRx[23],AO24 / XYZABC[1] high word,YES,343
+Robot_to_PLC,4,24,30025,GVL_RobotBridge.aRobotRx[24],AO25 / XYZABC[2] low word,YES,344
+Robot_to_PLC,4,25,30026,GVL_RobotBridge.aRobotRx[25],AO26 / XYZABC[2] high word,YES,345
+Robot_to_PLC,4,26,30027,GVL_RobotBridge.aRobotRx[26],AO27 / XYZABC[3] low word,YES,346
+Robot_to_PLC,4,27,30028,GVL_RobotBridge.aRobotRx[27],AO28 / XYZABC[3] high word,YES,347
+Robot_to_PLC,4,28,30029,GVL_RobotBridge.aRobotRx[28],AO29 / XYZABC[4] low word,YES,348
+Robot_to_PLC,4,29,30030,GVL_RobotBridge.aRobotRx[29],AO30 / XYZABC[4] high word,YES,349
+Robot_to_PLC,4,30,30031,GVL_RobotBridge.aRobotRx[30],AO31 / XYZABC[5] low word,YES,350
+Robot_to_PLC,4,31,30032,GVL_RobotBridge.aRobotRx[31],AO32 / XYZABC[5] high word,YES,351
+PLC_to_Robot,16,0,40001,GVL_RobotBridge.aRobotTx[0],DI33..48 (DI33..36 fixed zero),YES,314
+PLC_to_Robot,16,1,40002,GVL_RobotBridge.aRobotTx[1],DI49..56 binary GDI 1..255; DI57..64 zero,YES,359
+PLC_to_Robot,16,2,40003,NOT_MAPPED,DI65..DI80,NO,
+PLC_to_Robot,16,3,40004,NOT_MAPPED,DI81..DI96,NO,
+PLC_to_Robot,16,4,40005,NOT_MAPPED,AI5,NO,
+PLC_to_Robot,16,5,40006,NOT_MAPPED,AI6,NO,
+PLC_to_Robot,16,6,40007,NOT_MAPPED,AI7,NO,
+PLC_to_Robot,16,7,40008,NOT_MAPPED,AI8,NO,
+PLC_to_Robot,16,8,40009,NOT_MAPPED,AI9,NO,
+PLC_to_Robot,16,9,40010,NOT_MAPPED,AI10,NO,
+PLC_to_Robot,16,10,40011,NOT_MAPPED,AI11,NO,
+PLC_to_Robot,16,11,40012,NOT_MAPPED,AI12,NO,
+PLC_to_Robot,16,12,40013,NOT_MAPPED,AI13,NO,
+PLC_to_Robot,16,13,40014,NOT_MAPPED,AI14,NO,
+PLC_to_Robot,16,14,40015,NOT_MAPPED,AI15,NO,
+PLC_to_Robot,16,15,40016,NOT_MAPPED,AI16,NO,
+PLC_to_Robot,16,16,40017,NOT_MAPPED,AI17 / port248 low word,NO,
+PLC_to_Robot,16,17,40018,NOT_MAPPED,AI18 / port248 high word,NO,
+PLC_to_Robot,16,18,40019,NOT_MAPPED,AI19 / port249 low word,NO,
+PLC_to_Robot,16,19,40020,NOT_MAPPED,AI20 / port249 high word,NO,
+PLC_to_Robot,16,20,40021,NOT_MAPPED,AI21 / port250 low word,NO,
+PLC_to_Robot,16,21,40022,NOT_MAPPED,AI22 / port250 high word,NO,
+PLC_to_Robot,16,22,40023,NOT_MAPPED,AI23 / port251 low word,NO,
+PLC_to_Robot,16,23,40024,NOT_MAPPED,AI24 / port251 high word,NO,
+PLC_to_Robot,16,24,40025,NOT_MAPPED,AI25 / port252 low word,NO,
+PLC_to_Robot,16,25,40026,NOT_MAPPED,AI26 / port252 high word,NO,
+PLC_to_Robot,16,26,40027,NOT_MAPPED,AI27 / port253 low word,NO,
+PLC_to_Robot,16,27,40028,NOT_MAPPED,AI28 / port253 high word,NO,
+PLC_to_Robot,16,28,40029,NOT_MAPPED,AI29 / port254 low word,NO,
+PLC_to_Robot,16,29,40030,NOT_MAPPED,AI30 / port254 high word,NO,
+PLC_to_Robot,16,30,40031,NOT_MAPPED,AI31 / port255 low word,NO,
+PLC_to_Robot,16,31,40032,NOT_MAPPED,AI32 / port255 high word,NO,

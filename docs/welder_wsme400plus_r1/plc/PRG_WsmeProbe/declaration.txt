@@ -1,0 +1,65 @@
+(* WSME 400PLUS commissioning: read-only CoE inspection, no PDO writes.
+   One PROGRAM call per scan. Uses CmpHCCom 1.1.1.0 ETC_COE_SdoRead.
+   Set uiSlaveAddress from the actual slave address, then pulse xStart.
+   xDone means the transport layout was read; it NEVER authorizes welding. *)
+PROGRAM PRG_WsmeProbe
+VAR
+    usiMaster : USINT := 1;
+    uiSlaveAddress : UINT := 1001;
+    xStart : BOOL := FALSE;
+    xAbort : BOOL := FALSE;
+    xBusy : BOOL;
+    xDone : BOOL;
+    xError : BOOL;
+    uiError : UINT;
+    wErrorIndex : WORD;
+    byErrorSubIndex : BYTE;
+    eLastReadError : IoDrvEthercatLib.ETC_CO_ERROR;
+    udiLastSdoAbortCode : UDINT;
+    udiLastDataRead : ULINT;
+    xReadBusySeen : BOOL;
+    xReadDoneSeen : BOOL;
+    xReadErrorSeen : BOOL;
+    udiVendor : UDINT;
+    udiProduct : UDINT;
+    udiRevision : UDINT;
+    udiSerial : UDINT;
+    uiRxPdoCount : UINT;
+    uiTxPdoCount : UINT;
+    wRxPdoIndex : WORD;
+    wTxPdoIndex : WORD;
+    uiRxCount : UINT;
+    uiTxCount : UINT;
+    aRxMap : ARRAY[0..31] OF UDINT;
+    aTxMap : ARRAY[0..31] OF UDINT;
+    aRxIndex : ARRAY[0..31] OF WORD;
+    aTxIndex : ARRAY[0..31] OF WORD;
+    aRxSubIndex : ARRAY[0..31] OF BYTE;
+    aTxSubIndex : ARRAY[0..31] OF BYTE;
+    aRxBitLength : ARRAY[0..31] OF BYTE;
+    aTxBitLength : ARRAY[0..31] OF BYTE;
+    aRxBitOffset : ARRAY[0..31] OF UINT;
+    aTxBitOffset : ARRAY[0..31] OF UINT;
+    uiRxBits : UINT;
+    uiTxBits : UINT;
+    uiRxBytes : UINT;
+    uiTxBytes : UINT;
+    xRxByteAligned : BOOL;
+    xTxByteAligned : BOOL;
+    fbRead : CmpHCCom.ETC_COE_SdoRead;
+    abyReadData : ARRAY[0..3] OF BYTE;
+    fbTimeout : TON;
+    xStartOld : BOOL;
+    xStartEdge : BOOL;
+    usiMasterRun : USINT;
+    uiSlaveRun : UINT;
+    uiStep : UINT;
+    uiPhase : UINT;
+    uiEntry : UINT;
+    uiI : UINT;
+    wReadIndex : WORD;
+    byReadSubIndex : BYTE;
+    uiExpectedLength : UINT;
+    udiValue : UDINT;
+    byBits : BYTE;
+END_VAR

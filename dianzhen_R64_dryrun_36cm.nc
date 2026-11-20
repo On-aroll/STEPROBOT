@@ -1,0 +1,476 @@
+; R6.4 DRY RUN - 36 cm lattice; cell-transfer and final-retract repair.
+; G21 mm: unit cell 120 x 120 x 120; printed lattice 360 x 360 x 360.
+; Coordinates use the saved robot experiment origin and fixed tool direction.
+; No extrusion, welding output, homing or origin capture is generated.
+; Preserve the 162 original struts and their 15 mm/s feed.
+; Cell transfer: lift, move XY above completed structure, then descend.
+; Transfer Z = max(completed structure Z, destination Z) + 50 mm.
+; Travel feed is 20 mm/s. Final position is X300 Y240 Z410 mm.
+; Select omit process outputs for the retained M05 before conversion.
+G21 G17 G94 G91.1
+G90
+
+; i=0,j=0, cx=60,cy=60,cz=60
+; Cell 1/27: enter via clearance Z110 mm.
+G1 Z110 F1200
+G4 P1 ; retain the original 1 second dwell
+G1 X120 Y120 Z110 F1200
+G1 Z60 F1200
+G1 X0 Y0 Z60  F900 ; DRY RUN: E0.3394 omitted; no extrusion
+G1 X0 Y120 Z60 F1200
+G1 X120 Y0 Z60  F900 ; DRY RUN: E0.6788 omitted; no extrusion
+G1 X120 Y60 Z120 F1200
+G1 X0 Y60 Z0  F900 ; DRY RUN: E1.0182 omitted; no extrusion
+G1 X120 Y60 Z0 F1200
+G1 X0 Y60 Z120  F900 ; DRY RUN: E1.3576 omitted; no extrusion
+G1 X60 Y120 Z120 F1200
+G1 X60 Y0 Z0  F900 ; DRY RUN: E1.6970 omitted; no extrusion
+G1 X60 Y120 Z0 F1200
+G1 X60 Y0 Z120  F900 ; DRY RUN: E2.0364 omitted; no extrusion
+
+; i=0,j=1, cx=60,cy=180,cz=60
+; Cell 2/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X120 Y240 Z170 F1200
+G1 Z60 F1200
+G1 X0 Y120 Z60  F900 ; DRY RUN: E2.3758 omitted; no extrusion
+G1 X0 Y240 Z60 F1200
+G1 X120 Y120 Z60  F900 ; DRY RUN: E2.7152 omitted; no extrusion
+G1 X120 Y180 Z120 F1200
+G1 X0 Y180 Z0  F900 ; DRY RUN: E3.0546 omitted; no extrusion
+G1 X120 Y180 Z0 F1200
+G1 X0 Y180 Z120  F900 ; DRY RUN: E3.3940 omitted; no extrusion
+G1 X60 Y240 Z120 F1200
+G1 X60 Y120 Z0  F900 ; DRY RUN: E3.7334 omitted; no extrusion
+G1 X60 Y240 Z0 F1200
+G1 X60 Y120 Z120  F900 ; DRY RUN: E4.0728 omitted; no extrusion
+
+; i=0,j=2, cx=60,cy=300,cz=60
+; Cell 3/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X120 Y360 Z170 F1200
+G1 Z60 F1200
+G1 X0 Y240 Z60  F900 ; DRY RUN: E4.4122 omitted; no extrusion
+G1 X0 Y360 Z60 F1200
+G1 X120 Y240 Z60  F900 ; DRY RUN: E4.7516 omitted; no extrusion
+G1 X120 Y300 Z120 F1200
+G1 X0 Y300 Z0  F900 ; DRY RUN: E5.0910 omitted; no extrusion
+G1 X120 Y300 Z0 F1200
+G1 X0 Y300 Z120  F900 ; DRY RUN: E5.4304 omitted; no extrusion
+G1 X60 Y360 Z120 F1200
+G1 X60 Y240 Z0  F900 ; DRY RUN: E5.7698 omitted; no extrusion
+G1 X60 Y360 Z0 F1200
+G1 X60 Y240 Z120  F900 ; DRY RUN: E6.1092 omitted; no extrusion
+
+; i=1,j=0, cx=180,cy=60,cz=60
+; Cell 4/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X240 Y120 Z170 F1200
+G1 Z60 F1200
+G1 X120 Y0 Z60  F900 ; DRY RUN: E6.4486 omitted; no extrusion
+G1 X120 Y120 Z60 F1200
+G1 X240 Y0 Z60  F900 ; DRY RUN: E6.7880 omitted; no extrusion
+G1 X240 Y60 Z120 F1200
+G1 X120 Y60 Z0  F900 ; DRY RUN: E7.1274 omitted; no extrusion
+G1 X240 Y60 Z0 F1200
+G1 X120 Y60 Z120  F900 ; DRY RUN: E7.4668 omitted; no extrusion
+G1 X180 Y120 Z120 F1200
+G1 X180 Y0 Z0  F900 ; DRY RUN: E7.8062 omitted; no extrusion
+G1 X180 Y120 Z0 F1200
+G1 X180 Y0 Z120  F900 ; DRY RUN: E8.1456 omitted; no extrusion
+
+; i=1,j=1, cx=180,cy=180,cz=60
+; Cell 5/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X240 Y240 Z170 F1200
+G1 Z60 F1200
+G1 X120 Y120 Z60  F900 ; DRY RUN: E8.4850 omitted; no extrusion
+G1 X120 Y240 Z60 F1200
+G1 X240 Y120 Z60  F900 ; DRY RUN: E8.8244 omitted; no extrusion
+G1 X240 Y180 Z120 F1200
+G1 X120 Y180 Z0  F900 ; DRY RUN: E9.1638 omitted; no extrusion
+G1 X240 Y180 Z0 F1200
+G1 X120 Y180 Z120  F900 ; DRY RUN: E9.5032 omitted; no extrusion
+G1 X180 Y240 Z120 F1200
+G1 X180 Y120 Z0  F900 ; DRY RUN: E9.8426 omitted; no extrusion
+G1 X180 Y240 Z0 F1200
+G1 X180 Y120 Z120  F900 ; DRY RUN: E10.1820 omitted; no extrusion
+
+; i=1,j=2, cx=180,cy=300,cz=60
+; Cell 6/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X240 Y360 Z170 F1200
+G1 Z60 F1200
+G1 X120 Y240 Z60  F900 ; DRY RUN: E10.5214 omitted; no extrusion
+G1 X120 Y360 Z60 F1200
+G1 X240 Y240 Z60  F900 ; DRY RUN: E10.8608 omitted; no extrusion
+G1 X240 Y300 Z120 F1200
+G1 X120 Y300 Z0  F900 ; DRY RUN: E11.2002 omitted; no extrusion
+G1 X240 Y300 Z0 F1200
+G1 X120 Y300 Z120  F900 ; DRY RUN: E11.5396 omitted; no extrusion
+G1 X180 Y360 Z120 F1200
+G1 X180 Y240 Z0  F900 ; DRY RUN: E11.8790 omitted; no extrusion
+G1 X180 Y360 Z0 F1200
+G1 X180 Y240 Z120  F900 ; DRY RUN: E12.2184 omitted; no extrusion
+
+; i=2,j=0, cx=300,cy=60,cz=60
+; Cell 7/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X360 Y120 Z170 F1200
+G1 Z60 F1200
+G1 X240 Y0 Z60  F900 ; DRY RUN: E12.5578 omitted; no extrusion
+G1 X240 Y120 Z60 F1200
+G1 X360 Y0 Z60  F900 ; DRY RUN: E12.8972 omitted; no extrusion
+G1 X360 Y60 Z120 F1200
+G1 X240 Y60 Z0  F900 ; DRY RUN: E13.2366 omitted; no extrusion
+G1 X360 Y60 Z0 F1200
+G1 X240 Y60 Z120  F900 ; DRY RUN: E13.5760 omitted; no extrusion
+G1 X300 Y120 Z120 F1200
+G1 X300 Y0 Z0  F900 ; DRY RUN: E13.9154 omitted; no extrusion
+G1 X300 Y120 Z0 F1200
+G1 X300 Y0 Z120  F900 ; DRY RUN: E14.2548 omitted; no extrusion
+
+; i=2,j=1, cx=300,cy=180,cz=60
+; Cell 8/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X360 Y240 Z170 F1200
+G1 Z60 F1200
+G1 X240 Y120 Z60  F900 ; DRY RUN: E14.5942 omitted; no extrusion
+G1 X240 Y240 Z60 F1200
+G1 X360 Y120 Z60  F900 ; DRY RUN: E14.9336 omitted; no extrusion
+G1 X360 Y180 Z120 F1200
+G1 X240 Y180 Z0  F900 ; DRY RUN: E15.2730 omitted; no extrusion
+G1 X360 Y180 Z0 F1200
+G1 X240 Y180 Z120  F900 ; DRY RUN: E15.6124 omitted; no extrusion
+G1 X300 Y240 Z120 F1200
+G1 X300 Y120 Z0  F900 ; DRY RUN: E15.9518 omitted; no extrusion
+G1 X300 Y240 Z0 F1200
+G1 X300 Y120 Z120  F900 ; DRY RUN: E16.2912 omitted; no extrusion
+
+; i=2,j=2, cx=300,cy=300,cz=60
+; Cell 9/27: enter via clearance Z170 mm.
+G1 Z170 F1200
+G1 X360 Y360 Z170 F1200
+G1 Z60 F1200
+G1 X240 Y240 Z60  F900 ; DRY RUN: E16.6306 omitted; no extrusion
+G1 X240 Y360 Z60 F1200
+G1 X360 Y240 Z60  F900 ; DRY RUN: E16.9700 omitted; no extrusion
+G1 X360 Y300 Z120 F1200
+G1 X240 Y300 Z0  F900 ; DRY RUN: E17.3094 omitted; no extrusion
+G1 X360 Y300 Z0 F1200
+G1 X240 Y300 Z120  F900 ; DRY RUN: E17.6488 omitted; no extrusion
+G1 X300 Y360 Z120 F1200
+G1 X300 Y240 Z0  F900 ; DRY RUN: E17.9882 omitted; no extrusion
+G1 X300 Y360 Z0 F1200
+G1 X300 Y240 Z120  F900 ; DRY RUN: E18.3276 omitted; no extrusion
+
+; i=0,j=0, cx=60,cy=60,cz=180
+; Cell 10/27: enter via clearance Z230 mm.
+G1 Z230 F1200
+G1 X120 Y120 Z230 F1200
+G1 Z180 F1200
+G1 X0 Y0 Z180  F900 ; DRY RUN: E18.6670 omitted; no extrusion
+G1 X0 Y120 Z180 F1200
+G1 X120 Y0 Z180  F900 ; DRY RUN: E19.0064 omitted; no extrusion
+G1 X120 Y60 Z240 F1200
+G1 X0 Y60 Z120  F900 ; DRY RUN: E19.3458 omitted; no extrusion
+G1 X120 Y60 Z120 F1200
+G1 X0 Y60 Z240  F900 ; DRY RUN: E19.6852 omitted; no extrusion
+G1 X60 Y120 Z240 F1200
+G1 X60 Y0 Z120  F900 ; DRY RUN: E20.0246 omitted; no extrusion
+G1 X60 Y120 Z120 F1200
+G1 X60 Y0 Z240  F900 ; DRY RUN: E20.3640 omitted; no extrusion
+
+; i=0,j=1, cx=60,cy=180,cz=180
+; Cell 11/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X120 Y240 Z290 F1200
+G1 Z180 F1200
+G1 X0 Y120 Z180  F900 ; DRY RUN: E20.7034 omitted; no extrusion
+G1 X0 Y240 Z180 F1200
+G1 X120 Y120 Z180  F900 ; DRY RUN: E21.0428 omitted; no extrusion
+G1 X120 Y180 Z240 F1200
+G1 X0 Y180 Z120  F900 ; DRY RUN: E21.3822 omitted; no extrusion
+G1 X120 Y180 Z120 F1200
+G1 X0 Y180 Z240  F900 ; DRY RUN: E21.7216 omitted; no extrusion
+G1 X60 Y240 Z240 F1200
+G1 X60 Y120 Z120  F900 ; DRY RUN: E22.0610 omitted; no extrusion
+G1 X60 Y240 Z120 F1200
+G1 X60 Y120 Z240  F900 ; DRY RUN: E22.4004 omitted; no extrusion
+
+; i=0,j=2, cx=60,cy=300,cz=180
+; Cell 12/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X120 Y360 Z290 F1200
+G1 Z180 F1200
+G1 X0 Y240 Z180  F900 ; DRY RUN: E22.7398 omitted; no extrusion
+G1 X0 Y360 Z180 F1200
+G1 X120 Y240 Z180  F900 ; DRY RUN: E23.0792 omitted; no extrusion
+G1 X120 Y300 Z240 F1200
+G1 X0 Y300 Z120  F900 ; DRY RUN: E23.4186 omitted; no extrusion
+G1 X120 Y300 Z120 F1200
+G1 X0 Y300 Z240  F900 ; DRY RUN: E23.7580 omitted; no extrusion
+G1 X60 Y360 Z240 F1200
+G1 X60 Y240 Z120  F900 ; DRY RUN: E24.0974 omitted; no extrusion
+G1 X60 Y360 Z120 F1200
+G1 X60 Y240 Z240  F900 ; DRY RUN: E24.4368 omitted; no extrusion
+
+; i=1,j=0, cx=180,cy=60,cz=180
+; Cell 13/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X240 Y120 Z290 F1200
+G1 Z180 F1200
+G1 X120 Y0 Z180  F900 ; DRY RUN: E24.7762 omitted; no extrusion
+G1 X120 Y120 Z180 F1200
+G1 X240 Y0 Z180  F900 ; DRY RUN: E25.1156 omitted; no extrusion
+G1 X240 Y60 Z240 F1200
+G1 X120 Y60 Z120  F900 ; DRY RUN: E25.4550 omitted; no extrusion
+G1 X240 Y60 Z120 F1200
+G1 X120 Y60 Z240  F900 ; DRY RUN: E25.7944 omitted; no extrusion
+G1 X180 Y120 Z240 F1200
+G1 X180 Y0 Z120  F900 ; DRY RUN: E26.1338 omitted; no extrusion
+G1 X180 Y120 Z120 F1200
+G1 X180 Y0 Z240  F900 ; DRY RUN: E26.4732 omitted; no extrusion
+
+; i=1,j=1, cx=180,cy=180,cz=180
+; Cell 14/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X240 Y240 Z290 F1200
+G1 Z180 F1200
+G1 X120 Y120 Z180  F900 ; DRY RUN: E26.8126 omitted; no extrusion
+G1 X120 Y240 Z180 F1200
+G1 X240 Y120 Z180  F900 ; DRY RUN: E27.1520 omitted; no extrusion
+G1 X240 Y180 Z240 F1200
+G1 X120 Y180 Z120  F900 ; DRY RUN: E27.4914 omitted; no extrusion
+G1 X240 Y180 Z120 F1200
+G1 X120 Y180 Z240  F900 ; DRY RUN: E27.8308 omitted; no extrusion
+G1 X180 Y240 Z240 F1200
+G1 X180 Y120 Z120  F900 ; DRY RUN: E28.1702 omitted; no extrusion
+G1 X180 Y240 Z120 F1200
+G1 X180 Y120 Z240  F900 ; DRY RUN: E28.5096 omitted; no extrusion
+
+; i=1,j=2, cx=180,cy=300,cz=180
+; Cell 15/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X240 Y360 Z290 F1200
+G1 Z180 F1200
+G1 X120 Y240 Z180  F900 ; DRY RUN: E28.8490 omitted; no extrusion
+G1 X120 Y360 Z180 F1200
+G1 X240 Y240 Z180  F900 ; DRY RUN: E29.1884 omitted; no extrusion
+G1 X240 Y300 Z240 F1200
+G1 X120 Y300 Z120  F900 ; DRY RUN: E29.5278 omitted; no extrusion
+G1 X240 Y300 Z120 F1200
+G1 X120 Y300 Z240  F900 ; DRY RUN: E29.8672 omitted; no extrusion
+G1 X180 Y360 Z240 F1200
+G1 X180 Y240 Z120  F900 ; DRY RUN: E30.2066 omitted; no extrusion
+G1 X180 Y360 Z120 F1200
+G1 X180 Y240 Z240  F900 ; DRY RUN: E30.5460 omitted; no extrusion
+
+; i=2,j=0, cx=300,cy=60,cz=180
+; Cell 16/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X360 Y120 Z290 F1200
+G1 Z180 F1200
+G1 X240 Y0 Z180  F900 ; DRY RUN: E30.8854 omitted; no extrusion
+G1 X240 Y120 Z180 F1200
+G1 X360 Y0 Z180  F900 ; DRY RUN: E31.2248 omitted; no extrusion
+G1 X360 Y60 Z240 F1200
+G1 X240 Y60 Z120  F900 ; DRY RUN: E31.5642 omitted; no extrusion
+G1 X360 Y60 Z120 F1200
+G1 X240 Y60 Z240  F900 ; DRY RUN: E31.9036 omitted; no extrusion
+G1 X300 Y120 Z240 F1200
+G1 X300 Y0 Z120  F900 ; DRY RUN: E32.2430 omitted; no extrusion
+G1 X300 Y120 Z120 F1200
+G1 X300 Y0 Z240  F900 ; DRY RUN: E32.5824 omitted; no extrusion
+
+; i=2,j=1, cx=300,cy=180,cz=180
+; Cell 17/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X360 Y240 Z290 F1200
+G1 Z180 F1200
+G1 X240 Y120 Z180  F900 ; DRY RUN: E32.9218 omitted; no extrusion
+G1 X240 Y240 Z180 F1200
+G1 X360 Y120 Z180  F900 ; DRY RUN: E33.2612 omitted; no extrusion
+G1 X360 Y180 Z240 F1200
+G1 X240 Y180 Z120  F900 ; DRY RUN: E33.6006 omitted; no extrusion
+G1 X360 Y180 Z120 F1200
+G1 X240 Y180 Z240  F900 ; DRY RUN: E33.9400 omitted; no extrusion
+G1 X300 Y240 Z240 F1200
+G1 X300 Y120 Z120  F900 ; DRY RUN: E34.2794 omitted; no extrusion
+G1 X300 Y240 Z120 F1200
+G1 X300 Y120 Z240  F900 ; DRY RUN: E34.6188 omitted; no extrusion
+
+; i=2,j=2, cx=300,cy=300,cz=180
+; Cell 18/27: enter via clearance Z290 mm.
+G1 Z290 F1200
+G1 X360 Y360 Z290 F1200
+G1 Z180 F1200
+G1 X240 Y240 Z180  F900 ; DRY RUN: E34.9582 omitted; no extrusion
+G1 X240 Y360 Z180 F1200
+G1 X360 Y240 Z180  F900 ; DRY RUN: E35.2976 omitted; no extrusion
+G1 X360 Y300 Z240 F1200
+G1 X240 Y300 Z120  F900 ; DRY RUN: E35.6370 omitted; no extrusion
+G1 X360 Y300 Z120 F1200
+G1 X240 Y300 Z240  F900 ; DRY RUN: E35.9764 omitted; no extrusion
+G1 X300 Y360 Z240 F1200
+G1 X300 Y240 Z120  F900 ; DRY RUN: E36.3158 omitted; no extrusion
+G1 X300 Y360 Z120 F1200
+G1 X300 Y240 Z240  F900 ; DRY RUN: E36.6552 omitted; no extrusion
+
+; i=0,j=0, cx=60,cy=60,cz=300
+; Cell 19/27: enter via clearance Z350 mm.
+G1 Z350 F1200
+G1 X120 Y120 Z350 F1200
+G1 Z300 F1200
+G1 X0 Y0 Z300  F900 ; DRY RUN: E36.9946 omitted; no extrusion
+G1 X0 Y120 Z300 F1200
+G1 X120 Y0 Z300  F900 ; DRY RUN: E37.3340 omitted; no extrusion
+G1 X120 Y60 Z360 F1200
+G1 X0 Y60 Z240  F900 ; DRY RUN: E37.6734 omitted; no extrusion
+G1 X120 Y60 Z240 F1200
+G1 X0 Y60 Z360  F900 ; DRY RUN: E38.0128 omitted; no extrusion
+G1 X60 Y120 Z360 F1200
+G1 X60 Y0 Z240  F900 ; DRY RUN: E38.3522 omitted; no extrusion
+G1 X60 Y120 Z240 F1200
+G1 X60 Y0 Z360  F900 ; DRY RUN: E38.6916 omitted; no extrusion
+
+; i=0,j=1, cx=60,cy=180,cz=300
+; Cell 20/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X120 Y240 Z410 F1200
+G1 Z300 F1200
+G1 X0 Y120 Z300  F900 ; DRY RUN: E39.0310 omitted; no extrusion
+G1 X0 Y240 Z300 F1200
+G1 X120 Y120 Z300  F900 ; DRY RUN: E39.3704 omitted; no extrusion
+G1 X120 Y180 Z360 F1200
+G1 X0 Y180 Z240  F900 ; DRY RUN: E39.7098 omitted; no extrusion
+G1 X120 Y180 Z240 F1200
+G1 X0 Y180 Z360  F900 ; DRY RUN: E40.0492 omitted; no extrusion
+G1 X60 Y240 Z360 F1200
+G1 X60 Y120 Z240  F900 ; DRY RUN: E40.3886 omitted; no extrusion
+G1 X60 Y240 Z240 F1200
+G1 X60 Y120 Z360  F900 ; DRY RUN: E40.7280 omitted; no extrusion
+
+; i=0,j=2, cx=60,cy=300,cz=300
+; Cell 21/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X120 Y360 Z410 F1200
+G1 Z300 F1200
+G1 X0 Y240 Z300  F900 ; DRY RUN: E41.0674 omitted; no extrusion
+G1 X0 Y360 Z300 F1200
+G1 X120 Y240 Z300  F900 ; DRY RUN: E41.4068 omitted; no extrusion
+G1 X120 Y300 Z360 F1200
+G1 X0 Y300 Z240  F900 ; DRY RUN: E41.7462 omitted; no extrusion
+G1 X120 Y300 Z240 F1200
+G1 X0 Y300 Z360  F900 ; DRY RUN: E42.0856 omitted; no extrusion
+G1 X60 Y360 Z360 F1200
+G1 X60 Y240 Z240  F900 ; DRY RUN: E42.4250 omitted; no extrusion
+G1 X60 Y360 Z240 F1200
+G1 X60 Y240 Z360  F900 ; DRY RUN: E42.7644 omitted; no extrusion
+
+; i=1,j=0, cx=180,cy=60,cz=300
+; Cell 22/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X240 Y120 Z410 F1200
+G1 Z300 F1200
+G1 X120 Y0 Z300  F900 ; DRY RUN: E43.1038 omitted; no extrusion
+G1 X120 Y120 Z300 F1200
+G1 X240 Y0 Z300  F900 ; DRY RUN: E43.4432 omitted; no extrusion
+G1 X240 Y60 Z360 F1200
+G1 X120 Y60 Z240  F900 ; DRY RUN: E43.7826 omitted; no extrusion
+G1 X240 Y60 Z240 F1200
+G1 X120 Y60 Z360  F900 ; DRY RUN: E44.1220 omitted; no extrusion
+G1 X180 Y120 Z360 F1200
+G1 X180 Y0 Z240  F900 ; DRY RUN: E44.4614 omitted; no extrusion
+G1 X180 Y120 Z240 F1200
+G1 X180 Y0 Z360  F900 ; DRY RUN: E44.8008 omitted; no extrusion
+
+; i=1,j=1, cx=180,cy=180,cz=300
+; Cell 23/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X240 Y240 Z410 F1200
+G1 Z300 F1200
+G1 X120 Y120 Z300  F900 ; DRY RUN: E45.1402 omitted; no extrusion
+G1 X120 Y240 Z300 F1200
+G1 X240 Y120 Z300  F900 ; DRY RUN: E45.4796 omitted; no extrusion
+G1 X240 Y180 Z360 F1200
+G1 X120 Y180 Z240  F900 ; DRY RUN: E45.8190 omitted; no extrusion
+G1 X240 Y180 Z240 F1200
+G1 X120 Y180 Z360  F900 ; DRY RUN: E46.1584 omitted; no extrusion
+G1 X180 Y240 Z360 F1200
+G1 X180 Y120 Z240  F900 ; DRY RUN: E46.4978 omitted; no extrusion
+G1 X180 Y240 Z240 F1200
+G1 X180 Y120 Z360  F900 ; DRY RUN: E46.8372 omitted; no extrusion
+
+; i=1,j=2, cx=180,cy=300,cz=300
+; Cell 24/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X240 Y360 Z410 F1200
+G1 Z300 F1200
+G1 X120 Y240 Z300  F900 ; DRY RUN: E47.1766 omitted; no extrusion
+G1 X120 Y360 Z300 F1200
+G1 X240 Y240 Z300  F900 ; DRY RUN: E47.5160 omitted; no extrusion
+G1 X240 Y300 Z360 F1200
+G1 X120 Y300 Z240  F900 ; DRY RUN: E47.8554 omitted; no extrusion
+G1 X240 Y300 Z240 F1200
+G1 X120 Y300 Z360  F900 ; DRY RUN: E48.1948 omitted; no extrusion
+G1 X180 Y360 Z360 F1200
+G1 X180 Y240 Z240  F900 ; DRY RUN: E48.5342 omitted; no extrusion
+G1 X180 Y360 Z240 F1200
+G1 X180 Y240 Z360  F900 ; DRY RUN: E48.8736 omitted; no extrusion
+
+; i=2,j=0, cx=300,cy=60,cz=300
+; Cell 25/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X360 Y120 Z410 F1200
+G1 Z300 F1200
+G1 X240 Y0 Z300  F900 ; DRY RUN: E49.2130 omitted; no extrusion
+G1 X240 Y120 Z300 F1200
+G1 X360 Y0 Z300  F900 ; DRY RUN: E49.5524 omitted; no extrusion
+G1 X360 Y60 Z360 F1200
+G1 X240 Y60 Z240  F900 ; DRY RUN: E49.8918 omitted; no extrusion
+G1 X360 Y60 Z240 F1200
+G1 X240 Y60 Z360  F900 ; DRY RUN: E50.2312 omitted; no extrusion
+G1 X300 Y120 Z360 F1200
+G1 X300 Y0 Z240  F900 ; DRY RUN: E50.5706 omitted; no extrusion
+G1 X300 Y120 Z240 F1200
+G1 X300 Y0 Z360  F900 ; DRY RUN: E50.9100 omitted; no extrusion
+
+; i=2,j=1, cx=300,cy=180,cz=300
+; Cell 26/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X360 Y240 Z410 F1200
+G1 Z300 F1200
+G1 X240 Y120 Z300  F900 ; DRY RUN: E51.2494 omitted; no extrusion
+G1 X240 Y240 Z300 F1200
+G1 X360 Y120 Z300  F900 ; DRY RUN: E51.5888 omitted; no extrusion
+G1 X360 Y180 Z360 F1200
+G1 X240 Y180 Z240  F900 ; DRY RUN: E51.9282 omitted; no extrusion
+G1 X360 Y180 Z240 F1200
+G1 X240 Y180 Z360  F900 ; DRY RUN: E52.2676 omitted; no extrusion
+G1 X300 Y240 Z360 F1200
+G1 X300 Y120 Z240  F900 ; DRY RUN: E52.6070 omitted; no extrusion
+G1 X300 Y240 Z240 F1200
+G1 X300 Y120 Z360  F900 ; DRY RUN: E52.9464 omitted; no extrusion
+
+; i=2,j=2, cx=300,cy=300,cz=300
+; Cell 27/27: enter via clearance Z410 mm.
+G1 Z410 F1200
+G1 X360 Y360 Z410 F1200
+G1 Z300 F1200
+G1 X240 Y240 Z300  F900 ; DRY RUN: E53.2858 omitted; no extrusion
+G1 X240 Y360 Z300 F1200
+G1 X360 Y240 Z300  F900 ; DRY RUN: E53.6252 omitted; no extrusion
+G1 X360 Y300 Z360 F1200
+G1 X240 Y300 Z240  F900 ; DRY RUN: E53.9646 omitted; no extrusion
+G1 X360 Y300 Z240 F1200
+G1 X240 Y300 Z360  F900 ; DRY RUN: E54.3040 omitted; no extrusion
+G1 X300 Y360 Z360 F1200
+G1 X300 Y240 Z240  F900 ; DRY RUN: E54.6434 omitted; no extrusion
+G1 X300 Y360 Z240 F1200
+G1 X300 Y240 Z360  F900 ; DRY RUN: E54.9828 omitted; no extrusion
+
+; End: move UP 50 mm above the 360 mm lattice; keep current X/Y.
+G1 Z410 F1200
+M05
+M30

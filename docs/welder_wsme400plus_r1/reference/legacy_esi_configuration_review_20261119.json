@@ -1,0 +1,443 @@
+{
+  "date": "2026-11-19",
+  "sources": {
+    "original_xml_archive": "docs/工程文件.zip",
+    "original_xml_member": "工程文件/01_各设备的ethercat描述性文件/LAN9252-EVB-SPIXML-103_WSM_DZ.xml",
+    "xml_sha256": "4e6dc12158cbde42c72d71cf527e03d283beb5005adc7cf22171f4409b698e45",
+    "extracted_xml_matches_archive": true,
+    "installed_xml_matches_archive": true,
+    "original_project_archive": "docs/工程文件/00_上下位机代码/Lower.zip",
+    "project_sha256": "62f185f6fa599f7637250256358d5c939748d4f99555ef9cef7d4cbffc2fa057",
+    "extracted_project_matches_archive": true,
+    "generated_device_path": "C:\\Inovance Control\\InoProShop\\CODESYS\\Repository\\Devices\\65\\777_0000925200000001\\Revision%3D16%2300000001\\device.xml",
+    "generated_device_sha256": "cecdaace0f71b990a3c1916e0cfad683005092e53f7f968bf5662bba7f1b05f3"
+  },
+  "source_pdos": {
+    "RxPdo": {
+      "index": "#x1601",
+      "count": 32,
+      "total_bits": 256,
+      "fixed": "true",
+      "mandatory": "true",
+      "entries": [
+        {
+          "index": 28688,
+          "subindex": 1,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 2,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 3,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 4,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 5,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 6,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 7,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 8,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 9,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 10,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 11,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 12,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 13,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 14,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 15,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 16,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 17,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 18,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 19,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 20,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 21,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 22,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 23,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 24,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 25,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 26,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 27,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 28,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 29,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 30,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 31,
+          "bits": 8
+        },
+        {
+          "index": 28688,
+          "subindex": 32,
+          "bits": 8
+        }
+      ]
+    },
+    "TxPdo": {
+      "index": "#x1a00",
+      "count": 32,
+      "total_bits": 256,
+      "fixed": "true",
+      "mandatory": "true",
+      "entries": [
+        {
+          "index": 24576,
+          "subindex": 1,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 2,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 3,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 4,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 5,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 6,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 7,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 8,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 9,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 10,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 11,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 12,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 13,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 14,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 15,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 16,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 17,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 18,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 19,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 20,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 21,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 22,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 23,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 24,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 25,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 26,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 27,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 28,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 29,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 30,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 31,
+          "bits": 8
+        },
+        {
+          "index": 24576,
+          "subindex": 32,
+          "bits": 8
+        }
+      ]
+    }
+  },
+  "source_dictionary_inconsistencies": {
+    "#x1601": {
+      "datatype_bits": 304,
+      "datatype_subitems_including_sub0": 10,
+      "default_subitems_including_sub0": 33,
+      "default_sub0_hex": "20"
+    },
+    "#x1a00": {
+      "datatype_bits": 304,
+      "datatype_subitems_including_sub0": 10,
+      "default_subitems_including_sub0": 33,
+      "default_sub0_hex": "20"
+    },
+    "#x6000": {
+      "datatype_bits": 24,
+      "datatype_subitems_including_sub0": 9,
+      "default_subitems_including_sub0": 33,
+      "default_sub0_hex": "08"
+    },
+    "#x7010": {
+      "datatype_bits": 24,
+      "datatype_subitems_including_sub0": 9,
+      "default_subitems_including_sub0": 33,
+      "default_sub0_hex": "08"
+    }
+  },
+  "installed_description_defaults": {
+    "vendor": 1911,
+    "product": 37458,
+    "PDOAssign": "FALSE",
+    "PDOConfig": "FALSE",
+    "SM2": {
+      "physicalAddress": "4352",
+      "flagtypedir": "100",
+      "synctype": "1",
+      "length": "32",
+      "flagevent": "0",
+      "flagctrl": "1",
+      "flagvirtual": "0"
+    },
+    "SM3": {
+      "physicalAddress": "5120",
+      "flagtypedir": "32",
+      "synctype": "0",
+      "length": "32",
+      "flagevent": "0",
+      "flagctrl": "1",
+      "flagvirtual": "0"
+    },
+    "RxPDO": {
+      "NumberofExcludes": "0",
+      "NumberofEntries": "32",
+      "Index": "16#1601",
+      "Name": "'DO Outputs'",
+      "Fixed": "True",
+      "Mandatory": "True",
+      "Virtual": "False",
+      "Sm": "2",
+      "Su": "2",
+      "DependOnSlot": "false",
+      "DependOnSlotGroup": "false",
+      "OverwrittenByModule": "false"
+    },
+    "TxPDO": {
+      "NumberofExcludes": "0",
+      "NumberofEntries": "32",
+      "Index": "16#1a00",
+      "Name": "'DI Inputs'",
+      "Fixed": "True",
+      "Mandatory": "True",
+      "Virtual": "False",
+      "Sm": "3",
+      "Su": "3",
+      "DependOnSlot": "false",
+      "DependOnSlotGroup": "false",
+      "OverwrittenByModule": "false"
+    }
+  },
+  "interpretation": {
+    "current_coe_mapping_remains_as_observed": "15 object bytes plus 1 padding byte per direction",
+    "cause_of_current_coe_mapping_not_established": true,
+    "installed_defaults_are_not_a_read_of_live_project_or_ESC_registers": true,
+    "legacy_32_byte_configuration_is_a_candidate_for_field_validation": true,
+    "coe_sub0_becoming_32_is_not_a_required_gate_for_fixed_configuration": true,
+    "hardware_acceptance_or_application_compatibility_proven": false,
+    "live_project_modified": false,
+    "plc_download_or_device_write_performed": false
+  }
+}

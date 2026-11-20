@@ -1,0 +1,38 @@
+{
+  "date": "2026-11-18",
+  "changed_object": "FB_FileSocketIo",
+  "implementation_only": true,
+  "socket_io_sha256": "ae3185585b5ffee9691845db646288709e3bc84bb5253caa5a024a8e691b02f7",
+  "normal_close_result": "CmpErrors.Errors.ERR_SOCK_CLOSED (16#0211), zero bytes only",
+  "native_result_retained_while_idle": true,
+  "offline_fast_st_tests": 18,
+  "offline_auto_st_tests": 37,
+  "offline_passed": true,
+  "old_source_reproduced_error": "16#F223 / stage 220 on simulated ERR_SOCK_CLOSED",
+  "onsite_native_error_code_observed": false,
+  "field_receipt": "auto_receipt_be41a3058bba47c587e15489ee6877fc.json",
+  "field_readback_bytes": 22858,
+  "field_result": "INCOMPLETE before fix",
+  "inoproshop_compiled_after_fix": false,
+  "physical_retry_after_fix": false,
+  "checks_preserved": [
+    "exact readback length",
+    "byte comparison or CRC32",
+    "FTP 226/250",
+    "handle cleanup",
+    "batch finish before ready"
+  ],
+  "field_followup": {
+    "operator_report": "upload successful, speed acceptable",
+    "receipt": "auto_receipt_f55e394275df49798636d1715d60dcdf.json",
+    "completed_at": "2026-11-18T21:23:26.596",
+    "status": "COMPLETE",
+    "total_bytes": 66117,
+    "total_ms": 6463,
+    "socket_close_errors": [
+      0,
+      0
+    ],
+    "same_name_interpreter_reload_verified": false
+  }
+}

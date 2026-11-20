@@ -1,0 +1,6 @@
+(* View only: copy mapped input bytes, without decoding the welding protocol.
+   Call once per scan from MainTask. Has no hardware writes or SDO calls. *)
+PROGRAM PRG_AtrFeedback
+VAR
+    abyTx : ARRAY[0..14] OF BYTE;
+END_VAR

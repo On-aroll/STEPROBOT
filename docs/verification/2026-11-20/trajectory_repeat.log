@@ -1,0 +1,11 @@
+Test project C:/Users/6/Desktop/plc/tmp/github_update_20261120/STEPROBOT/tmp/build_r64
+    Start 2: trajectory_lattice_small
+    Test #2: trajectory_lattice_small .........   Passed    1.55 sec
+    Start 2: trajectory_lattice_small
+    Test #2: trajectory_lattice_small .........   Passed    1.54 sec
+    Start 2: trajectory_lattice_small
+1/1 Test #2: trajectory_lattice_small .........   Passed    1.52 sec
+
+100% tests passed out of 1
+
+Total Test time (real) =   4.62 sec

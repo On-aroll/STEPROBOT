@@ -1,0 +1,40 @@
+FUNCTION F_FileNameValid : BOOL
+VAR_INPUT
+    sName : STRING(64);
+    xProject : BOOL;
+END_VAR
+VAR
+    pName : POINTER TO BYTE;
+    uiI : UINT;
+    uiBaseLength : UINT;
+    xValid : BOOL;
+    xChar : BOOL;
+END_VAR
+(* Flat lowercase ASCII names; no slash, CR/LF, spaces, or extra dots. *)
+xValid := FALSE;
+uiBaseLength := UINT#0;
+IF xProject THEN
+    IF (LEFT(sName, 6) = 'pcjob_') AND (RIGHT(sName, 3) = '.sr')
+        AND (LEN(sName) >= 12) AND (LEN(sName) <= 48) THEN
+        uiBaseLength := INT_TO_UINT(LEN(sName)) - UINT#3;
+    END_IF;
+ELSE
+    IF (LEN(sName) >= 5) AND (LEN(sName) <= 48) THEN
+        IF (RIGHT(sName, 4) = '.srp') OR (RIGHT(sName, 4) = '.srd')
+            OR (RIGHT(sName, 4) = '.txt') THEN
+            uiBaseLength := INT_TO_UINT(LEN(sName)) - UINT#4;
+        END_IF;
+    END_IF;
+END_IF;
+IF uiBaseLength > UINT#0 THEN
+    xValid := TRUE;
+    pName := ADR(sName);
+    FOR uiI := UINT#0 TO uiBaseLength - UINT#1 DO
+        xChar := ((pName[uiI] >= BYTE#97) AND (pName[uiI] <= BYTE#122))
+            OR ((pName[uiI] >= BYTE#48) AND (pName[uiI] <= BYTE#57))
+            OR (pName[uiI] = BYTE#95);
+        IF NOT xChar THEN xValid := FALSE; END_IF;
+    END_FOR;
+END_IF;
+F_FileNameValid := xValid;
+END_FUNCTION

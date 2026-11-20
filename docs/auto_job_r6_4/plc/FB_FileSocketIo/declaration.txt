@@ -1,0 +1,22 @@
+FUNCTION_BLOCK FB_FileSocketIo
+VAR_INPUT
+    xSend : BOOL;
+    xReceive : BOOL;
+    diConnectID : DINT;
+    pSend : POINTER TO BYTE;
+    uiSendSize : UINT;
+END_VAR
+VAR_OUTPUT
+    uiSent : UINT;
+    uiCount : UINT;
+    xPeerClosed : BOOL;
+    xError : BOOL;
+    wErrorID : WORD;
+    udiNativeResult : UDINT;
+    aRecv : ARRAY[0..8191] OF BYTE;
+END_VAR
+VAR
+    stSocketInfo : CmpHCTCPIP.SOCKET_INFO;
+    wLookup : WORD;
+    xiCount : __XINT;
+END_VAR

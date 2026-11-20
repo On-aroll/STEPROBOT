@@ -1,0 +1,27 @@
+test_abort_and_configuration_changes_stop_current_read (test_probe_st.Tests.test_abort_and_configuration_changes_stop_current_read) ... ok
+test_byte_rounding_and_alignment_at_maximum_supported_bit_width (test_probe_st.Tests.test_byte_rounding_and_alignment_at_maximum_supported_bit_width) ... ok
+test_caller_owned_buffer_and_little_endian_decode (test_probe_st.Tests.test_caller_owned_buffer_and_little_endian_decode) ... ok
+test_detects_changed_metadata_or_mapping_during_read (test_probe_st.Tests.test_detects_changed_metadata_or_mapping_during_read) ... ok
+test_empty_maps_are_not_read_as_entry_one (test_probe_st.Tests.test_empty_maps_are_not_read_as_entry_one) ... ok
+test_fallback_timeout_stops_and_does_not_restart (test_probe_st.Tests.test_fallback_timeout_stops_and_does_not_restart) ... ok
+test_first_native_calls_use_valid_inputs_and_false_execute_without_abort (test_probe_st.Tests.test_first_native_calls_use_valid_inputs_and_false_execute_without_abort) ... ok
+test_full_capacity_and_dynamic_assignment_indices (test_probe_st.Tests.test_full_capacity_and_dynamic_assignment_indices) ... ok
+test_held_start_and_pulses_while_busy_do_not_replay (test_probe_st.Tests.test_held_start_and_pulses_while_busy_do_not_replay) ... ok
+test_item_count_is_not_byte_count (test_probe_st.Tests.test_item_count_is_not_byte_count) ... ok
+test_native_error_is_exposed_and_not_retried (test_probe_st.Tests.test_native_error_is_exposed_and_not_retried) ... ok
+test_native_status_observations_survive_timeout_and_clear_on_new_run (test_probe_st.Tests.test_native_status_observations_survive_timeout_and_clear_on_new_run) ... ok
+test_new_trigger_clears_old_snapshot_and_error (test_probe_st.Tests.test_new_trigger_clears_old_snapshot_and_error) ... ok
+test_only_read_operations_and_no_process_output_mapping (test_probe_st.Tests.test_only_read_operations_and_no_process_output_mapping) ... ok
+test_padding_and_non_byte_aligned_total (test_probe_st.Tests.test_padding_and_non_byte_aligned_total) ... ok
+test_paste_files_reconstruct_program_exactly (test_probe_st.Tests.test_paste_files_reconstruct_program_exactly) ... ok
+test_reads_all_entries_including_beyond_esi_nine (test_probe_st.Tests.test_reads_all_entries_including_beyond_esi_nine) ... ok
+test_rejects_over_capacity_on_either_side (test_probe_st.Tests.test_rejects_over_capacity_on_either_side) ... ok
+test_rejects_response_size_mismatch_for_all_sizes (test_probe_st.Tests.test_rejects_response_size_mismatch_for_all_sizes) ... ok
+test_rejects_zero_pdo_index_and_zero_bit_length (test_probe_st.Tests.test_rejects_zero_pdo_index_and_zero_bit_length) ... ok
+test_requires_one_assigned_pdo_without_guessing (test_probe_st.Tests.test_requires_one_assigned_pdo_without_guessing) ... ok
+test_unconfigured_master_or_slave_sends_no_request (test_probe_st.Tests.test_unconfigured_master_or_slave_sends_no_request) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.371s
+
+OK

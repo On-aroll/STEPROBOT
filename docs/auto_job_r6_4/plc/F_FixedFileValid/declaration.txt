@@ -1,0 +1,4 @@
+FUNCTION F_FixedFileValid : BOOL
+VAR_INPUT
+    sName : STRING(64);
+END_VAR

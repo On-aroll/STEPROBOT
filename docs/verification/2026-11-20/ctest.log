@@ -1,0 +1,67 @@
+Test project C:/Users/6/Desktop/plc/tmp/github_update_20261120/STEPROBOT/tmp/build_r64
+      Start  1: trajectory_lattice_normal
+ 1/31 Test  #1: trajectory_lattice_normal ........   Passed    1.65 sec
+      Start  2: trajectory_lattice_small
+ 2/31 Test  #2: trajectory_lattice_small .........   Passed    1.52 sec
+      Start  3: trajectory_lattice_wide
+ 3/31 Test  #3: trajectory_lattice_wide ..........   Passed    1.67 sec
+      Start  4: workflow_ui_normal
+ 4/31 Test  #4: workflow_ui_normal ...............   Passed    3.36 sec
+      Start  5: workflow_ui_small
+ 5/31 Test  #5: workflow_ui_small ................   Passed    6.19 sec
+      Start  6: workflow_ui_wide
+ 6/31 Test  #6: workflow_ui_wide .................   Passed    3.49 sec
+      Start  7: welder_and_mode_bridge
+ 7/31 Test  #7: welder_and_mode_bridge ...........   Passed    8.94 sec
+      Start  8: twin_snapshot_and_model
+ 8/31 Test  #8: twin_snapshot_and_model ..........   Passed   14.41 sec
+      Start  9: twin_workstation_ui
+ 9/31 Test  #9: twin_workstation_ui ..............   Passed    3.21 sec
+      Start 10: twin_workstation_ui_small
+10/31 Test #10: twin_workstation_ui_small ........   Passed    2.99 sec
+      Start 11: twin_workstation_ui_wide
+11/31 Test #11: twin_workstation_ui_wide .........   Passed    3.39 sec
+      Start 12: plc_manual_bridge
+12/31 Test #12: plc_manual_bridge ................   Passed   21.98 sec
+      Start 13: plc_manual_workstation_ui
+13/31 Test #13: plc_manual_workstation_ui ........   Passed    1.19 sec
+      Start 14: plc_manual_ui_small
+14/31 Test #14: plc_manual_ui_small ..............   Passed    1.14 sec
+      Start 15: robot_identity_aliases
+15/31 Test #15: robot_identity_aliases ...........   Passed    0.01 sec
+      Start 16: gcode_job
+16/31 Test #16: gcode_job ........................   Passed    0.20 sec
+      Start 17: modbus_client
+17/31 Test #17: modbus_client ....................   Passed    3.08 sec
+      Start 18: plcjob_client
+18/31 Test #18: plcjob_client ....................   Passed    2.56 sec
+      Start 19: return_tcp_speed_limit
+19/31 Test #19: return_tcp_speed_limit ...........   Passed    0.01 sec
+      Start 20: plc_bridge
+20/31 Test #20: plc_bridge .......................   Passed   18.87 sec
+      Start 21: plc_bridge_ui
+21/31 Test #21: plc_bridge_ui ....................   Passed    1.42 sec
+      Start 22: plc_bridge_ui_small
+22/31 Test #22: plc_bridge_ui_small ..............   Passed    1.32 sec
+      Start 23: plc_bridge_panel
+23/31 Test #23: plc_bridge_panel .................   Passed    7.97 sec
+      Start 24: file_bridge
+24/31 Test #24: file_bridge ......................   Passed   12.68 sec
+      Start 25: file_upload_ui
+25/31 Test #25: file_upload_ui ...................   Passed    1.15 sec
+      Start 26: gcode_delivery_ui
+26/31 Test #26: gcode_delivery_ui ................   Passed    1.17 sec
+      Start 27: gcode_delivery_flow
+27/31 Test #27: gcode_delivery_flow ..............   Passed    0.68 sec
+      Start 28: auto_delivery_flow
+28/31 Test #28: auto_delivery_flow ...............   Passed    0.52 sec
+      Start 29: auto_delivery_ui
+29/31 Test #29: auto_delivery_ui .................   Passed    1.38 sec
+      Start 30: plc_manual_ui_wide
+30/31 Test #30: plc_manual_ui_wide ...............   Passed    1.21 sec
+      Start 31: plc_bridge_ui_wide
+31/31 Test #31: plc_bridge_ui_wide ...............   Passed    1.54 sec
+
+100% tests passed out of 31
+
+Total Test time (real) = 130.91 sec

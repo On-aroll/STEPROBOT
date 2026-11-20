@@ -6,6 +6,12 @@
 *.sln   text eol=crlf
 *.md    text eol=lf
 
+# 柜内程序与PLC/G代码源文件保持无额外CR的LF换行。
+*.srp   text eol=lf
+*.srd   text eol=lf
+*.st    text eol=lf
+*.nc    text eol=lf
+
 # C++ SDK 头文件是厂商给的 GBK/ANSI 无 BOM 文件，一旦被转成 UTF-8 注释就废了
 *.hpp   -text
 

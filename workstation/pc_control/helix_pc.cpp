@@ -54,6 +54,9 @@ static double homePlanRadius = 0;
 static const char* homePlanError = "none";
 static bool atRest(RobotComClient& client);
 
+// 运动语句回执序号：每次执行结束（完成/拒绝/中止）+1，UI 靠它区分新旧回执
+static unsigned moveSeq = 0;
+
 // 工作区根优先取 UI 传入的环境变量 STEPROBOT_WORKSPACE；无该变量时回退老布局
 // （exe 固定位于 <workspace>/RobotPrograms/<机型>/pc_control/，向上五级）。
 static const std::wstring& workspaceRoot() {
@@ -484,6 +487,83 @@ static bool pulseJog(RobotComClient& client, REFSYS frame, int axis, bool positi
     return rc == 0 && safe && client.getMessageData().m_MessageType != eError;
 }
 
+// SDK 运动语句（示教挪动，20231115 指令流接口）：把单条 PTP/直线/圆弧作为临时程序发给控制器执行。
+// 前提与点动一致：手动模式、完全静止（virtualCommand 已查）、伺服使能、无报错、工具/坐标系已设。
+// 目标点按当前示教坐标系（getTeachRefSysNam）解释；执行期间监视排队的 stop，随时 MSTOP + 丢弃程序。
+static bool runMoveCommand(RobotComClient& client, bool jointTarget, bool arc, const double target[6],
+                           const double help[3], int dyn, double ovl) {
+    if (client.getMotorEnableState() != 1 || client.getMessageData().m_MessageType == eError ||
+        client.getToolName().empty() || client.getTeachRefSysNam().empty()) {
+        std::cout << "move_refused=manual_state_or_feedback move_seq=" << ++moveSeq << '\n';
+        return false;
+    }
+    const std::string tool = client.getToolName();
+    const std::string ref = client.getTeachRefSysNam();
+    if (!jointTarget && (ref == "JOINTS" || ref == "TOOL")) {
+        std::cout << "move_refused=cartesian_target_in_" << ref << "_frame move_seq=" << ++moveSeq << '\n';
+        return false;
+    }
+    HMIPos end{}, mid{};
+    if (jointTarget) {
+        end.m_PosType = eAxisPos;
+        for (int i = 0; i < 6; ++i) end.m_Pos.m_Joint[i] = target[i];
+    } else {
+        end.m_PosType = eCartPos;
+        end.m_Pos.m_CartPos = CartPos{target[0], target[1], target[2], target[3], target[4], target[5], 0u};
+        mid.m_PosType = eCartPos;
+        mid.m_Pos.m_CartPos = CartPos{help[0], help[1], help[2], 0., 0., 0., 0u};
+    }
+    SDKOverlap overlap{};
+    overlap.m_tcp_distance = ovl;
+    overlap.m_Percent = 0;
+    overlap.m_OveTyp = eOVLABS;
+    client.SDKSimulateProgramKill();
+    if (client.SDKSimulateProgramLoad() != 0) {
+        std::cout << "move_refused=program_load_failed move_seq=" << ++moveSeq << '\n';
+        return false;
+    }
+    int stmt = 1;
+    int rc = client.SDKSimulateSetToolCmd(tool, stmt++);
+    if (rc == 0) rc = client.SDKSimulateSetRefSysCmd(ref, stmt++);
+    if (rc == 0) {
+        if (jointTarget) rc = client.SDKSimulatePTPProCmd(end, dyn, overlap, tool, ref, stmt);
+        else if (arc) rc = client.SDKSimulateCircProCmd(end, mid, dyn, overlap, eConst, tool, ref, stmt);
+        else rc = client.SDKSimulateLinProCmd(end, dyn, overlap, eConst, tool, ref, stmt);
+        ++stmt;
+    }
+    if (rc != 0) {
+        client.SDKSimulateProgramKill();
+        std::cout << "move_refused=rc_" << rc << " move_seq=" << ++moveSeq << '\n';
+        return false;
+    }
+    int sentLine = 0;
+    if (client.SDKSimulateProgramSend(sentLine) != 0) {
+        client.SDKSimulateProgramKill();
+        std::cout << "move_refused=program_send_failed move_seq=" << ++moveSeq << '\n';
+        return false;
+    }
+    std::cout << "move_started=stmt_" << stmt - 1 << " ref=" << ref << " tool=" << tool << " dyn=" << dyn << '\n';
+    int stable = 0;
+    for (int i = 0; i < 600; ++i) {  // 100 ms × 600 = 60 s 上限
+        if (!panelStartAllowed()) {  // 面板已排队 stop/quit：立即中止
+            client.SetModeCmd(MSTOP, false);
+            client.SDKSimulateProgramKill();
+            std::cout << "move_aborted=1 move_seq=" << ++moveSeq << '\n';
+            return false;
+        }
+        stable = client.getProgramState() == eStop && atRest(client) ? stable + 1 : 0;
+        if (stable >= 3) {
+            std::cout << "move_done=1 move_seq=" << ++moveSeq << '\n';
+            return true;
+        }
+        std::this_thread::sleep_for(100ms);
+    }
+    client.SetModeCmd(MSTOP, false);
+    client.SDKSimulateProgramKill();
+    std::cout << "move_refused=timeout move_seq=" << ++moveSeq << '\n';
+    return false;
+}
+
 static bool planReturnHome(RobotComClient& client, double speed, const JointPose& target) {
     homePlanError = "none";
     homePlanReady = false;
@@ -746,6 +826,32 @@ static bool virtualCommand(RobotComClient& client, const Job& job, const std::st
             client.VariableRefReadCmd(name, reference) != 0 || client.ReferenceSystemSetCmd(name) != 0 ||
             !waitFor(client, [&] { return client.getTeachRefSysNam() == name; })) return false;
         return setFrame(client, "UserRef", eCustom);
+    }
+    if (command.rfind("moveptpj ", 0) == 0 || command.rfind("moveptp ", 0) == 0 ||
+        command.rfind("movelin ", 0) == 0 || command.rfind("movecirc ", 0) == 0) {
+        std::istringstream input(command);
+        std::string action, trailing;
+        input >> action;  // 动作词；>> 默认跳过空白，后续数值顺序读
+        double target[6]{}, help[3]{};
+        int dyn = 0;
+        double ovl = 0;
+        const int count = action == "movecirc" ? 9 : 6;
+        bool ok = true;
+        for (int i = 0; i < count && ok; ++i) {
+            double& slot = i < 6 ? target[i] : help[i - 6];
+            if (!(input >> slot)) ok = false;
+        }
+        if (ok && !(input >> dyn)) ok = false;
+        if (ok && !(input >> ovl)) ok = false;
+        if (ok && (input >> trailing)) ok = false;
+        bool finite = ok;
+        for (double value : target) finite = finite && std::isfinite(value);
+        for (double value : help) finite = finite && std::isfinite(value);
+        if (!finite || dyn < 1 || dyn > 100 || !std::isfinite(ovl) || ovl < 0 || ovl > 500) {
+            std::cout << "move_refused=bad_arguments move_seq=" << ++moveSeq << '\n';
+            return false;
+        }
+        return runMoveCommand(client, action == "moveptpj", action == "movecirc", target, help, dyn, ovl);
     }
     if (command == "speed1" || command == "speed5" || command == "speed10")
         return setOverride(client, std::stoi(command.substr(5)));

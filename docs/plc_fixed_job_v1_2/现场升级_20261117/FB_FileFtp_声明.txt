@@ -1,0 +1,130 @@
+FUNCTION_BLOCK FB_FileFtp
+VAR_INPUT
+    xStart : BOOL;
+    xAbort : BOOL;
+    pBuffer : POINTER TO BYTE;
+    udiSize : UDINT;
+    sProject : STRING(64);
+    sFile : STRING(64);
+    xCreateProject : BOOL;
+    xReplaceFixed : BOOL;
+    sUser : STRING(64);
+    sPassword : STRING(64);
+END_VAR
+VAR CONSTANT
+    cdiControlID : DINT := DINT#245;
+    cdiDataID : DINT := DINT#246;
+END_VAR
+VAR_OUTPUT
+    xDone : BOOL := FALSE;
+    xTestPassed : BOOL := FALSE;
+    xError : BOOL := FALSE;
+    xLoginOk : BOOL := FALSE;
+    xBaseDirOk : BOOL := FALSE;
+    xScratchCreated : BOOL := FALSE;
+    xUploadComplete : BOOL := FALSE;
+    xReadbackComplete : BOOL := FALSE;
+    xContentMatch : BOOL := FALSE;
+    xQuitOk : BOOL := FALSE;
+    xCleanupOk : BOOL := FALSE;
+    uiStep : UINT := UINT#0;
+    uiErrorStage : UINT := UINT#0;
+    wErrorID : WORD := WORD#0;
+    wDataCloseErrorID : WORD := WORD#0;
+    wControlCloseErrorID : WORD := WORD#0;
+    udiExpectedBytes : UDINT := UDINT#0;
+    udiUploadedBytes : UDINT := UDINT#0;
+    udiReadbackBytes : UDINT := UDINT#0;
+    uiReplyCode : UINT := UINT#0;
+    uiUserReplyCode : UINT := UINT#0;
+    uiPassReplyCode : UINT := UINT#0;
+    uiBaseDirReplyCode : UINT := UINT#0;
+    uiNameCheckReplyCode : UINT := UINT#0;
+    uiMkdReplyCode : UINT := UINT#0;
+    uiStorReplyCode : UINT := UINT#0;
+    uiUploadCompleteCode : UINT := UINT#0;
+    uiRetrReplyCode : UINT := UINT#0;
+    uiDownloadCompleteCode : UINT := UINT#0;
+    uiPasvPort : UINT := UINT#0;
+    wReadbackEndStatus : WORD := WORD#0;
+    sRemotePath : STRING(160);
+    sLastReply : STRING(255);
+    sMkdReply : STRING(255);
+    sPasvReply : STRING(255);
+    sUploadReply : STRING(255);
+    sDownloadReply : STRING(255);
+    xControlOwned : BOOL := FALSE;
+    xDataOwned : BOOL := FALSE;
+    xUploadDataConnected : BOOL := FALSE;
+    xDownloadDataConnected : BOOL := FALSE;
+    xLineTruncated : BOOL := FALSE;
+
+END_VAR
+VAR
+    (* Caller owns immutable buffer until xDone and clean socket closure. *)
+    xAbortLatched : BOOL;
+    xProgress : BOOL;
+    xDirectoryReady : BOOL;
+    xReplaceRun : BOOL;
+    sFileRun : STRING(64);
+    pBufferRun : POINTER TO BYTE;
+
+    stControlServer : CmpHCTCPIP.ADDRESS := (strIPAddr := '192.168.3.188', uiPort := UINT#21);
+    stDataServer : CmpHCTCPIP.ADDRESS;
+    fbControlClient : CmpHCTCPIP.SktTCPClient;
+    fbControlReceive : CmpHCTCPIP.SktTCPRecv;
+    fbControlSend : CmpHCTCPIP.SktTCPSend;
+    fbControlClose : CmpHCTCPIP.SktClose;
+    fbDataClient : CmpHCTCPIP.SktTCPClient;
+    fbDataSend : CmpHCTCPIP.SktTCPSend;
+    fbDataReceive : CmpHCTCPIP.SktTCPRecv;
+    fbDataClose : CmpHCTCPIP.SktClose;
+    fbReplyTimeout : TON;
+    fbCommandTimeout : TON;
+    fbUploadTimeout : TON;
+    fbReadbackTimeout : TON;
+    fbDataCloseTimeout : TON;
+    fbControlCloseTimeout : TON;
+
+    xStartOld : BOOL := FALSE;
+    xFail : BOOL := FALSE;
+    xFinishedNow : BOOL := FALSE;
+    wPendingError : WORD := WORD#0;
+    uiPendingStage : UINT := UINT#0;
+    uiPhase : UINT := UINT#0;
+    uiNextCommand : UINT := UINT#0;
+    uiTransferMode : UINT := UINT#0;
+    xReplyReady : BOOL := FALSE;
+    xReplyAccepted : BOOL := FALSE;
+    xDigits : BOOL := FALSE;
+    xMultiline : BOOL := FALSE;
+    sMultilineCode : STRING(3);
+    sLine : STRING(255);
+    pLine : POINTER TO BYTE;
+    uiLineLength : UINT := UINT#0;
+    aControlRx : ARRAY[0..0] OF BYTE;
+    sCommand : STRING(160);
+    pCommand : POINTER TO BYTE;
+    uiCommandIndex : UINT := UINT#0;
+    uiCommandLength : UINT := UINT#0;
+    aControlTx : ARRAY[0..0] OF BYTE;
+    aDataTx : ARRAY[0..0] OF BYTE;
+    aDataRx : ARRAY[0..0] OF BYTE;
+    sUserRun : STRING(64);
+    sPasswordRun : STRING(64);
+    sScratchRun : STRING(64);
+    pCredential : POINTER TO BYTE;
+    uiI : UINT := UINT#0;
+    xNameCharacter : BOOL := FALSE;
+    xBytesMatch : BOOL := FALSE;
+    xReadbackEndCandidate : BOOL := FALSE;
+    xDataCloseFailed : BOOL := FALSE;
+    pReply : POINTER TO BYTE;
+    aPasv : ARRAY[0..5] OF UINT;
+    uiPasvField : UINT := UINT#0;
+    uiPasvValue : UINT := UINT#0;
+    xPasvValid : BOOL := FALSE;
+    xPasvInTuple : BOOL := FALSE;
+    xPasvClosed : BOOL := FALSE;
+    xPasvHasDigit : BOOL := FALSE;
+END_VAR

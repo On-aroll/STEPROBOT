@@ -1,0 +1,10 @@
+    (* 用户于2026-11-17确认的既有工程；复用1/2/3号，不修改柜内绑定。 *)
+    xFixedMappingConfirmed : BOOL := TRUE;
+    sFixedProject : STRING(64) := 'pcjob_20261116_201104_7f547f98.sr';
+    uiFixedCapture : UINT := UINT#1;
+    uiFixedPath : UINT := UINT#2;
+    uiFixedReturn : UINT := UINT#3;
+    (* 以下为非保持运行状态，不要加入PERSISTENT或RETAIN区。 *)
+    xFixedUpdateBusy : BOOL;
+    xFixedReady : BOOL;
+    xFixedIdle : BOOL;

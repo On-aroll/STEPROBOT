@@ -1,0 +1,543 @@
+# PLC resident manual service V2 / R6.3 with extended WORLD/target/return speed and position feedback. No automatic motion on program start.
+msPosDelay := 15;
+msPosTick := 0;
+msPosIndex := 0;
+msPosId := 0;
+msStageKind := 0;
+msStageCount := 0;
+msJog := FALSE;
+msLast := AIRead(pb_in5);
+msLastLease := AIRead(pb_in8);
+msMissed := 0;
+msEdges := 0;
+msAccepted := 0;
+msCompleted := 0;
+msError := 0;
+msHeartbeat := 0;
+msAtHome := FALSE;
+AOSet(pb_out6,msAccepted);
+AOSet(pb_out7,msCompleted);
+WHILE(TRUE)DO
+    WaitTime(20);
+    msLease := AIRead(pb_in8);
+    IF(msLease!=msLastLease)THEN
+        msLastLease := msLease;
+        msMissed := 0;
+        IF(msEdges<2)THEN
+            msEdges := msEdges+1;
+        END_IF
+    ELSE
+        msMissed := msMissed+1;
+    END_IF
+    msLeaseOK := FALSE;
+    IF(msEdges>=2 && msMissed<25 && msLease>0)THEN
+        msLeaseOK := TRUE;
+    END_IF
+    IF(msMissed>=25 || msLease==0)THEN
+        msEdges := 0;
+        msError := 8;
+    END_IF
+    msCommand := AIRead(pb_in5);
+    IF(msCommand>0 && msCommand!=msLast)THEN
+        msArgument := AIRead(pb_in6);
+        msSpeed := AIRead(pb_in7);
+        WaitTime(20);
+        msCommand2 := AIRead(pb_in5);
+        IF(msCommand==msCommand2)THEN
+            msLast := msCommand;
+            msSequence := msCommand/32;
+            msAction := msCommand-msSequence*32;
+            msError := 0;
+            msValid := TRUE;
+            IF(msSequence<1 || msSequence>1000 || msLeaseOK==FALSE)THEN
+                msValid := FALSE;
+                msError := 8;
+            END_IF
+            msJog := FALSE;
+            IF(msAction>=1 && msAction<=6 || msAction>=11 && msAction<=16)THEN
+                IF(msSpeed<0)THEN
+                    msJog := TRUE;
+                    msSpeed := msSpeed+32768;
+                ELSE
+                    IF(msSpeed>=32768)THEN
+                        msJog := TRUE;
+                        msSpeed := msSpeed-32768;
+                    END_IF
+                END_IF
+                IF(msArgument==0 || msArgument>10000 || msArgument< -10000)THEN
+                    msValid := FALSE;
+                    msError := 7;
+                END_IF
+                IF(msJog==TRUE)THEN
+                    IF(msAction>=1 && msAction<=6)THEN
+                        IF(msArgument>1000 || msArgument< -1000)THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                        IF(msSpeed<=1500 && (msArgument>500 || msArgument< -500))THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                        IF(msSpeed<=1000 && (msArgument>250 || msArgument< -250))THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                        IF(msSpeed<=500 && (msArgument>100 || msArgument< -100))THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                    ELSE
+                        IF(msArgument>10000 || msArgument< -10000)THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                        IF(msSpeed<=5000 && (msArgument>5000 || msArgument< -5000))THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                        IF(msSpeed<=1000 && (msArgument>1000 || msArgument< -1000))THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                        IF(msSpeed<=250 && (msArgument>500 || msArgument< -500))THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                        IF(msSpeed<=50 && (msArgument>100 || msArgument< -100))THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                    END_IF
+                END_IF
+            ELSE
+                IF(msAction<20 || msAction>31)THEN
+                    msValid := FALSE;
+                    msError := 7;
+                END_IF
+            END_IF
+            IF(msAction>=1 && msAction<=16 || msAction==21 || msAction==30)THEN
+                IF(msAction>=11 && msAction<=16 || msAction==30 && msStageKind==2)THEN
+                    IF(msSpeed<1 || msSpeed>32767)THEN
+                        msValid := FALSE;
+                        msError := 7;
+                    END_IF
+                ELSE
+                    IF(msSpeed<10 || msSpeed>10000)THEN
+                        msValid := FALSE;
+                        msError := 7;
+                    END_IF
+                END_IF
+            END_IF
+            IF(msAction==20)THEN
+                IF(msArgument<1 || msArgument>999)THEN
+                    msValid := FALSE;
+                    msError := 7;
+                END_IF
+            END_IF
+            IF(msAction==21)THEN
+                IF(msHomeSaved==FALSE || msArgument!=msOrigin)THEN
+                    msValid := FALSE;
+                    msError := 9;
+                END_IF
+            END_IF
+            IF(msAction==23)THEN
+                IF(msArgument<1 || msArgument>2 || msSpeed<1 || msSpeed>999)THEN
+                    msValid := FALSE;
+                    msError := 10;
+                END_IF
+            END_IF
+            IF(msAction>=24 && msAction<=29)THEN
+                msPart := msAction-24;
+                msValue := msArgument+msSpeed/1000.0;
+                IF(msStageKind==0 || msPart!=msStageCount)THEN
+                    msValid := FALSE;
+                    msError := 10;
+                END_IF
+                IF(msSpeed!=2000)THEN
+                    IF(msSpeed<0 || msSpeed>999 || msArgument< -10000 || msArgument>10000)THEN
+                        msValid := FALSE;
+                        msError := 7;
+                    END_IF
+                    IF(msStageKind==1 || msPart>=3)THEN
+                        IF(msValue< -360 || msValue>360)THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                    ELSE
+                        IF(msValue< -10000 || msValue>10000)THEN
+                            msValid := FALSE;
+                            msError := 7;
+                        END_IF
+                    END_IF
+                ELSE
+                    IF(msArgument!=0)THEN
+                        msValid := FALSE;
+                        msError := 7;
+                    END_IF
+                END_IF
+            END_IF
+            IF(msAction==30)THEN
+                IF(msStageKind==0 || msStageCount!=6 || msArgument!=msStageId)THEN
+                    msValid := FALSE;
+                    msError := 10;
+                END_IF
+            END_IF
+            IF(msValid==FALSE)THEN
+                msJog := FALSE;
+                msStageKind := 0;
+                msStageCount := 0;
+            END_IF
+            msPosDelay := 15;
+            msPosTick := 0;
+            msPosIndex := 0;
+            msOutput := 0;
+            AOSet(pb_out5,msOutput);
+            AOSet(pb_out7,msOutput);
+            msOutput := msError*1000+msOrigin;
+            AOSet(pb_out8,msOutput);
+            msAccepted := msCommand;
+            AOSet(pb_out6,msAccepted);
+            IF(msValid==TRUE)THEN
+                msFlags := 2;
+                IF(msHomeSaved==TRUE)THEN
+                    msFlags := msFlags+4;
+                END_IF
+                msOutput := 1000+msHeartbeat*16+msFlags;
+                AOSet(pb_out5,msOutput);
+                IF(msAction<23 || msAction==31)THEN
+                    msStageKind := 0;
+                    msStageCount := 0;
+                END_IF
+                msDelta := msArgument/1000.0;
+                msVelocity := msSpeed/100.0;
+                IF(msAction>=11 && msAction<=16 || msAction==30 && msStageKind==2)THEN
+                    msVelocity := msSpeed/10.0;
+                END_IF
+                IF(msVelocity<0.1)THEN
+                    msVelocity := 0.1;
+                END_IF
+                msDyn.PathVelocity := msVelocity;
+                msDyn.OriVelocity := msVelocity;
+                msDyn.JointVelocity := msVelocity;
+                IF(msDyn.JointVelocity>100)THEN
+                    msDyn.JointVelocity := 100;
+                END_IF
+                msJointDelta.A1 := 0;
+                msJointDelta.A2 := 0;
+                msJointDelta.A3 := 0;
+                msJointDelta.A4 := 0;
+                msJointDelta.A5 := 0;
+                msJointDelta.A6 := 0;
+                msCartDelta.X := 0;
+                msCartDelta.Y := 0;
+                msCartDelta.Z := 0;
+                msCartDelta.A := 0;
+                msCartDelta.B := 0;
+                msCartDelta.C := 0;
+                IF(msJog==TRUE)THEN
+                    ClkStop(msLeaseClock);
+                    ClkReset(msLeaseClock);
+                    ClkStart(msLeaseClock);
+                END_IF
+                msCanRun := TRUE;
+                WHILE(msCanRun==TRUE)DO
+                    msCanRun := FALSE;
+                    IF(msAction>=1 && msAction<=6 || msAction>=11 && msAction<=16)THEN
+                        msCommand2 := AIRead(pb_in5);
+                        msLease := AIRead(pb_in8);
+                        IF(msJog==TRUE)THEN
+                            IF(msLease!=msLastLease)THEN
+                                msLastLease := msLease;
+                                ClkStop(msLeaseClock);
+                                ClkReset(msLeaseClock);
+                                ClkStart(msLeaseClock);
+                            END_IF
+                            msLeaseElapsed := ClkRead(msLeaseClock);
+                            IF(msLeaseElapsed>=600)THEN
+                                msCommand2 := 0;
+                                msError := 8;
+                            END_IF
+                        END_IF
+                        IF(msCommand2==msCommand && msLease>0)THEN
+                            IF(msAction>=1 && msAction<=6)THEN
+                                IF(msAction==1)THEN
+                                    msJointDelta.A1 := msDelta;
+                                END_IF
+                                IF(msAction==2)THEN
+                                    msJointDelta.A2 := msDelta;
+                                END_IF
+                                IF(msAction==3)THEN
+                                    msJointDelta.A3 := msDelta;
+                                END_IF
+                                IF(msAction==4)THEN
+                                    msJointDelta.A4 := msDelta;
+                                END_IF
+                                IF(msAction==5)THEN
+                                    msJointDelta.A5 := msDelta;
+                                END_IF
+                                IF(msAction==6)THEN
+                                    msJointDelta.A6 := msDelta;
+                                END_IF
+                                msAtHome := FALSE;
+                                PTPRel(msJointDelta,msDyn,NULL,Default,WORLD);
+                            END_IF
+                            IF(msAction>=11 && msAction<=16)THEN
+                                IF(msAction==11)THEN
+                                    msCartDelta.X := msDelta;
+                                END_IF
+                                IF(msAction==12)THEN
+                                    msCartDelta.Y := msDelta;
+                                END_IF
+                                IF(msAction==13)THEN
+                                    msCartDelta.Z := msDelta;
+                                END_IF
+                                IF(msAction==14)THEN
+                                    msCartDelta.A := msDelta;
+                                END_IF
+                                IF(msAction==15)THEN
+                                    msCartDelta.B := msDelta;
+                                END_IF
+                                IF(msAction==16)THEN
+                                    msCartDelta.C := msDelta;
+                                END_IF
+                                msAtHome := FALSE;
+                                LinRel(msCartDelta,msDyn,NULL,NULL,Default,WORLD);
+                            END_IF
+                            WaitIsFinished(100);
+                            IF(msJog==TRUE)THEN
+                                msCanRun := TRUE;
+                                msHeartbeat := msHeartbeat+1;
+                                IF(msHeartbeat>=62)THEN
+                                    msHeartbeat := 0;
+                                END_IF
+                                msFlags := 1;
+                                IF(msHomeSaved==TRUE)THEN
+                                    msFlags := msFlags+4;
+                                END_IF
+                                msOutput := 1000+msHeartbeat*16+msFlags;
+                                AOSet(pb_out5,msOutput);
+                            END_IF
+                        END_IF
+                    END_IF
+                END_WHILE
+                IF(msAction==20)THEN
+                    msHomeSaved := FALSE;
+                    SaveData(msHomeSaved);
+                    GetCurrentPos(msHome,Default,WORLD);
+                    GetCurrentPos(msHomeCart,Default,WORLD);
+                    msOrigin := msArgument;
+                    SaveData(msHome);
+                    SaveData(msHomeCart);
+                    SaveData(msOrigin);
+                    msHomeSaved := TRUE;
+                    SaveData(msHomeSaved);
+                    msAtHome := TRUE;
+                END_IF
+                IF(msAction==21)THEN
+                    msAtHome := FALSE;
+                    PTP(msHome,msDyn,NULL,Default,WORLD);
+                    WaitIsFinished(100);
+                    GetCurrentPos(msNow,Default,WORLD);
+                    msAtHome := TRUE;
+                    msDifference := msHome.A1-msNow.A1;
+                    msDifference := Abs(msDifference);
+                    IF(msDifference>0.005)THEN
+                        msAtHome := FALSE;
+                    END_IF
+                    msDifference := msHome.A2-msNow.A2;
+                    msDifference := Abs(msDifference);
+                    IF(msDifference>0.005)THEN
+                        msAtHome := FALSE;
+                    END_IF
+                    msDifference := msHome.A3-msNow.A3;
+                    msDifference := Abs(msDifference);
+                    IF(msDifference>0.005)THEN
+                        msAtHome := FALSE;
+                    END_IF
+                    msDifference := msHome.A4-msNow.A4;
+                    msDifference := Abs(msDifference);
+                    IF(msDifference>0.005)THEN
+                        msAtHome := FALSE;
+                    END_IF
+                    msDifference := msHome.A5-msNow.A5;
+                    msDifference := Abs(msDifference);
+                    IF(msDifference>0.005)THEN
+                        msAtHome := FALSE;
+                    END_IF
+                    msDifference := msHome.A6-msNow.A6;
+                    msDifference := Abs(msDifference);
+                    IF(msDifference>0.005)THEN
+                        msAtHome := FALSE;
+                    END_IF
+                END_IF
+                IF(msAction==23)THEN
+                    msStageKind := msArgument;
+                    msStageId := msSpeed;
+                    msStageCount := 0;
+                    GetCurrentPos(msAbsoluteJoint,Default,WORLD);
+                    GetCurrentPos(msAbsoluteCart,Default,WORLD);
+                END_IF
+                IF(msAction>=24 && msAction<=29)THEN
+                    IF(msSpeed!=2000)THEN
+                        IF(msPart==0)THEN
+                            IF(msStageKind==1)THEN
+                                msAbsoluteJoint.A1 := msValue;
+                            ELSE
+                                msAbsoluteCart.X := msValue;
+                            END_IF
+                        END_IF
+                        IF(msPart==1)THEN
+                            IF(msStageKind==1)THEN
+                                msAbsoluteJoint.A2 := msValue;
+                            ELSE
+                                msAbsoluteCart.Y := msValue;
+                            END_IF
+                        END_IF
+                        IF(msPart==2)THEN
+                            IF(msStageKind==1)THEN
+                                msAbsoluteJoint.A3 := msValue;
+                            ELSE
+                                msAbsoluteCart.Z := msValue;
+                            END_IF
+                        END_IF
+                        IF(msPart==3)THEN
+                            IF(msStageKind==1)THEN
+                                msAbsoluteJoint.A4 := msValue;
+                            ELSE
+                                msAbsoluteCart.A := msValue;
+                            END_IF
+                        END_IF
+                        IF(msPart==4)THEN
+                            IF(msStageKind==1)THEN
+                                msAbsoluteJoint.A5 := msValue;
+                            ELSE
+                                msAbsoluteCart.B := msValue;
+                            END_IF
+                        END_IF
+                        IF(msPart==5)THEN
+                            IF(msStageKind==1)THEN
+                                msAbsoluteJoint.A6 := msValue;
+                            ELSE
+                                msAbsoluteCart.C := msValue;
+                            END_IF
+                        END_IF
+                    END_IF
+                    msStageCount := msStageCount+1;
+                END_IF
+                IF(msAction==30)THEN
+                    msStageCount := 0;
+                    msAtHome := FALSE;
+                    IF(msStageKind==1)THEN
+                        PTP(msAbsoluteJoint,msDyn,NULL,Default,WORLD);
+                    ELSE
+                        Lin(msAbsoluteCart,msDyn,NULL,NULL,Default,WORLD);
+                    END_IF
+                    WaitIsFinished(100);
+                    msStageKind := 0;
+                END_IF
+            END_IF
+            msCompleted := msCommand;
+            msOutput := msError*1000+msOrigin;
+            AOSet(pb_out8,msOutput);
+            AOSet(pb_out7,msCompleted);
+        END_IF
+    END_IF
+    msHeartbeat := msHeartbeat+1;
+    IF(msHeartbeat>=62)THEN
+        msHeartbeat := 0;
+    END_IF
+    msFlags := 1;
+    IF(msLeaseOK==FALSE)THEN
+        msFlags := 0;
+    END_IF
+    IF(msHomeSaved==TRUE)THEN
+        msFlags := msFlags+4;
+    END_IF
+    IF(msAtHome==TRUE)THEN
+        msFlags := msFlags+8;
+    END_IF
+    IF(msPosDelay>0 || msLeaseOK==FALSE)THEN
+        IF(msPosDelay>0)THEN
+            msPosDelay := msPosDelay-1;
+        END_IF
+        msOutput := msError*1000+msOrigin;
+        AOSet(pb_out8,msOutput);
+        AOSet(pb_out6,msAccepted);
+        AOSet(pb_out7,msCompleted);
+        msOutput := 1000+msHeartbeat*16+msFlags;
+        AOSet(pb_out5,msOutput);
+    ELSE
+        msPosTick := msPosTick+1;
+        IF(msPosTick>=5)THEN
+            msPosTick := 0;
+            IF(msPosIndex==0)THEN
+                GetCurrentPos(msLiveJoint,Default,WORLD);
+                GetCurrentPos(msLiveCart,Default,WORLD);
+                msPosId := msPosId+1;
+                IF(msPosId>99)THEN
+                    msPosId := 1;
+                END_IF
+            END_IF
+            IF(msPosIndex==0)THEN
+                msPosValue := msLiveJoint.A1;
+            END_IF
+            IF(msPosIndex==1)THEN
+                msPosValue := msLiveJoint.A2;
+            END_IF
+            IF(msPosIndex==2)THEN
+                msPosValue := msLiveJoint.A3;
+            END_IF
+            IF(msPosIndex==3)THEN
+                msPosValue := msLiveJoint.A4;
+            END_IF
+            IF(msPosIndex==4)THEN
+                msPosValue := msLiveJoint.A5;
+            END_IF
+            IF(msPosIndex==5)THEN
+                msPosValue := msLiveJoint.A6;
+            END_IF
+            IF(msPosIndex==6)THEN
+                msPosValue := msLiveCart.X;
+            END_IF
+            IF(msPosIndex==7)THEN
+                msPosValue := msLiveCart.Y;
+            END_IF
+            IF(msPosIndex==8)THEN
+                msPosValue := msLiveCart.Z;
+            END_IF
+            IF(msPosIndex==9)THEN
+                msPosValue := msLiveCart.A;
+            END_IF
+            IF(msPosIndex==10)THEN
+                msPosValue := msLiveCart.B;
+            END_IF
+            IF(msPosIndex==11)THEN
+                msPosValue := msLiveCart.C;
+            END_IF
+            msPosWhole := msPosValue;
+            msPosPart := msPosValue-msPosWhole;
+            IF(msPosPart<0)THEN
+                msPosWhole := msPosWhole-1;
+                msPosPart := msPosPart+1;
+            END_IF
+            msPosFraction := msPosPart*1000;
+            IF(msPosFraction>=1000)THEN
+                msPosWhole := msPosWhole+1;
+                msPosFraction := msPosFraction-1000;
+            END_IF
+            IF(msPosWhole>= -10000 && msPosWhole<=10000 && msPosFraction>=0 && msPosFraction<=999)THEN
+                msPosHeader := 28000+msPosId*32+msPosIndex+1;
+                msOutput := 0;
+                AOSet(pb_out5,msOutput);
+                AOSet(pb_out6,msPosWhole);
+                AOSet(pb_out7,msPosFraction);
+                AOSet(pb_out8,msPosHeader);
+                AOSet(pb_out5,msPosHeader);
+            END_IF
+            msPosIndex := msPosIndex+1;
+            IF(msPosIndex>=12)THEN
+                msPosIndex := 0;
+            END_IF
+        END_IF
+    END_IF
+END_WHILE

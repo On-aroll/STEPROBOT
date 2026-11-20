@@ -1,76 +1,30 @@
-# STEP 打印作业台 · SR175-3200
+# R6.4 上位机源码 · 2026-11-20
 
-**操作者请看 [使用说明.md](使用说明.md)**（三种连接模式的操作流程、Modbus 机器人侧配置、常见问题）；本 README 面向构建与开发。
+构建与本机配置见[上一级说明](../README.md)，当前实现/现场验证边界见[项目现状](../../docs/项目现状-2026-11-20.md)。本目录为 GitHub 中的上位机源码入口。
 
-在 Windows 资源管理器双击 `Open_Pendant.cmd`（或仓库根的 `Start-Workstation.cmd`）运行 `native/StepWorkstation.exe`，使用 C++20、Qt Widgets 和 MSVC x64。断电级急停始终在示教器实体按钮上。
+| 模块 | 文件 |
+|---|---|
+| 界面及共享状态 | `workstation.cpp`、`workstation_ui.h`、`workstation_print.h`、`workstation_settings.h` |
+| G代码转换、快照与多文件作业 | `workstation_job.*`、`workstation_converter.*`、`workstation_delivery.*`、`workstation_deliverydialog.*`、`gcode_converter.cpp` |
+| Modbus与机器人主桥 | `workstation_modbus.*`、`workstation_plcbridge.*`、`workstation_plcjob.*`、`workstation_plcpanel.*` |
+| 文件桥及双通道上传 | `workstation_filebridge.*`、`workstation_directftp.*`、`workstation_fileuploaddialog.*` |
+| 微调、实验起点和六轴姿态 | `workstation_manualbridge.*`、`workstation_twin.*`、`assets/*.json` |
+| 焊机与模式 | `workstation_welder.*`、`workstation_mode.*`、`mode_helper/` |
+| 既有SDK会话、回程与回放 | `workstation_session.*`、`workstation_home.*`、`workstation_replay.*`、`helix_pc.cpp` |
+| 离线验证 | `tests/`；CMake 注册完整 Qt/C++/界面测试，ST测试单独执行 |
 
-一个程序，三种连接方式（工具栏下拉切换）：
+PLC 配套源文件及安装步骤使用[R6.4 自动流程](../../docs/auto_job_r6_4/从这里开始.md)与[R6.3 手动服务](../../docs/manual_control_r6_3/先看这里.md)。本目录中的 `plc_modbus_bridge_v2_gdi255/` 和根目录协议 CSV 是历史基础接口资料，升级时不能覆盖当前配套版本。
 
-| 模式 | 端口 | 用途 |
-| --- | --- | --- |
-| STEP 虚拟控制器 | 隔离端口 30316/30317 | 本机仿真：拉起 STEPStudio 内核执行 SRP/SRD，验证作业不碰实机 |
-| 实机 STEP SDK | 控制柜 30312 | SDK 直连控制柜：点动、启停、程序加载、上位机起点与回程 |
-| Modbus TCP | 从站 502 | 按系统信号位号直控（启动/停止/暂停/复位/加载/GDI 程序号），无实时回读 |
+典型流程：导入 G 代码→自动转换→选 PLC 转传或电脑 FTP 直传→PLC 回读确认→显示可用11号→登记、加载、确认、使能、运行。10号继续用于微调/起点；日常上传不改手动服务和起点。自动入口允许1～15个程序。
 
-## 上位机做什么
+默认使用当前显示内容快照，支持多文件原文和轨迹同步、行映射、高亮与失败清理。三维模型显示真实六轴反馈，轨迹是本地规划值；缺失或过期数据会标记。SDK文件直传不等于切换机器人控制通道。
 
-1. **G 代码工具链**：打开 `.nc/.gcode` 或 STEP ZIP，查看原文与生成的 SRP/SRD 工程树，双击运动行设置起始行重新编译，从「工程 / 工具」导出完整 STEP 工程 ZIP（含源行映射与哈希），送 STEPStudio 验证后导入。详见 [转换与工程编辑说明](CONVERSION_GUIDE.md)。
-2. **轨迹预览**：等轴 / XY / XZ 几何视图，计划路径 + 控制器回读轨迹叠加（SDK / 虚拟控制器模式）。
-3. **手动点动**：SDK 与虚拟控制器模式下六轴 / WORLD / 基座 / 工具 / 用户坐标点动，各轴实时角度回读，TCP 上限 250 mm/s。Modbus 模式点动请在示教器操作。
-4. **上位机起点与回程**：按控制器身份保存六轴起点，独立规划关节分段回程，TCP 限速并二次确认。
-5. **Modbus TCP 主站**：机器人作为从站，写保持寄存器 Word1–4 控制 DI33–96；也是 AC802 PLC 联动的协议验证工具。
+现场固定密码从 `STEP_FTP_PASSWORD` 或 EXE 同目录 `workstation.local.ini` 读取，示例见 `workstation.local.ini.example`。网格需用 `tools/prepare_assets.py` 从本机许可资源补齐；厂商SDK与网格不分发。
 
-## Modbus DI 直控约定
-
-手册 V1.8.0 第四章：Word1–4 打包 DI33–96（bit0 为 DI33），写保持寄存器地址 0–3 即整组写入。信号语义（位号在界面可配）：
-
-- **启动 DI33 / 复位 DI36 / 加载 DI37**：脉冲信号（高 600 ms 自动回落）；「开始」先清停止/暂停电平再脉冲启动。
-- **停止 DI34 / 暂停 DI35**：电平信号，保持期间无法启动；按钮为切换式（再点一次解除）。
-- **程序号**：GDI 起始位号起 8 位（DI40–47）二进制写入，随后脉冲加载信号。
-- 机器人侧需在示教器「配置 → 系统IO」绑定上述信号，GDI 组绑定目标程序，钥匙开关切到 **AUT EXT 外部自动**。运行状态无回读，以示教器为准。
-- 连接仅允许控制柜所在私有网段（10.x / 172.16–31.x / 192.168.x）。
-
-## 构建
-
-在 MSVC 2022 x64 开发环境运行：
+旧焊机32字节适配尚不适用于现场16字节PDO的新机型，SDK模式切换、最新连续上传错误恢复和完整焊接联动仍按[项目现状](../../docs/项目现状-2026-11-20.md)列出的范围继续现场验收。
 
 ```powershell
-powershell -File build.ps1 -QtRoot 'C:\Qt\6.8.2\msvc2022_64'
+python -m unittest discover -s workstation/pc_control/tests -p 'test_*_st.py' -v
 ```
 
-脚本执行 CMake 配置（Ninja + Release）、构建、ctest，并把 `StepWorkstation.exe`、`StepGcodeConverter.exe`、`helix_pc.exe` 与 Qt 运行库部署到 `pc_control/native`。Qt 固定 6.8.2 MSVC2022 x64（ZIP 读取接口与其绑定）。
-
-`helix_pc.exe` 是 SDK 桥接进程（虚拟控制器准备 + 实机 attach），需部署在 `StepWorkstation.exe` 旁边；仓库无 vendor SDK 库时 CMake 跳过编译、部署现成 exe。
-
-## 测试
-
-| 测试 | 覆盖 |
-| --- | --- |
-| `modbus_client` | 内置 QTcpServer 从站模拟器：FC03/04 轮询、FC06/16 写入、异常响应翻译、响应超时、迟到响应按事务 ID 丢弃、未连接写入拒绝、通信计数 |
-| `gcode_job` | G 代码方言、圆弧/螺旋离散、速度组复用、起点重编译、BOM、边界与拒绝输入 |
-| `robot_identity_aliases` | SR175-3200 型号别名 |
-| `return_tcp_speed_limit` | 回程 TCP 限速公式 |
-
-## 软件范围
-
-| 文件 | 作用 |
-| --- | --- |
-| `workstation.cpp` | 界面：工具栏连接区、工程树、源行视图、手动点动、运行控制、Modbus 信号组 |
-| `workstation_session.h/.cpp` | SDK / 虚拟控制器会话：QProcess 编排 STEPStudio 内核与 helix_pc，回读协议解析 |
-| `workstation_modbus.h/.cpp` | Modbus TCP 主站（MBAP 编解码、串行事务、轮询/写入、统计） |
-| `workstation_motion.h` | 回程六轴规划与 TCP 限速 |
-| `workstation_experiment.h/.cpp` | 实验试次记录（输入、trace、事件） |
-| `workstation_replay.h/.cpp` | 历史试次回放与对比 |
-| `workstation_home.h/.cpp` | 上位机起点持久化（按控制器身份隔离） |
-| `workstation_job.h/.cpp` | G 代码后置转换、ZIP 生成、文件编辑校验、映射与几何恢复 |
-| `workstation_converter.h/.cpp` | 独立转换窗口 |
-| `gcode_converter.cpp` | C++ 命令行转换器 |
-| `workstation_plot.h` | 轨迹视图绘制（计划 / 回读 / 回程预览叠加） |
-| `workstation_paths.h` | 数据目录解析（备用） |
-| `workstation_identity.h` | SR175-3200 型号别名识别 |
-
-命令行转换器用法：
-
-```powershell
-.\native\StepGcodeConverter.exe --input 'D:\path\input.gcode' --output 'D:\path\program.zip'
-```
+上述 ST 命令从仓库根目录执行。测试使用本地定时器、模拟报文和实际 ST 源码解释执行；不修改在线 PLC。新机型的只读诊断测试位于 `docs/welder_wsme400plus_r1/tests`。

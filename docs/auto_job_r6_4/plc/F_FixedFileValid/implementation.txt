@@ -1,0 +1,1 @@
+F_FixedFileValid := F_AutoFileIndex(sName) > UINT#0;

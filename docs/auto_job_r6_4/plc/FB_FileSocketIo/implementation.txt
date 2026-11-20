@@ -1,0 +1,55 @@
+(* CmpHCTCPIP 1.0.0.7 owns the connection. This block only performs I/O.
+   One nonblocking syscall per call. Parent advances by the ACTUAL count.
+   No reset scan; no re-send of an already accepted prefix; EOF is explicit. *)
+uiSent := UINT#0;
+uiCount := UINT#0;
+xPeerClosed := FALSE;
+xError := FALSE;
+wErrorID := WORD#0;
+(* Preserve the last native result/count while idle for field diagnostics. *)
+IF xSend OR xReceive THEN
+    udiNativeResult := UDINT#0;
+    wLookup := CmpHCTCPIP.GetSocketInfo(diConnectID, ADR(stSocketInfo));
+    IF wLookup <> WORD#0 THEN
+        xError := TRUE;
+        wErrorID := wLookup;
+    ELSIF (stSocketInfo.hSocket = SysSocket.RTS_INVALID_HANDLE)
+        OR (stSocketInfo.diSocketType <> SysSocket.SOCKET_STREAM) OR (xSend AND xReceive) THEN
+        xError := TRUE;
+        wErrorID := WORD#16#F220;
+    ELSIF xSend THEN
+        IF (pSend = 0) OR (uiSendSize = UINT#0) OR (uiSendSize > UINT#8192) THEN
+            xError := TRUE;
+            wErrorID := WORD#16#F221;
+        ELSE
+            xiCount := SysSocket.SysSockSend(stSocketInfo.hSocket, pSend,
+                UINT_TO_DINT(uiSendSize), SysSocket.SOCKET_MSG_DONTWAIT, ADR(udiNativeResult));
+            IF udiNativeResult = CmpErrors.Errors.ERR_SOCK_WOULDBLOCK THEN
+                (* Retry on the next PLC scan; the parent enforces the progress timeout. *)
+            ELSIF (udiNativeResult <> CmpErrors.Errors.ERR_OK) OR (xiCount <= 0)
+                OR (xiCount > UINT_TO_DINT(uiSendSize)) THEN
+                xError := TRUE;
+                wErrorID := WORD#16#F222;
+            ELSE
+                uiSent := __XINT_TO_UINT(xiCount);
+            END_IF;
+        END_IF;
+    ELSE
+        xiCount := SysSocket.SysSockRecv(stSocketInfo.hSocket, ADR(aRecv),
+            DINT#8192, SysSocket.SOCKET_MSG_DONTWAIT, ADR(udiNativeResult));
+        IF udiNativeResult = CmpErrors.Errors.ERR_SOCK_WOULDBLOCK THEN
+            (* No data yet. A short final packet is delivered immediately. *)
+        ELSIF (udiNativeResult = CmpErrors.Errors.ERR_SOCK_CLOSED) AND (xiCount = 0) THEN
+            (* CODESYS reports a graceful TCP end with ERR_SOCK_CLOSED.
+               Parent still requires exact length/content, FTP 226/250 and cleanup. *)
+            xPeerClosed := TRUE;
+        ELSIF (udiNativeResult <> CmpErrors.Errors.ERR_OK) OR (xiCount < 0) OR (xiCount > 8192) THEN
+            xError := TRUE;
+            wErrorID := WORD#16#F223;
+        ELSIF xiCount = 0 THEN
+            xPeerClosed := TRUE;
+        ELSE
+            uiCount := __XINT_TO_UINT(xiCount);
+        END_IF;
+    END_IF;
+END_IF;

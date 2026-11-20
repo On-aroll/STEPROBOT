@@ -1,0 +1,10 @@
+(* Add inside the EXISTING non-retained VAR_GLOBAL, before END_VAR. Keep all credentials and permits. *)
+xFixedMappingConfirmed : BOOL := FALSE;
+sFixedProject : STRING(64) := 'pcjob_manual_r63.sr';
+uiFixedCapture : UINT := UINT#10;
+uiFixedPath : UINT := UINT#11;
+uiAutoCapacity : UINT := UINT#15;
+xFixedUpdateBusy : BOOL;
+xFixedReady : BOOL;
+xFixedIdle : BOOL;
+aAutoTag : ARRAY[0..2] OF WORD;

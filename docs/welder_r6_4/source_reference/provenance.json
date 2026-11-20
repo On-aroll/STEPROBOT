@@ -1,0 +1,12 @@
+{
+  "source": "C:\\Users\\6\\Desktop\\plc\\docs\\工程文件\\00_上下位机代码\\Lower\\lower.project",
+  "sha256": "62f185f6fa599f7637250256358d5c939748d4f99555ef9cef7d4cbffc2fa057",
+  "objects": [
+    "64040793-1a21-40df-abe3-10688efffbb4",
+    "9a124ed0-a6ef-43e7-b8f8-6da9310a642a"
+  ],
+  "method": "CODESYS TextDocument line records, shared string references; current text blocks only",
+  "original_fixed_addresses_removed": true,
+  "cnc_wire_feed_not_migrated": true,
+  "public_export_text_normalization": "Trailing whitespace and excess final blank lines removed; original archive identified by sha256."
+}

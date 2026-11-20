@@ -1,4 +1,5 @@
 #include "workstation_job.h"
+#include "workstation_delivery.h"
 
 #include <QCoreApplication>
 #include <QCommandLineParser>
@@ -18,14 +19,24 @@ int main(int argc, char** argv) {
     parser.addOption({"rapid-mm-s", "Bounded G0 linear speed, 0.001..25 mm/s", "speed", "5"});
     parser.addOption({"arc-tolerance-mm", "Arc chord tolerance, 0.001..0.1 mm", "error", "0.05"});
     parser.addOption({"omit-process-outputs", "Explicitly omit M3/M4/M5/M11; no process outputs are generated"});
+    parser.addOption({"auto-job", "Compile 1..15 sources into an R6.4 fixed auto-entry patch; output is a directory"});
+    parser.addPositionalArgument("sources", "G-code sources in execution order when --auto-job is set", "[sources...]");
     parser.process(app);
     QTextStream output(stdout), errors(stderr);
     output.setEncoding(QStringConverter::Utf8);
     errors.setEncoding(QStringConverter::Utf8);
-    if (!parser.isSet("input") || !parser.isSet("output")) { parser.showHelp(2); }
+    if ((!parser.isSet("input") && !(parser.isSet("auto-job") && !parser.positionalArguments().isEmpty())) || !parser.isSet("output")) { parser.showHelp(2); }
     bool rapidOk = false, toleranceOk = false;
     const ConversionSettings settings{parser.value("rapid-mm-s").toDouble(&rapidOk), parser.value("arc-tolerance-mm").toDouble(&toleranceOk), parser.isSet("omit-process-outputs")};
     if (!rapidOk || !toleranceOk) { errors << "Invalid conversion parameter.\n"; return 2; }
+    if(parser.isSet("auto-job")) {
+        auto sources=parser.positionalArguments();if(parser.isSet("input"))sources.prepend(parser.value("input"));
+        const auto job=Delivery::compileAuto(sources,readNativeJob(parser.value("template")),settings);
+        if(!job.error.isEmpty()){errors<<job.error<<'\n';return 3;}
+        const auto package=Delivery::saveAuto(job,parser.value("output"));
+        if(!package.error.isEmpty()){errors<<package.error<<'\n';return 4;}
+        output<<package.manifest<<'\n';return 0;
+    }
     const auto job = readGcodeJob(parser.value("input"), readNativeJob(parser.value("template")), settings);
     if (!job.runnable()) { errors << conversionReport(job); return 3; }
     const auto error = exportStepJob(job, parser.value("output"));
